@@ -1,0 +1,7 @@
+.env.*
+.env
+
+tts/
+finals/
+
+__pycache__/
