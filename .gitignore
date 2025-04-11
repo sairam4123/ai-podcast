@@ -5,3 +5,9 @@ tts/
 finals/
 
 __pycache__/
+
+# Local DB files
+audios.json
+podcasts.json
+
+gen*.json
