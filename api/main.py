@@ -1,4 +1,5 @@
 import fastapi
+import pydantic
 from gen import main as generate_podcast
 from uuid import uuid4
 import json
@@ -8,6 +9,20 @@ from fastapi.responses import FileResponse
 import pathlib
 
 app = fastapi.FastAPI()
+
+# Add CORS middleware to allow requests from any origin
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+class GeneratePodcast(pydantic.BaseModel):
+    topic: str | None = None
+
 
 podcasts = {}
 pathlib.Path("podcasts.json").touch(exist_ok=True)
@@ -47,8 +62,12 @@ async def get_audio(podcast_id: str):
         return {"error": "Audio not found"}, 404
 
 @app.post("/podcasts")
-async def create_podcast(topic: str):
-    podcast = generate_podcast(topic)
+async def create_podcast(q_topic: str | None = None, podcast: GeneratePodcast | None = None):
+    print(podcast.topic, q_topic)
+    podcast = generate_podcast(podcast.topic if podcast else q_topic)
+    if not podcast:
+        return {"error": "No podcast generated"}, 400
+    
     podcast["id"] = str(uuid4())
     podcasts[podcast["id"]] = podcast
     

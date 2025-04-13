@@ -1,0 +1,61 @@
+import { FaPlay } from "react-icons/fa";
+import { FaRepeat } from "react-icons/fa6";
+import { Podcast } from "../@types/Podcast";
+import { useGetAudio } from "../api/getAudio";
+import { useEffect, useRef } from "react";
+
+export function TopicComponent({
+  staggerIndex,
+  ...props
+}: { staggerIndex: number } & Podcast) {
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const {audioBlob, refetch} = useGetAudio({podcast_id: props.id}, {enabled: false});
+  useEffect(() => {
+    if (audioRef.current && audioBlob) {
+      const audioUrl = URL.createObjectURL(audioBlob);
+      audioRef.current.src = audioUrl;
+      audioRef.current.play();
+    }
+    console.log(audioBlob)
+  }, [audioBlob]);
+  return (
+    <div
+      className="flex group animate-popIn max-h-20 transition-all w-full starting:opacity-0 starting:scale-0 flex-row items-center justify-center hover:bg-zinc-600/40 bg-zinc-700/40 drop-shadow-sm drop-shadow-black/50 hover:drop-shadow-black hover:drop-shadow-md hover:scale-[1.01] rounded-lg space-x-3"
+      style={{
+        animationDelay: `${staggerIndex * 0.15}s`,
+        animationFillMode: "both",
+      }}
+    >
+      <img
+        src="https://plus.unsplash.com/premium_photo-1673967831980-1d377baaded2?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Y2F0c3xlbnwwfHwwfHx8MA%3D%3D"
+        className="flex max-h-20 aspect-square h-full w-auto mask-r-from-60% mask-t-from-80% mask-b-from-80% mask-l-from-80% rounded-lg"
+      />
+      <div className="flex flex-row items-center justify-center w-full py-2 pr-2 -ml-1">
+        <div className="flex flex-col items-start justify-center w-full space-y-1">
+          <p className="text-lg select-none font-bold w-full text-left flex grow text-gray-100">
+            {props.podcast_title ?? "Podcast Title"}
+          </p>
+          <p className="text-sm/5 select-none font-medium line-clamp-1 -mt-2 text-gray-300">
+            {props.podcast_description ?? "Podcast Description"}
+          </p>
+          <p className="text-sm select-none font-bold text-gray-400">3:45</p>
+        </div>
+        <div className="flex flex-row px-2 items-center justify-end space-x-6">
+          <div className="flex transition-all group-hover:opacity-100 opacity-0 flex-row items-center justify-center space-x-2">
+            <button onClick={() => {
+                refetch();
+
+            }} className="transition-all bg-zinc-600 group/play cursor-pointer active:bg-zinc-950 active:scale-[0.97] drop-shadow-sm drop-shadow-black text-white hover:bg-zinc-500 rounded-lg p-2">
+              <FaPlay className="text-lg group-active/play:text-zinc-300" />
+            </button>
+            <button className="transition-all bg-zinc-600 group/repeat cursor-pointer active:bg-zinc-950 active:scale-[0.97] drop-shadow-sm drop-shadow-black text-white hover:bg-zinc-500 rounded-lg p-2">
+              <FaRepeat className="text-lg group-active/repeat:text-zinc-300" />
+            </button>
+          </div>
+        </div>
+      </div>
+      <audio ref={audioRef} src={audioBlob ? URL.createObjectURL(audioBlob) : undefined} autoPlay={true} controls className="hidden" />
+    </div>
+  );
+}

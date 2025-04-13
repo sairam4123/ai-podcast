@@ -10,6 +10,7 @@ import pydub
 from pydub import AudioSegment
 import google.generativeai as genai
 import google.cloud.texttospeech as tts
+import io
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
@@ -116,8 +117,11 @@ def save_podcast(text, filename, lang="en-IN", voice="en-IN-Standard-A"):
             pitch=0.0,
         ),
     )
-    with open(filename, "wb") as out:
-        out.write(speech.audio_content)
+
+    return io.BytesIO(speech.audio_content)
+    # # Save the audio to a file
+    # with open(filename, "wb") as out:
+    #     out.write(speech.audio_content)
     
 
 # def save_podcast(text, filename, tld="com"):
@@ -171,28 +175,25 @@ def main(topic="machine learning"):
 
     print("Generating podcast...")
     print(f"Podcast Title: {podcast_title}")
-    save_podcast(podcast_title, f"{os_safe_title}.wav", country_interviewer, gen_voice_ann.name)
-    save_podcast(podcast_description, f"{os_safe_title}_description.wav", country_interviewer, gen_voice_ann.name)
-    save_podcast(f"{episode_number}. {episode_title}", f"{os_safe_title}_episode.wav", language, gen_voice_ann.name)
+    title_audio = save_podcast(podcast_title, f"{os_safe_title}.wav", country_interviewer, gen_voice_ann.name)
+    desc_audio = save_podcast(podcast_description, f"{os_safe_title}_description.wav", country_interviewer, gen_voice_ann.name)
+    ep_audio = save_podcast(f"{episode_title}", f"{os_safe_title}_episode.wav", language, gen_voice_ann.name)
     
+    audios = [title_audio, desc_audio, ep_audio]
+
     for idx, turn in enumerate(conversation):
         if turn["speaker"] == "interviewer":
-            save_podcast(turn["text"], f"{os_safe_title}_{os_safe_interviewer}_{idx}.wav", country_interviewer, gen_voice_inter.name)
+            turn_audio = save_podcast(turn["text"], f"{os_safe_title}_{os_safe_interviewer}_{idx}.wav", country_interviewer, gen_voice_inter.name)
         else:
-            save_podcast(turn["text"], f"{os_safe_title}_{os_safe_speaker}_{idx}.wav", country_speaker, gen_voice_speak.name)
+            turn_audio = save_podcast(turn["text"], f"{os_safe_title}_{os_safe_speaker}_{idx}.wav", country_speaker, gen_voice_speak.name)
+        audios.append(turn_audio)
         print(f"Generated {turn['speaker']} audio for turn {idx + 1}/{len(conversation)}")
 
     print(f"Podcast '{podcast_title}' generated and saved in {os.path.abspath('tts')} folder.")
 
     # merge the files into a single podcast
-    podcast_files = [f"{os_safe_title}.wav", f"{os_safe_title}_description.wav", f"{os_safe_title}_episode.wav"]
-    for idx, turn in enumerate(conversation):
-        if turn["speaker"] == "interviewer":
-            podcast_files.append(f"{os_safe_title}_{os_safe_interviewer}_{idx}.wav")
-        else:
-            podcast_files.append(f"{os_safe_title}_{os_safe_speaker}_{idx}.wav")
     
-    segments = [pydub.AudioSegment.from_wav(os.path.join(TTS_FOLDER, file)) for file in podcast_files]
+    segments = [pydub.AudioSegment.from_wav(audio) for audio in audios]
     combined = AudioSegment.silent(duration=500)
     for segment in segments:
         combined += segment + AudioSegment.silent(duration=500)  # Add a 1-second silence between segments
