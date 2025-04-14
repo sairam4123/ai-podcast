@@ -5,6 +5,7 @@ import { useGetAudio } from "../api/getAudio";
 import { useEffect, useRef } from "react";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { formatDuration } from "../lib/formatDuration";
+import { useGetImage } from "../api/getImage";
 
 export function TopicComponent({
   staggerIndex,
@@ -12,7 +13,11 @@ export function TopicComponent({
 }: { staggerIndex: number } & Podcast) {
 
   const {audioUrl, refetch, isLoading} = useGetAudio({podcast_id: props.id}, {enabled: false});
+  const {imageUrl, isLoading: imageLoading} = useGetImage({podcastId: props.id});
   const {audioRef, isPlaying, pause, play, toggle} = useAudioPlayer()
+
+  console.log(imageUrl)
+  const defaultImage = "https://plus.unsplash.com/premium_photo-1673967831980-1d377baaded2?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Y2F0c3xlbnwwfHwwfHx8MA%3D%3D"
   // useEffect(() => {
   //   if (audioRef.current && audioBlob) {
   //     const audioUrl = URL.createObjectURL(audioBlob);
@@ -32,16 +37,23 @@ export function TopicComponent({
 
   return (
     <div
-      className="flex group animate-popIn max-h-20 transition-all w-full starting:opacity-0 starting:scale-0 flex-row items-center justify-center hover:bg-zinc-600/40 bg-zinc-700/40 drop-shadow-sm drop-shadow-black/50 hover:drop-shadow-black hover:drop-shadow-md hover:scale-[1.01] rounded-lg space-x-3"
+      className="flex group animate-popIn max-h-20 transition-all w-full starting:opacity-0 starting:scale-0 flex-row items-center justify-center hover:bg-zinc-600/40 bg-zinc-700/40 drop-shadow-sm drop-shadow-black/20 hover:drop-shadow-black hover:drop-shadow-md hover:scale-[1.01] rounded-lg space-x-3"
       style={{
         animationDelay: `${staggerIndex * 0.15}s`,
         animationFillMode: "both",
       }}
+      onClick={() => {
+        window.location.href = `/podcast/${props.id}`; // navigate to the podcast page (HACK FOR NOW)
+        // replace with href in the future
+      }}
     >
-      <img
-        src="https://plus.unsplash.com/premium_photo-1673967831980-1d377baaded2?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Y2F0c3xlbnwwfHwwfHx8MA%3D%3D"
-        className="flex max-h-20 aspect-square h-full w-auto mask-r-from-60% mask-t-from-80% mask-b-from-80% mask-l-from-80% rounded-lg"
-      />
+      {imageLoading ? <div className=" max-w-20 w-full h-full p-2 max-h-20 aspect-square flex items-center justify-center mask-r-from-60% mask-t-from-80% mask-b-from-80% mask-l-from-80% rounded-lg">
+        <FaSpinner className="animate-spin text-white text-2xl" />
+        </div> 
+        : <img
+        src={imageUrl ?? defaultImage}
+        className="flex starting:opacity-0 transition-all opacity-100 max-h-20 aspect-square h-full w-auto mask-r-from-60% mask-t-from-80% mask-b-from-80% mask-l-from-80% rounded-lg"
+      />}
       <div className="flex flex-row items-center justify-center w-full py-2 pr-2 -ml-1">
         <div className="flex flex-col items-start justify-center w-full space-y-1">
           <p className="text-lg select-none font-bold w-full text-left flex grow text-gray-100">

@@ -35,6 +35,12 @@ pathlib.Path("audios.json").touch(exist_ok=True)
 with open("audios.json", "r") as f:
     audios = json.loads(f.read() or "{}")
 
+images = {}
+pathlib.Path("images.json").touch(exist_ok=True)
+with open("images.json", "r") as f:
+    images = json.loads(f.read() or "{}")
+
+
 
 @app.get("/podcasts/search")
 async def search_podcasts(query: str):
@@ -54,17 +60,27 @@ async def get_podcast(podcast_id: str):
     if "duration" not in podcast: # just in case we don't have it yet
         podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
     if podcast:
-        return {**podcast}
+        return {"podcast": podcast, "success": True, "message": "Podcast found"}
     else:
         return {"error": "Podcast not found"}, 404
+
 
 @app.get("/audios/{podcast_id}")
 async def get_audio(podcast_id: str):
     audio = audios.get(podcast_id)
     if audio:
-        return FileResponse(audio, media_type="audio/mpeg")
+        return FileResponse(audio)
     else:
         return {"error": "Audio not found"}, 404
+
+@app.get("/images/{podcast_id}")
+async def get_image(podcast_id: str):
+    image = images.get(podcast_id)
+    if image:
+        return FileResponse(image)
+    else:
+        return {"error": "Image not found"}, 404
+    
 
 @app.post("/podcasts")
 async def create_podcast(q_topic: str | None = None, podcast: GeneratePodcast | None = None):
@@ -77,8 +93,10 @@ async def create_podcast(q_topic: str | None = None, podcast: GeneratePodcast | 
     podcasts[podcast["id"]] = podcast
     
     audios[podcast["id"]] = podcast["audio_file"]
+    images[podcast["id"]] = podcast["image_file"]
 
     del podcast["audio_file"]
+    del podcast["image_file"]
 
     with open("podcasts.json", "w") as f:
         f.write(json.dumps(podcasts, indent=4))

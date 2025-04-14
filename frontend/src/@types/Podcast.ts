@@ -21,6 +21,6 @@ export type Podcast = {
     conversation?: {
         speaker: "interviewer" | "speaker";
         text: string;
-    }
+    }[]
 
 }

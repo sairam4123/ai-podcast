@@ -3,11 +3,13 @@
 
 tts/
 finals/
+images/
 
 __pycache__/
 
 # Local DB files
 audios.json
 podcasts.json
+images.json
 
 gen*.json

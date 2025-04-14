@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import pydantic
 load_dotenv()
 
 import random
@@ -8,11 +9,11 @@ import json
 import gtts
 import pydub
 from pydub import AudioSegment
-import google.generativeai as genai
+import google.genai as genai
 import google.cloud.texttospeech as tts
 import io
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
 
 speech_client = tts.TextToSpeechClient.from_service_account_json("gen-lang-client.json")
 
@@ -20,13 +21,27 @@ VOICE_MODEL = "Wavenet" # "Standard" | "Wavenet" | "Chirp3"
 
 TTS_FOLDER = "tts"
 FINAL_FOLDER = "finals" # Folder to save the final podcast
+IMAGES_FOLDER = "images" # Folder to save the images
+
 if not os.path.exists(FINAL_FOLDER):
     os.makedirs(FINAL_FOLDER)
 if not os.path.exists(TTS_FOLDER):
     os.makedirs(TTS_FOLDER)
+if not os.path.exists(IMAGES_FOLDER):
+    os.makedirs(IMAGES_FOLDER)
 
 
-model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
+# model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
+
+client = genai.Client()
+
+# image_model = client.models.generate_content(
+#     model="gemini-2.0-flash-exp-image-generation",
+#     contents=[text_input, image],
+#     config=types.GenerateContentConfig(
+#       response_modalities=['Text', 'Image']
+#     )
+# )
 
 prompt = """
 You are a expert in this {topic}.
@@ -77,7 +92,6 @@ podcast_schema = """
         "gender": "male | female",
     },
     "language": "Language Code in the format of 'en-US' or 'en-GB'",
-    "episodeNumber": "Episode Number",
     "speaker": {
         "name": "Speaker Name",
         "country": "Language Code in the format of 'en-US' or 'en-GB'",
@@ -96,9 +110,64 @@ podcast_schema = """
 }
 """
 
-def generate_podcast(topic):
-    response = model.generate_content(prompt.format(topic=topic) + podcast_schema, generation_config={"max_output_tokens": 4000})
-    return response.text
+class Person(pydantic.BaseModel):
+    name: str
+    country: str
+    gender: str
+
+class Conversation(pydantic.BaseModel):
+    speaker: str = pydantic.Field(..., enum=["interviewer", "speaker"])
+    text: str
+
+class Podcast(pydantic.BaseModel):
+    podcastTitle: str
+    podcastDescription: str
+    episodeTitle: str
+    interviewer: Person
+    speaker: Person
+    language: str
+    episodeNumber: str = pydantic.Field(..., description="Episode number in the format of '1', '2', '3'")
+    conversation: list[Conversation]
+
+img_prompt = """
+You are a expert in this {topic}.
+Generate a image for the podcast on {topic}. 
+Podcast title is {podcastTitle}.
+Podcast description is {podcastDescription}.
+Episode title is {episodeTitle}.
+Interviewer name is {interviewerName} and gender {interviewerGender}.
+Speaker name is {speakerName} and gender {speakerGender}.
+
+The image should be colorful and engaging. 
+The image should be in the format of a podcast cover image. 
+The image should be in the format of a square. 
+The image should be in the format of PNG.
+The image should be in the format of a 3000x3000 pixels. 
+The image should be in the format of a 72 dpi.
+The image should be in the format of a 24 bit color depth.
+
+Use abstract art and design elements to create a visually appealing image.
+"""
+
+def generate_podcast(topic) -> Podcast:
+    response = client.models.generate_content(contents=prompt.format(topic=topic) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": Podcast}, model="gemini-2.0-flash",)
+    return response.parsed
+
+def generate_image(topic, podcast: Podcast) -> io.BytesIO:
+    response = client.models.generate_content(contents=img_prompt.format(topic=topic, **podcast), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-exp-image-generation")
+    for content in response.candidates[0].content.parts:
+        print(content)
+        if content.text is not None:
+            print(content.text)
+            continue
+        if content.inline_data is not None:
+            
+            image = content.inline_data.data
+            image = io.BytesIO(image)
+            break
+    else:
+        raise ValueError("No image found in response")
+    return image
 
 def save_podcast(text, filename, lang="en-IN", voice="en-IN-Standard-A"):
     
@@ -123,6 +192,8 @@ def save_podcast(text, filename, lang="en-IN", voice="en-IN-Standard-A"):
     #     out.write(speech.audio_content)
     
 
+
+
 # def save_podcast(text, filename, tld="com"):
 #     filename = os.path.join(TTS_FOLDER, filename)
 #     tts = speech_model.generate_content(text, generation_config={"max_output_tokens": 4000})
@@ -134,7 +205,8 @@ def remap_os_safe_title(title: str) -> str:
 
 def main(topic="machine learning"):
     podcast = generate_podcast(topic)
-    podcast = json.loads(podcast)
+    # print(podcast.model_dump_json(indent=4))
+    podcast = podcast.model_dump()
     podcast_title = podcast["podcastTitle"]
     podcast_description = podcast["podcastDescription"]
     episode_title = podcast["episodeTitle"]
@@ -152,6 +224,11 @@ def main(topic="machine learning"):
     language = podcast["language"]
     episode_number = podcast["episodeNumber"]
 
+    image = generate_image(topic, {**podcast, "interviewerName": interviewer["name"], "speakerName": speaker["name"], "interviewerGender": gender_interviewer, "speakerGender": gender_speaker})
+    image_file = os.path.join(IMAGES_FOLDER, f"{os_safe_title}.png")
+    with open(image_file, "wb") as f:
+        f.write(image.getbuffer())
+    print(f"Image saved as {os_safe_title}.png")
 
     # Filter voices by gender
     resp_voices_inter = speech_client.list_voices(language_code=country_interviewer).voices
@@ -210,6 +287,8 @@ def main(topic="machine learning"):
         "conversation": conversation,
         "audio_file": final_file,
         "duration": len(combined) / 1000,  # duration in seconds
+        "image_file": image_file,
+        "episode_number": episode_number,
     }
 
 if __name__ == "__main__":

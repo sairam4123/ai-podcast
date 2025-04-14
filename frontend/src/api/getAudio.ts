@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import useFetch from "../lib/useFetch";
 import useLoadFile from "../lib/useLoadFile";
 import { API_URL } from "./api";
 
@@ -9,6 +8,9 @@ export function useGetAudio({podcast_id}: {podcast_id: string}, {enabled = true}
 
     const audioBlob = useMemo(() => {
         if (!data) return null;
+        // check if the data is a valid audio
+        const isValidAudio = data.type.startsWith("audio/");
+        if (!isValidAudio) return null;
         return new Blob([data], { type: "audio/mpeg" });
     }, [data]);
 
@@ -23,7 +25,6 @@ export function useGetAudio({podcast_id}: {podcast_id: string}, {enabled = true}
         };
       }, [audioUrl]);
 
-    console.log(data)
     return {
         audioUrl,
         isLoading: loading,
