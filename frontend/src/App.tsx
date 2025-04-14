@@ -35,7 +35,7 @@ export function App() {
         {generatePodcastMutation.isLoading ? <FaSpinner className="animate-spin text-2xl text-gray-200" /> : <p className="text-lg font-bold">Generate</p>}
       </button>
       </div>
-      {!isLoading && <div className="flex flex-col items-center justify-center bg-zinc-800/20 drop-shadow-lg drop-shadow-black/20 backdrop-blur-lg w-2/3 p-2 rounded-xl mt-6">
+      {(!isLoading && searchTerm) && <div className="flex flex-col items-center justify-center bg-zinc-800/20 drop-shadow-lg drop-shadow-black/20 backdrop-blur-lg w-2/3 p-2 rounded-xl mt-6">
         <p className="text-xl font-bold text-gray-200 my-1">
           We've found some topics similar to yours
         </p>

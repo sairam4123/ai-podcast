@@ -1,5 +1,6 @@
 import fastapi
 import pydantic
+import pydub
 from gen import main as generate_podcast
 from uuid import uuid4
 import json
@@ -39,7 +40,9 @@ with open("audios.json", "r") as f:
 async def search_podcasts(query: str):
     results = []
     for podcast_id, podcast in podcasts.items():
-        if query.lower() in podcast["podcast_title"].lower() or query.lower() in podcast["podcast_description"].lower():
+        if query.lower() in podcast["podcast_title"].lower() or query.lower() in podcast["podcast_description"].lower() or query.lower() in podcast["episode_title"].lower():
+            if "duration" not in podcast: # just in case we don't have it yet
+                podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
             results.append({"id": podcast_id, **podcast})
     if results:
         return {"results": results}
@@ -48,6 +51,8 @@ async def search_podcasts(query: str):
 @app.get("/podcasts/{podcast_id}")
 async def get_podcast(podcast_id: str):
     podcast = podcasts.get(podcast_id)
+    if "duration" not in podcast: # just in case we don't have it yet
+        podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
     if podcast:
         return {**podcast}
     else:

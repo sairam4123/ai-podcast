@@ -37,11 +37,10 @@ Keep the conversation simple and easy to understand for a 20 year old.
 The conversation should be engaging and interesting.
 The conversation should be around 8 minutes long.
 If the time is given, the conversation should be around that time.
-If time given is more than 8 minutes, then the conversation should be around 8 minutes.
 Include ahhs and umms in the conversation to make it sound more natural.
 The conversation should be in the format of a podcast.
 
-Around 20 questions and answers should be there in the conversation.
+Around 30 questions and answers should be there in the conversation.
 
 Keep the following in mind:
 1. Keep the conversation simple and easy to understand.
@@ -200,6 +199,7 @@ def main(topic="machine learning"):
     
     final_file = os.path.join(FINAL_FOLDER, f"{os_safe_title}_final.wav")
     combined.export(final_file, format="wav")
+
     print(f"Final podcast '{podcast_title}_final.wav' generated.")
     return {
         "podcast_title": podcast_title,
@@ -208,7 +208,8 @@ def main(topic="machine learning"):
         "interviewer": interviewer,
         "speaker": speaker,
         "conversation": conversation,
-        "audio_file": final_file
+        "audio_file": final_file,
+        "duration": len(combined) / 1000,  # duration in seconds
     }
 
 if __name__ == "__main__":

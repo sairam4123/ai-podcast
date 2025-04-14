@@ -1,4 +1,4 @@
-export function CreatePodcastPage() {
+export function Podcast() {
     return (
         <div>
             

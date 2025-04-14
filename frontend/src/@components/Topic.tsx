@@ -1,24 +1,35 @@
-import { FaPlay } from "react-icons/fa";
+import { FaPause, FaPlay, FaSpinner } from "react-icons/fa";
 import { FaRepeat } from "react-icons/fa6";
 import { Podcast } from "../@types/Podcast";
 import { useGetAudio } from "../api/getAudio";
 import { useEffect, useRef } from "react";
+import { useAudioPlayer } from "../hooks/useAudioPlayer";
+import { formatDuration } from "../lib/formatDuration";
 
 export function TopicComponent({
   staggerIndex,
   ...props
 }: { staggerIndex: number } & Podcast) {
 
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const {audioBlob, refetch} = useGetAudio({podcast_id: props.id}, {enabled: false});
-  useEffect(() => {
-    if (audioRef.current && audioBlob) {
-      const audioUrl = URL.createObjectURL(audioBlob);
-      audioRef.current.src = audioUrl;
-      audioRef.current.play();
-    }
-    console.log(audioBlob)
-  }, [audioBlob]);
+  const {audioUrl, refetch, isLoading} = useGetAudio({podcast_id: props.id}, {enabled: false});
+  const {audioRef, isPlaying, pause, play, toggle} = useAudioPlayer()
+  // useEffect(() => {
+  //   if (audioRef.current && audioBlob) {
+  //     const audioUrl = URL.createObjectURL(audioBlob);
+  //     audioRef.current.src = audioUrl;
+  //     audioRef.current.play();
+  //     console.log(audioRef.current.src)
+  //   }
+  //   // return () => {
+  //   //   if (audioRef.current) {
+  //   //     audioRef.current.pause();
+  //   //     audioRef.current.src = ""; // Clear the source to release the object URL
+  //   //   }
+  //   // };
+  // }, [audioBlob]);
+
+  // console.log(audioRef.current?.paused)
+
   return (
     <div
       className="flex group animate-popIn max-h-20 transition-all w-full starting:opacity-0 starting:scale-0 flex-row items-center justify-center hover:bg-zinc-600/40 bg-zinc-700/40 drop-shadow-sm drop-shadow-black/50 hover:drop-shadow-black hover:drop-shadow-md hover:scale-[1.01] rounded-lg space-x-3"
@@ -39,15 +50,17 @@ export function TopicComponent({
           <p className="text-sm/5 select-none font-medium line-clamp-1 -mt-2 text-gray-300">
             {props.podcast_description ?? "Podcast Description"}
           </p>
-          <p className="text-sm select-none font-bold text-gray-400">3:45</p>
+          <p className="text-sm select-none font-bold text-gray-400">{formatDuration(props.duration) ?? "3:45"}</p>
         </div>
         <div className="flex flex-row px-2 items-center justify-end space-x-6">
           <div className="flex transition-all group-hover:opacity-100 opacity-0 flex-row items-center justify-center space-x-2">
             <button onClick={() => {
-                refetch();
-
+               if (!audioRef.current?.src) {
+                refetch()
+               }
+               toggle()
             }} className="transition-all bg-zinc-600 group/play cursor-pointer active:bg-zinc-950 active:scale-[0.97] drop-shadow-sm drop-shadow-black text-white hover:bg-zinc-500 rounded-lg p-2">
-              <FaPlay className="text-lg group-active/play:text-zinc-300" />
+              {isLoading ? <FaSpinner className="text-lg animate-spin" /> : (!isPlaying) ? <FaPlay className="text-lg group-active/play:text-zinc-300" /> : <FaPause className="text-lg group-active/play:text-zinc-300 animate-pulse" />}
             </button>
             <button className="transition-all bg-zinc-600 group/repeat cursor-pointer active:bg-zinc-950 active:scale-[0.97] drop-shadow-sm drop-shadow-black text-white hover:bg-zinc-500 rounded-lg p-2">
               <FaRepeat className="text-lg group-active/repeat:text-zinc-300" />
@@ -55,7 +68,7 @@ export function TopicComponent({
           </div>
         </div>
       </div>
-      <audio ref={audioRef} src={audioBlob ? URL.createObjectURL(audioBlob) : undefined} autoPlay={true} controls className="hidden" />
+      <audio ref={audioRef} src={audioUrl} controls className="hidden" />
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function SearchBox({
         inputRef.current?.focus();
     }}>
         <FaSearch className="group-focus-within:text-gray-800 flex text-gray-500" />
-        <input type="text" placeholder="What's in your mind?"
+        <input type="text" ref={inputRef} placeholder="What's in your mind?"
             onChange={(e) => {setSearchTerm(e.target.value)}}
              value={searchTerm} className="flex grow selection:bg-black/25 ring-0 outline-none focus:placeholder:text-black/70 text-black placeholder:text-black/50" />
     </div>

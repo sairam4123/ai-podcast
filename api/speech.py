@@ -38,8 +38,6 @@ def list_voices(language_code=None):
         print(f"{languages:<8} | {name:<24} | {gender:<8} | {rate:,} Hz")
         
 
-import google.cloud.texttospeech as tts
-
 
 def text_to_wav(voice_name: str, text: str):
     language_code = "-".join(voice_name.split("-")[:2])
@@ -62,6 +60,6 @@ def text_to_wav(voice_name: str, text: str):
         print(f'Generated speech saved to "{filename}"')
         
 
-# list_voices()
+list_voices()
 
-text_to_wav("en-GB-Standard-O", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+# text_to_wav("en-GB-Standard-O", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")

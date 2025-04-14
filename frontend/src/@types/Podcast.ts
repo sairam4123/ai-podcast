@@ -4,6 +4,7 @@ export type Podcast = {
     podcast_description: string;
     episode_title: string;
     image?: string;
+    duration: number;
 
     interviewer: {
         name: string;
