@@ -57,6 +57,8 @@ async def search_podcasts(query: str):
 @app.get("/podcasts/{podcast_id}")
 async def get_podcast(podcast_id: str):
     podcast = podcasts.get(podcast_id)
+    if not podcast:
+        return {"error": "Podcast not found"}, 404
     if "duration" not in podcast: # just in case we don't have it yet
         podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
     if podcast:
@@ -103,6 +105,9 @@ async def create_podcast(q_topic: str | None = None, podcast: GeneratePodcast | 
     
     with open("audios.json", "w") as f:
         f.write(json.dumps(audios, indent=4))
+
+    with open("images.json", "w") as f:
+        f.write(json.dumps(images, indent=4))
 
     return {**podcast}
 

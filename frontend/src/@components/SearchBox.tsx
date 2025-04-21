@@ -9,7 +9,7 @@ export function SearchBox({
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
 
-    return <div className="flex transition-all items-center group drop-shadow-md hover:scale-[1.02] drop-shadow-gray-500 hover:drop-shadow-lg hover:drop-shadow-black/50 focus-within:drop-shadow-gray-300 justify-center bg-white cursor-text rounded-xl w-1/3 p-3 space-x-2" onClick={() => {
+    return <div className="flex transition-all items-center group drop-shadow-md hover:scale-[1.02] drop-shadow-gray-500 hover:drop-shadow-lg hover:drop-shadow-black/50 focus-within:drop-shadow-gray-300 justify-center bg-white cursor-text rounded-xl w-9/12 lg:w-1/2 xl:w-1/3 p-3 space-x-2" onClick={() => {
         inputRef.current?.focus();
     }}>
         <FaSearch className="group-focus-within:text-gray-800 flex text-gray-500" />

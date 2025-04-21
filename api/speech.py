@@ -3,6 +3,7 @@ from typing import Sequence
 import google.cloud.texttospeech as tts
 
 
+from gen import detect_topic_language
 
 def unique_languages_from_voices(voices: Sequence[tts.Voice]):
     language_set = set()
@@ -60,6 +61,7 @@ def text_to_wav(voice_name: str, text: str):
         print(f'Generated speech saved to "{filename}"')
         
 
-list_voices()
+# list_voices()
+print(detect_topic_language("explain the process behind time-sharing in operating systems"))
 
 # text_to_wav("en-GB-Standard-O", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")

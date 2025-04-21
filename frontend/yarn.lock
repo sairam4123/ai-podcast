@@ -442,6 +442,11 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@rigo-m/react-split-text@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@rigo-m/react-split-text/-/react-split-text-1.0.1.tgz#fb178a8be62f4fbb3e68d64293f3bc58ed508aba"
+  integrity sha512-zL6wgpPRLqy2bvskiPUmXhEFbmlVp6ThlE6RKJg/jGB/tg1Bj2vzjxfVjWjE+KxhMhBBYZyzDWq4no1mVoh3kw==
+
 "@rollup/rollup-android-arm-eabi@4.39.0":
   version "4.39.0"
   resolved "https://registry.yarnpkg.com/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.39.0.tgz#1d8cc5dd3d8ffe569d8f7f67a45c7909828a0f66"

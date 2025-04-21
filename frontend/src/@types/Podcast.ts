@@ -21,6 +21,8 @@ export type Podcast = {
     conversation?: {
         speaker: "interviewer" | "speaker";
         text: string;
+        start_time?: number;
+        end_time?: number;
     }[]
 
 }
