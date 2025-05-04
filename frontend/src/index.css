@@ -144,3 +144,36 @@
   border: 1px solid #f0f0f0;
   background: linear-gradient(to bottom, #1565c0, #003f5c);
 }
+
+
+.glass-panel {
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3); /* shiny top edge */
+  padding: 1.5rem;
+  color: white;
+  overflow: hidden;
+}
+
+/* Glossy gradient layer */
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Content stays on top */
+.glass-panel > * {
+  position: relative;
+  z-index: 2;
+}

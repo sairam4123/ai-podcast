@@ -39,8 +39,8 @@ export function App() {
         </p>}
       </button>
       </div>
-      {(!isLoading && searchTerm && searchTerm === debouncedSearchTerm) && <div className="flex flex-col items-center justify-center bg-zinc-800/20 drop-shadow-lg drop-shadow-black/20 backdrop-blur-lg w-11/12 md:w-2/3 p-2 rounded-xl mt-6">
-        <p className="md:text-lg lg:text-xl font-bold text-gray-200 my-1">
+      {(!isLoading && searchTerm && searchTerm === debouncedSearchTerm) && <div className="flex flex-col glass-panel items-center justify-center bg-zinc-800/20 drop-shadow-lg drop-shadow-black/20 backdrop-blur-lg w-11/12 md:w-2/3 p-2 rounded-xl mt-6">
+        <p className="md:text-lg lg:text-xl text-shadow-black/75 font-bold text-gray-50 text-shadow-xs my-1">
           We've found some topics similar to yours
         </p>
         <div className="flex w-full flex-col items-center p-2 space-y-2 justify-center">

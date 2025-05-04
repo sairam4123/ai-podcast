@@ -86,7 +86,7 @@ async def get_image(podcast_id: str):
 
 @app.post("/podcasts")
 async def create_podcast(q_topic: str | None = None, podcast: GeneratePodcast | None = None):
-    print(podcast.topic, q_topic)
+    print(podcast, q_topic)
     podcast = generate_podcast(podcast.topic if podcast else q_topic)
     if not podcast:
         return {"error": "No podcast generated"}, 400

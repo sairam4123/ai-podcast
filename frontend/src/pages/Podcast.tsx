@@ -82,7 +82,7 @@ export function Podcast() {
                                         <span className="relative z-10">{removeSSMLtags(conv.text)}</span>
                                         {isCurrent && (
                                             <span
-                                            className="absolute left-0 top-0 h-full bg-yellow-400/30 z-0 animate-[highlightGrow_4s_linear_forwards]"
+                                            className={`absolute left-0 top-0 h-full starting:w-[${(conv.end_time! - conv.start_time!) / 100}] bg-yellow-400/30 z-0 animate-[highlightGrow_4s_linear_forwards]`}
                                             style={{ animationDuration: `${(conv.end_time! - conv.start_time!)}s`, width: "100%" }}
                                             />
                                         )}
