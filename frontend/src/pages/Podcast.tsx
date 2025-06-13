@@ -8,6 +8,8 @@ import { useAudioPlayer } from "../hooks/useAudioPlayer"
 import { cn } from "../lib/cn"
 import { FaPause } from "react-icons/fa"
 import { removeSSMLtags } from "../lib/removeSSMLtags"
+import { Podcast as PodcastType } from "../@types/Podcast"
+import { useGetAvatarImage } from "../api/getAvatarImage"
 
 export function Podcast() {
     const params = useParams()
@@ -17,6 +19,10 @@ export function Podcast() {
     const {imageUrl, isLoading: imageLoading, error: imageError} = useGetImage({podcastId})
     const {audioUrl, isLoading: audioLoading, error: audioError, refetch: refetchAudio} = useGetAudio({podcast_id: podcastId}, {enabled: false})
     const {audioRef, toggle, isPlaying, currentPosition} = useAudioPlayer()
+    const peopleById = data?.podcast.people?.reduce((acc, person) => {
+        acc[person.id] = person
+        return acc
+    }, {} as Record<string, NonNullable<PodcastType["people"]>[number]>)
     console.log(data, isLoading, error, isPlaying)
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-tr from-sky-200 to-[130%] to-blue-700">
@@ -36,7 +42,7 @@ export function Podcast() {
                             <div className="flex flex-col items-start justify-center w-full py-2 pr-2 -ml-1 space-y-1">
                                 <h1 className="text-2xl md:text-4xl text-white font-bold">{data.podcast.podcast_title}</h1>
                                 <p className="text-sm md:text-lg text-gray-300">{data.podcast.podcast_description}</p>
-                                <p className="text-sm md:text-lg font-bold text-gray-200">{formatDuration(data.podcast.duration)} - {formatDuration(currentPosition)}</p>
+                                <p className="text-sm md:text-lg font-bold text-gray-200">{formatDuration(currentPosition)} - {formatDuration(data.podcast.duration)}</p>
                                 <div className="flex flex-row space-x-4">
                                     {/* <p className="text-sm font-bold text-gray-400">{data.podcast.interviewer}</p>
                                     <p className="text-sm font-bold text-gray-400">{data.podcast.speaker}</p> */}
@@ -60,6 +66,7 @@ export function Podcast() {
                         <div className="flex flex-col items-start justify-start w-full p-2 px-4 mt-4 h-96 overflow-y-scroll space-y-4">
                             {data.podcast.conversation?.map((conv, index) => 
                                 {
+                                    const currentSpeaker = peopleById?.[conv.speaker]
                                     const isCurrent = (currentPosition > (conv.start_time ?? 0) && currentPosition < (conv.end_time ?? 0) && isPlaying)
                                     if (isCurrent) {
                                         // focus the element (good idea?)
@@ -70,24 +77,24 @@ export function Podcast() {
                                             }
                                         }, 0)
                                     }
-                                    return <div key={index} id={`conversation-${index}`} className={`flex ${conv.speaker === "interviewer" ? `bg-gradient-to-tl from-blue-600/70 to-blue-800/90 ml-auto rounded-t-3xl rounded-l-3xl md:rounded-l-2xl rounded-br-md md:rounded-br-lg` : `bg-gradient-to-tr from-green-700/80 to-green-800/90 rounded-t-3xl rounded-bl-md md:rounded-bl-lg md:rounded-r-2xl rounded-r-3xl`} text-white animate-slideInBottom max-w-4/7 lg:max-w-3/7 drop-shadow-lg transition-all ${(currentPosition > (conv.start_time ?? 0) && currentPosition < (conv.end_time ?? 0) && isPlaying) ? "outline-1 outline-white scale-105" : ""} hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`} style={{animationDelay: `${index * 0.15}s`, animationFillMode: "both"}}
-                                        onClick={() => {
-                                            if (audioRef.current && conv.start_time && conv.end_time) {
+                                    return <MessageCard
+                                    onClick={() => {
+                                        if (audioRef.current && conv.start_time && conv.end_time) {
                                                 audioRef.current.currentTime = conv.start_time
                                                 audioRef.current.play()
                                             }
-                                        }}
-                                        >
-                                    <p className="relative">
-                                        <span className="relative z-10">{removeSSMLtags(conv.text)}</span>
-                                        {isCurrent && (
-                                            <span
-                                            className={`absolute left-0 top-0 h-full starting:w-[${(conv.end_time! - conv.start_time!) / 100}] bg-yellow-400/30 z-0 animate-[highlightGrow_4s_linear_forwards]`}
-                                            style={{ animationDuration: `${(conv.end_time! - conv.start_time!)}s`, width: "100%" }}
-                                            />
-                                        )}
-                                    </p>
-                                </div>}
+                                    }}
+                                    key={index}
+
+                                        podcast={podcastId}
+                                        person={currentSpeaker}
+                                        message={conv}
+                                        isCurrent={isCurrent}
+                                        currentPosition={currentPosition}
+                                        isPlaying={isPlaying}
+                                        id={`conversation-${index}`}
+                                    />
+                                }
                             )}
                         </div>
                     </div>
@@ -96,4 +103,40 @@ export function Podcast() {
             <audio ref={audioRef} src={audioUrl ?? ""} className="hidden" controls />
         </div>
     )   
+}
+
+const MessageCard = ({message: conv, podcast: podcastId, person, isCurrent, onClick, currentPosition, isPlaying, id}: {
+    message: NonNullable<PodcastType["conversation"]>[number]
+    podcast: PodcastType["id"]
+    person: NonNullable<PodcastType["people"]>[number]
+    isCurrent: boolean;
+    currentPosition: number;
+    isPlaying: boolean;
+    id: string;
+    onClick: () => void;
+}) => {
+
+    const {imageUrl, isLoading} = useGetAvatarImage({podcastId, personId: person.id})
+    console.log(imageUrl)
+
+    return <div id={id} className={`flex ${person.interviewer ? `bg-gradient-to-tl from-blue-600/70 to-blue-800/90 ml-auto rounded-t-3xl rounded-l-3xl md:rounded-l-2xl rounded-br-md md:rounded-br-lg` : `bg-gradient-to-tr from-green-700/80 to-green-800/90 rounded-t-3xl rounded-bl-md md:rounded-bl-lg md:rounded-r-2xl rounded-r-3xl`} text-white animate-slideInBottom max-w-4/7 lg:max-w-3/7 drop-shadow-lg transition-all ${(currentPosition > (conv.start_time ?? 0) && currentPosition < (conv.end_time ?? 0) && isPlaying) ? "outline-1 outline-white scale-105" : ""} hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`}
+                                        onClick={() => {
+                                            onClick();
+                                        }}
+                                        >
+                                    <div className="flex flex-row items-start">
+                                        <img className="h-6 w-6 mr-2 aspect-square rounded-full" src={imageUrl} />
+                                    <p className="relative">
+                                        <p className="text-base text-shadow-md font-bold text-gray-200">{person.name}</p>
+                                        <span className="relative text-sm pt-2 z-10">{removeSSMLtags(conv.text)}</span>
+                                        {isCurrent && (
+                                            <span
+                                            className={`absolute left-0 top-0 h-full starting:w-[${(conv.end_time! - conv.start_time!) / 100}] bg-yellow-400/30 z-0 animate-[highlightGrow_4s_linear_forwards]`}
+                                            style={{ animationDuration: `${(conv.end_time! - conv.start_time!)}s`, width: "100%" }}
+                                            />
+                                        )}
+                                    </p>
+                                    </div>
+                                </div>
+
 }

@@ -6,20 +6,15 @@ export type Podcast = {
     image?: string;
     duration: number;
 
-    interviewer: {
+    people?: {
+        id: string;
         name: string;
-        country: string;
-        gender: string;
-    } | string;
-
-    speaker: {
-        name: string;
-        country: string;
-        gender: string;
-    } | string;
+        gender: 'male' | 'female';
+        interviewer: boolean;
+    }[]
 
     conversation?: {
-        speaker: "interviewer" | "speaker";
+        speaker: string;
         text: string;
         start_time?: number;
         end_time?: number;
