@@ -279,6 +279,21 @@ uvicorn = {version = ">=0.15.0", extras = ["standard"]}
 standard = ["uvicorn[standard] (>=0.15.0)"]
 
 [[package]]
+name = "fuzzywuzzy"
+version = "0.18.0"
+description = "Fuzzy string matching in python"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "fuzzywuzzy-0.18.0-py2.py3-none-any.whl", hash = "sha256:928244b28db720d1e0ee7587acf660ea49d7e4c632569cad4f1cd7e68a5f0993"},
+    {file = "fuzzywuzzy-0.18.0.tar.gz", hash = "sha256:45016e92264780e58972dca1b3d939ac864b78437422beecebb3095f8efd00e8"},
+]
+
+[package.extras]
+speedup = ["python-levenshtein (>=0.12)"]
+
+[[package]]
 name = "google-api-core"
 version = "2.24.2"
 description = "Google API client core library"
@@ -1712,4 +1727,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "f472c08e1f5c9c97ea4a14c422526c0c6182203269de7a137f076ed09ae587c2"
+content-hash = "80e6412b5c2e86082fed7b3a0aa4d5d151ff8bf391b4de808c59d5e834d15ac1"

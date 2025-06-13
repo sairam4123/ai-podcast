@@ -1,3 +1,6 @@
+import time
+from typing import Literal
+from uuid import uuid4
 from dotenv import load_dotenv
 import pydantic
 load_dotenv()
@@ -13,7 +16,7 @@ import google.genai as genai
 import google.cloud.texttospeech as tts
 import io
 
-
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 speech_client = tts.TextToSpeechClient.from_service_account_json(os.environ["GEN_LANG_JSON"])
 
@@ -53,8 +56,10 @@ Create a podcast-style conversation on the topic **{topic}**, in **{language}**,
 * The format should be a friendly and engaging chat between an interviewer and one or more speakers.
 * If more than one speaker is requested, adjust the number of interviewers and speakers accordingly (e.g., 5 speakers = 2 interviewers + 3 speakers).
 * Use simple, casual language with natural-sounding phrases (add a few "uh", "umm", etc. for realism).
-* Spice in a few arguments or disagreements to make it lively, but keep it friendly and respectful. (Between guests and interviewer too.) (HEATED DISCUSSIONS)
+* Spice in a few arguments or disagreements to make it lively, but keep it friendly and respectful. (Between guests and interviewer too.) (HEATED DISCUSSIONS) (Only if requested by the user)
 * The conversation should be about 12 minutes long and include **around 50 questions and answers**.
+
+* You may include "[pause long]" in the conversation to indicate a longer pause, but keep it natural.
 * Keep it light, easy to understand, and relatable.
 * Speakers should be named (e.g., Dr. Ravi, Ms. Anu). Use first names in the conversation.
 * No need for complex words or SSML tags. Avoid using backquotes for code—just write it out.
@@ -63,6 +68,8 @@ Create a podcast-style conversation on the topic **{topic}**, in **{language}**,
 * Use the appropriate script for the language (e.g. Devanagari for Hindi, Tamil script for Tamil).
 * Guests can also talk with each other not just with interviewer.
 * More debates and arguments in between guests to spice it up (HEATED DISCUSSIONS).
+* Makes sure that the topic is included in the description or episode title of the podcast.
+* If list or steps are generated, make sure to keep the same person speaking throughout the list or steps. (Don't change the speaker in between the list or steps).
 
 **Key points:**
 
@@ -72,6 +79,8 @@ Create a podcast-style conversation on the topic **{topic}**, in **{language}**,
 * Break long explanations into short answers
 * Keep technical terms in English if needed
 * Same language for everyone in the podcast
+
+
 
 PODCAST SCHEMA:
 """
@@ -102,10 +111,24 @@ podcast_schema = """
         {
             "speaker": "person id",
             "text": "Question or statement",
+            "pronounciations": [
+                {
+                    "word": "word to be pronounced",
+                    "ipa": "IPA representation of the word",
+                    "phonetic": "Phonetic representation of the word"
+                }
+            ]
         },
         {
             "speaker": "person id",
-            "text": "Question or statement"
+            "text": "Question or statement",
+            "pronounciations": [
+                {
+                    "word": "word to be pronounced",
+                    "ipa": "IPA representation of the word",
+                    "phonetic": "Phonetic representation of the word"
+                }
+            ]
         }
     ]
 }
@@ -118,10 +141,18 @@ class Person(pydantic.BaseModel):
     interviewer: bool = pydantic.Field(..., description="true if the person is the interviewer, false if the person is the speaker")
     id: str = pydantic.Field(..., description="a unique id for the person to identify the person in the conversation")
 
+class Pronounciation(pydantic.BaseModel):
+    word: str = pydantic.Field(..., description="The word to be pronounced")
+    ipa: str = pydantic.Field(..., description="The IPA representation of the word")
+    phonetic: str = pydantic.Field(..., description="The phonetic representation of the word")
 
 class Conversation(pydantic.BaseModel):
     speaker: str = pydantic.Field(..., description="interviewer or speaker")
     text: str
+    pronounciations: list[Pronounciation] = pydantic.Field(
+        default_factory=list, 
+        description="List of pronounciations for the words in the text. If the word is not in the list, it will be pronounced as it is."
+    )
 
 class Podcast(pydantic.BaseModel):
     podcastTitle: str
@@ -162,6 +193,14 @@ Choose the correct image for the speaker and interviewer.
 Use abstract art and design elements to create a visually appealing image.
 """
 
+author_prompt = """
+Generate an image of {people.name} from {people.country} who is a {people.gender}.
+The image should be in the format of a square.
+Make sure that the image resembles a real person, not a cartoon or an avatar. (An image that will be used in the actual podcast cover image)
+Keep the image clean and professional and high quality.
+Ground it to be more realistic and human-like and not like a AI generated avatar.
+"""
+
 people_prompt = """
 {people.name} - {people.country} - {people.gender} is a {people.interviewer} (true if the person is the interviewer, false if the person is the speaker)
 """
@@ -191,11 +230,22 @@ def generate_image(topic, podcast: Podcast) -> io.BytesIO:
         raise ValueError("No image found in response")
     return image
 
-def save_podcast(text, lang="en-IN", voice="en-IN-Standard-A"):
-    
+def save_podcast(text, lang="en-IN", voice="en-IN-Standard-A", pronounciations: list[Pronounciation] | None = None):
+    pronounciations = pronounciations or []
+    print([pron for pron in pronounciations])
     # filename = os.path.join(TTS_FOLDER, filename)
     speech = speech_client.synthesize_speech(
-        input=tts.SynthesisInput(text=text),
+        input=tts.SynthesisInput(text=text,
+                custom_pronunciations=tts.CustomPronunciations(
+                    pronunciations=[
+                    tts.CustomPronunciationParams(
+                        phrase=pronounciation.word,
+                        pronounciation=pronounciation.ipa,
+                        phonetic_encoding="PHONETIC_ENCODING_IPA"
+                    ) for pronounciation in (pronounciations or [])
+                ]
+                )
+            ),        
         # input=tts.SynthesisInput(ssml=f"<speak>{text}</speak>"),
         voice=tts.VoiceSelectionParams(
             language_code=lang,
@@ -205,6 +255,7 @@ def save_podcast(text, lang="en-IN", voice="en-IN-Standard-A"):
             audio_encoding=tts.AudioEncoding.LINEAR16,
             # speaking_rate=1.05,
             pitch=0.0,
+            
         ),
     )
 
@@ -232,17 +283,80 @@ def remap_os_safe_title(title: str) -> str:
 
 def select_voice_people(people: list[Person], lang: str) -> dict[str, tts.Voice]:
     voices = {}
-    listed_voices = [voice for voice in speech_client.list_voices(language_code=lang).voices if VOICE_MODEL in voice.name]
+    used_voices = set()
+    all_voices = speech_client.list_voices(language_code=lang)
+    listed_voices = [voice for voice in all_voices.voices if VOICE_MODEL in voice.name]
+
+    gender_voices: dict[Literal["male"] | Literal["female"] | Literal["neutral"], list[tts.Voice]] = {
+        "male": [],
+        "female": [],
+        "neutral": [],
+    }
+
+    for voice in listed_voices:
+        gender = tts.SsmlVoiceGender(voice.ssml_gender).name.lower()
+        if gender in gender_voices:
+            gender_voices[gender] += [voice]
+    
+
     for person in people:
-        if voices.get(person.id) is None:
-            print(f"Selecting voice for {person.name} ({person.country}) - {person.gender}")
-            print(f"Available voices: {[voice.name for voice in listed_voices]}")
-            voice = random.choice([voice for voice in listed_voices if tts.SsmlVoiceGender(voice.ssml_gender).name.lower().startswith(person.gender.lower()) and voice not in voices.values()])
+        if person.id not in voices:
+            person_gender = person.gender.lower()
+            if (person_gender not in ["male", "female", "neutral"]):
+                raise ValueError(f"Invalid {person_gender} is generated.")
+            
+            available = [v for v in gender_voices.get(person_gender, []) if v.name not in used_voices]
+            
+            if not available:
+                raise ValueError(f"No available voices left for gender: {person.gender}")
+
+            voice = random.choice(available)
             voices[person.id] = voice
+            used_voices.add(voice.name)
     return voices
 
+def save_image(image: io.BytesIO, podcast_id: str) -> None:
+    image_file = os.path.join(IMAGES_FOLDER, f"{podcast_id}.png")
+    with open(image_file, "wb") as f:
+        f.write(image.getbuffer())
+    print(f"Image saved as {podcast_id}.png")
 
-def main(topic="machine learning"):
+def save_podcast_cover(podcast: Podcast, topic: str, title: str) -> None:
+
+    image = generate_image(topic, podcast)
+    save_image(image, title)
+
+def generate_author_image(person: Person) -> io.BytesIO:
+    response = client.models.generate_content(contents=author_prompt.format(people=person), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-exp-image-generation")
+    for content in response.candidates[0].content.parts:
+        if content.text is not None:
+            continue
+        if content.inline_data is not None:
+            image = content.inline_data.data
+            image = io.BytesIO(image)
+            return image
+    else:
+        raise ValueError("No image found in response")
+
+def generate_author_images(podcast: Podcast, topic: str, title: str) -> None:
+    authors = podcast.people
+    print(f"Generating images for {len(authors)} authors...")
+    executor = ThreadPoolExecutor()
+    futures = []
+    for author in authors:
+        future = executor.submit(generate_author_image, author)
+        futures.append((author.id, future))
+    executor.shutdown(wait=True)
+    print("All author images generated. Saving images...")
+    for (pid, future) in futures:
+        response = future.result()
+        save_image(response, f"{title}_{pid}")        
+        
+
+
+def main(topic="machine learning", podcast_id=None):
+    podcast_id = podcast_id or str(uuid4())
+    print(f"Generating podcast for topic: {topic} with ID: {podcast_id}")
     lang = detect_topic_language(topic)
     print(f"Detected language: {lang}")
     podcast = generate_podcast(topic, lang)
@@ -251,7 +365,7 @@ def main(topic="machine learning"):
     podcast_description = podcast.podcastDescription
     episode_title = podcast.episodeTitle
     conversation = [conversation.model_dump() for conversation in podcast.conversation]
-    os_safe_title = remap_os_safe_title(podcast_title)
+    os_safe_title = remap_os_safe_title(podcast_title) + "_" + podcast_id
     
     # country_interviewer = interviewer["country"]
     # country_speaker = speaker["country"]
@@ -260,15 +374,17 @@ def main(topic="machine learning"):
     language = podcast.language
     episode_number = podcast.episodeNumber
 
+    start_time = time.time()
     voices = select_voice_people(podcast.people, podcast.language)
+    end_time = time.time()
+    print(f"Time taken to select voices: {end_time - start_time} seconds")
 
-    image = generate_image(topic, podcast)
+    executor = ProcessPoolExecutor()
+    
+        # return image
+    
     image_file = os.path.join(IMAGES_FOLDER, f"{os_safe_title}.png")
-    with open(image_file, "wb") as f:
-        f.write(image.getbuffer())
-    print(f"Image saved as {os_safe_title}.png")
-
-
+    res = executor.submit(save_podcast_cover, podcast, topic, os_safe_title)
 
     print(f"Selected voices: {"".join([f"{name} - {voice.name}\n" for name, voice in voices.items()])}")
     print("Generating podcast...")
@@ -282,14 +398,23 @@ def main(topic="machine learning"):
     conv_audios = []
 
     people = {person.id: person for person in podcast.people}
+    
+    executor.submit(generate_author_images, podcast, topic, os_safe_title)
 
-    for idx, turn in enumerate(podcast.conversation):
-        voice = voices[turn.speaker]
-        country = people[turn.speaker].country
-        print("Generating audio for turn: ", turn.text)
-        turn_audio = save_podcast(turn.text, country, voice.name)
-        conv_audios.append(turn_audio)
-        print(f"Generated {turn.speaker} audio for turn {idx + 1}/{len(conversation)}")
+
+    with ThreadPoolExecutor() as executor:
+        for idx, turn in enumerate(podcast.conversation):
+            voice = voices[turn.speaker]
+            country = people[turn.speaker].country
+            print("Generating audio for turn: ", turn.text)
+            turn_audio = executor.submit(save_podcast, turn.text, country, voice.name, turn.pronounciations)
+            conv_audios.append(turn_audio)
+            print(f"Generated {turn.speaker} audio for turn {idx + 1}/{len(conversation)}")
+
+            if idx % 8 == 0:
+                time.sleep(1)  # Sleep for 1 second every 10 turns to avoid rate limiting
+    
+    conv_audios = [audio.result() for audio in conv_audios]
 
     print(f"Podcast '{podcast_title}' generated and saved in {os.path.abspath('tts')} folder.")
 
@@ -309,12 +434,14 @@ def main(topic="machine learning"):
     final_file = os.path.join(FINAL_FOLDER, f"{os_safe_title}_final.wav")
     combined.export(final_file, format="wav")
 
-    print(f"Final podcast '{podcast_title}_final.wav' generated.")
+    print(f"Final podcast '{os_safe_title}_final.wav' generated.")
+    res = res.result()
+    executor.shutdown(wait=True)
     return {
         "podcast_title": podcast_title,
         "podcast_description": podcast_description,
         "episode_title": episode_title,
-        "people": podcast.people,
+        "people": [people.model_dump() for people in podcast.people],
         "language": language,
         "conversation": conversation,
         "audio_file": final_file,
@@ -340,4 +467,10 @@ def generate_podcast_from_topic(podcast_id: str, topic: str):
 
 if __name__ == "__main__":
     topic = input("Enter the topic for the podcast (default: machine learning): ")
+    topic = topic.strip() if topic else "machine learning"
     main(topic if topic else "machine learning")
+    # podcast = generate_podcast(topic, "en-IN")
+    # generate_image(topic, podcast)
+    # generate_author_images(podcast, topic, remap_os_safe_title(podcast.podcastTitle))
+
+
