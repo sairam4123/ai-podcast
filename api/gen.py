@@ -54,6 +54,7 @@ You are creating a podcast episode for **{topic}**.
 Create a podcast-style conversation on the topic **{topic}**, in **{language}**, targeting 20-year-old engineering students.
 
 * The format should be a friendly and engaging chat between an interviewer and one or more speakers.
+* Do not use "*" or "**" for bold / emphasis text, just use normal text. (Don't use markdown formatting in the text, just plain text.)
 * If more than one speaker is requested, adjust the number of interviewers and speakers accordingly (e.g., 5 speakers = 2 interviewers + 3 speakers).
 * Use simple, casual language with natural-sounding phrases (add a few "uh", "umm", etc. for realism).
 * Spice in a few arguments or disagreements to make it lively, but keep it friendly and respectful. (Between guests and interviewer too.) (HEATED DISCUSSIONS) (Only if requested by the user)

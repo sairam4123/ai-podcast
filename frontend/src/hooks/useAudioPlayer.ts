@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-export function useAudioPlayer() {
+export function useAudioPlayer({autoPlay = false}: { autoPlay?: boolean }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // const currentPosition = audioRef.current?.currentTime ?? 0;
   const [currentPosition, setCurrentPosition] = useState(0);
@@ -30,25 +31,38 @@ export function useAudioPlayer() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handlePlay = () => setIsPlaying(true);
+    const handlePlay = () => {
+      setIsPlaying(true)
+    };
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => setIsPlaying(false);
     const handleTimeUpdate = () => {
       setCurrentPosition(audio.currentTime);
     };
 
+    intervalRef.current = setInterval(() => {
+      if (audio) {
+        handleTimeUpdate();
+      }
+    }, 60);
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("ended", handleEnded);
-    audio.addEventListener("timeupdate", handleTimeUpdate);
+    // audio.addEventListener("timeupdate", handleTimeUpdate);
 
-    audio.play()
-    audio.pause()
+    if (autoPlay) {
+      audio.play()
+      audio.pause()
+    }
     return () => {
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
-      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      // audio.removeEventListener("timeupdate", handleTimeUpdate);
     };
   }, []);
 

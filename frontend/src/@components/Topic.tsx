@@ -15,7 +15,7 @@ export function TopicComponent({
 
   const {audioUrl, refetch, isLoading} = useGetAudio({podcast_id: props.id}, {enabled: false});
   const {imageUrl, isLoading: imageLoading} = useGetImage({podcastId: props.id});
-  const {audioRef, isPlaying, pause, play, toggle} = useAudioPlayer()
+  const {audioRef, isPlaying, pause, play, toggle} = useAudioPlayer({})
 
   const navigate = useNavigate();
 

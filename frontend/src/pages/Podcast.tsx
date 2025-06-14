@@ -18,7 +18,7 @@ export function Podcast() {
     const {data, isLoading, error} = useGetPodcast({podcastId})
     const {imageUrl, isLoading: imageLoading, error: imageError} = useGetImage({podcastId})
     const {audioUrl, isLoading: audioLoading, error: audioError, refetch: refetchAudio} = useGetAudio({podcast_id: podcastId}, {enabled: false})
-    const {audioRef, toggle, isPlaying, currentPosition} = useAudioPlayer()
+    const {audioRef, toggle, isPlaying, currentPosition} = useAudioPlayer({autoPlay: false})
     const peopleById = data?.podcast.people?.reduce((acc, person) => {
         acc[person.id] = person
         return acc
@@ -117,25 +117,32 @@ const MessageCard = ({message: conv, podcast: podcastId, person, isCurrent, onCl
 }) => {
 
     const {imageUrl, isLoading} = useGetAvatarImage({podcastId, personId: person.id})
-    console.log(imageUrl)
+    // console.log(imageUrl)
+    if (isCurrent)
+        console.log(((currentPosition - (conv.start_time ?? 0)) / ((conv.end_time ?? 0) - (conv.start_time ?? 0))) * 100, conv.start_time, conv.end_time, currentPosition, isPlaying)
 
-    return <div id={id} className={`flex ${person.interviewer ? `bg-gradient-to-tl from-blue-600/70 to-blue-800/90 ml-auto rounded-t-3xl rounded-l-3xl md:rounded-l-2xl rounded-br-md md:rounded-br-lg` : `bg-gradient-to-tr from-green-700/80 to-green-800/90 rounded-t-3xl rounded-bl-md md:rounded-bl-lg md:rounded-r-2xl rounded-r-3xl`} text-white animate-slideInBottom max-w-4/7 lg:max-w-3/7 drop-shadow-lg transition-all ${(currentPosition > (conv.start_time ?? 0) && currentPosition < (conv.end_time ?? 0) && isPlaying) ? "outline-1 outline-white scale-105" : ""} hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`}
+    return <div id={id} className={`flex ${person.interviewer ? `bg-gradient-to-tl from-blue-600/70 to-blue-800/90 ml-auto rounded-t-3xl rounded-l-3xl md:rounded-l-2xl rounded-br-md md:rounded-br-lg` : `bg-gradient-to-tr from-green-700/80 to-green-800/90 rounded-t-3xl rounded-bl-md md:rounded-bl-lg md:rounded-r-2xl rounded-r-3xl`} text-white animate-slideInBottom max-w-6/7 md:max-w-4/7 lg:max-w-3/7 drop-shadow-lg transition-all ${(currentPosition > (conv.start_time ?? 0) && currentPosition < (conv.end_time ?? 0) && isPlaying) ? "outline-1 outline-white scale-105" : ""} hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`}
                                         onClick={() => {
                                             onClick();
                                         }}
                                         >
                                     <div className="flex flex-row items-start">
-                                        <img className="h-6 w-6 mr-2 aspect-square rounded-full" src={imageUrl} />
-                                    <p className="relative">
-                                        <p className="text-base text-shadow-md font-bold text-gray-200">{person.name}</p>
-                                        <span className="relative text-sm pt-2 z-10">{removeSSMLtags(conv.text)}</span>
+                                        <FaSpinner className={cn("text-4xl text-gray-200", isLoading ? "animate-spin" : "hidden")} />
+                                        <img className={cn("h-5 w-5 md:h-6 md:w-6 mr-2 aspect-square rounded-full", isLoading && "hidden")} src={imageUrl} />
+                                    <div className="">
+                                        <p className="text-sm md:text-base text-shadow-md font-bold text-gray-200">{person.name}</p>
+                                        <p className="relative text-xs md:text-sm z-10">{removeSSMLtags(conv.text)}
+                                            
                                         {isCurrent && (
-                                            <span
-                                            className={`absolute left-0 top-0 h-full starting:w-[${(conv.end_time! - conv.start_time!) / 100}] bg-yellow-400/30 z-0 animate-[highlightGrow_4s_linear_forwards]`}
-                                            style={{ animationDuration: `${(conv.end_time! - conv.start_time!)}s`, width: "100%" }}
+                                            <div
+                                            className={`absolute transition-all ease-out duration-75 inset-0 w-full h-full bg-yellow-400/30 z-0`}
+                                            style={{
+                                                width: `${((currentPosition - (conv.start_time ?? 0)) / ((conv.end_time ?? 0) - (conv.start_time ?? 0))) * 100}%`,
+                                            }}
                                             />
                                         )}
-                                    </p>
+                                        </p>
+                                    </div>
                                     </div>
                                 </div>
 

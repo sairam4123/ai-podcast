@@ -2,6 +2,14 @@
 // It is used to make requests to the backend server.
 // The URL is set to the backend server's address and port.
 
+import { useGeneratePodcast } from "./generatePodcast";
+import { useGetAllPodcast } from "./getAllPodcast";
+import { useGetAudio } from "./getAudio";
+import { useGetAvatarImage } from "./getAvatarImage";
+import { useGetImage } from "./getImage";
+import { useGetPodcast } from "./getPodcast";
+import { useSearchPodcast } from "./searchPodcasts";
+
 // check if the environment is hosted on localhost or local network
 // ?
 const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
@@ -10,3 +18,13 @@ console.log("isLocalhost", isLocalhost);
 console.log("isLocalNetwork", isLocalNetwork);
 console.log("window.location.hostname", window.location.hostname);
 export const API_URL = `http://${window.location.hostname}:8000`;
+
+export const api = {
+    useSearchPodcast,
+    useGetAllPodcast,
+    useGeneratePodcast,
+    useGetAudio,
+    useGetAvatarImage,
+    useGetImage,
+    useGetPodcast
+}

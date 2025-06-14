@@ -68,6 +68,15 @@ QUERY: {query}
 
 client = genai.Client()
 
+@app.get("/podcasts")
+async def get_podcasts(offset: int = 0, limit: int = 10):
+    results = []
+    for podcast_id, podcast in list(podcasts.items())[offset:offset + limit]:
+        if "duration" not in podcast: # just in case we don't have it yet
+            podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
+        results.append({"id": podcast_id, **podcast})
+    return {"results": results}
+
 @app.get("/podcasts/search")
 async def search_podcasts(query: str):
 

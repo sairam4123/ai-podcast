@@ -7,8 +7,10 @@ import { useDebounce } from "use-debounce";
 import { useGeneratePodcast } from "./api/generatePodcast";
 import { GiSparkles } from "react-icons/gi";
 import { FaWandMagicSparkles } from "react-icons/fa6";
+import { Home } from "./pages/Home";
+import { MediaPlayerProvider } from "./contexts/mediaPlayer.context";
 
-export function App() {
+export function AppNew() {
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [debouncedSearchTerm] = useDebounce(searchTerm, 500);
   const {isLoading, data, error, refetch} = useSearchPodcast({searchTerm: debouncedSearchTerm});
@@ -45,6 +47,7 @@ export function App() {
         </p>
         <div className="flex w-full flex-col items-center p-2 space-y-2 justify-center">
           {data?.results.map((podcast, index) => {
+            // console.log("Podcast data", podcast);
             return (
               <TopicComponent
                 key={podcast.id}
@@ -71,4 +74,14 @@ export function App() {
       }
     </div>
   )
+}
+
+export function App() {
+  return (
+    <MediaPlayerProvider>
+      <Home />
+    </MediaPlayerProvider>
+    // <div className="flex flex-col py-8 items-center justify-center min-h-screen bg-gradient-to-tr from-sky-200 to-[130%] to-blue-700">
+    // </div>
+  );
 }
