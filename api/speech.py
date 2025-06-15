@@ -1,4 +1,8 @@
+
+import io
+import random
 from typing import Sequence
+from pydub import AudioSegment
 
 import google.cloud.texttospeech as tts
 
@@ -24,6 +28,13 @@ def list_languages():
 
 import google.cloud.texttospeech as tts
 
+count = 1
+
+
+def shift_down(audio: AudioSegment, semitones: float) -> AudioSegment:
+    # Adjust sample rate to shift pitch
+    new_sample_rate = int(audio.frame_rate * (2.0 ** (semitones / 12.0)))
+    return audio._spawn(audio.raw_data, overrides={'frame_rate': new_sample_rate}).set_frame_rate(audio.frame_rate)
 
 def list_voices(language_code=None):
     client = tts.TextToSpeechClient.from_service_account_json("gen-lang-client.json")
@@ -41,12 +52,16 @@ def list_voices(language_code=None):
 
 
 def text_to_wav(voice_name: str, text: str):
+    global count
     language_code = "-".join(voice_name.split("-")[:2])
     text_input = tts.SynthesisInput(text=text)
     voice_params = tts.VoiceSelectionParams(
         language_code=language_code, name=voice_name
     )
-    audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.LINEAR16)
+    audio_config = tts.AudioConfig(
+        audio_encoding=tts.AudioEncoding.LINEAR16,
+        speaking_rate=1.0
+    )
 
     client = tts.TextToSpeechClient.from_service_account_json("gen-lang-client.json")
     response = client.synthesize_speech(
@@ -55,13 +70,24 @@ def text_to_wav(voice_name: str, text: str):
         audio_config=audio_config,
     )
 
-    filename = f"{voice_name}.wav"
-    with open(filename, "wb") as out:
-        out.write(response.audio_content)
-        print(f'Generated speech saved to "{filename}"')
+    pitch_shift = random.uniform(-1, 1) * random.randint(1, 4)  # Random pitch shift between -5 and 5 semitones
+    print(f"Generating {count:03d} - {voice_name} with pitch shift of {pitch_shift} semitones")
+
+    file: AudioSegment = AudioSegment.from_wav(io.BytesIO(response.audio_content))
+    file = shift_down(file, pitch_shift)  # Shift down by 2 semitones
+
+    
+    file.export(f"{count:03d}-{voice_name}.wav", format="wav")
+    count += 1
         
 
 # list_voices()
+
 print(detect_topic_language("explain the process behind time-sharing in operating systems"))
 
-# text_to_wav("en-GB-Standard-O", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")

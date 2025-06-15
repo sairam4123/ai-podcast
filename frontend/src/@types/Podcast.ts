@@ -19,5 +19,8 @@ export type Podcast = {
         start_time?: number;
         end_time?: number;
     }[]
-
 }
+
+// export type PodcastNew = {
+
+// }

@@ -100,14 +100,16 @@ async def search_podcasts(query: str):
         search_match = 0
 
         for sk in (podcast_search_keys.search_keys or []):
-            process_results = process.extract(query, [podcast["podcast_title"], podcast["podcast_description"], podcast["episode_title"]], limit=1, scorer=fuzz.partial_ratio)
+            process_results = process.extract(sk, [podcast["podcast_title"], podcast["podcast_description"], podcast["episode_title"]], limit=1, scorer=fuzz.partial_ratio)
             search_match += process_results[0][1] if process_results else 0
             print("Search match for", podcast["podcast_title"], ":", search_match)
         search_match /= len(podcast_search_keys.search_keys) if podcast_search_keys.search_keys else 1 # is this a good idea?
+        process_results = process.extract(query, [podcast["podcast_title"], podcast["podcast_description"], podcast["episode_title"]], limit=1, scorer=fuzz.partial_ratio)
+        search_match += process_results[0][1] * 3 if process_results else 0 # Higher weight for the query match
+        search_match /= 4 # Normalize the search match
         if search_match < 60:
             print("Skipping podcast", podcast["podcast_title"], "due to low search match:", search_match)
             continue
-
 
         if "duration" not in podcast: # just in case we don't have it yet
             podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000

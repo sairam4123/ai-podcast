@@ -351,8 +351,7 @@ def generate_author_images(podcast: Podcast, topic: str, title: str) -> None:
     print("All author images generated. Saving images...")
     for (pid, future) in futures:
         response = future.result()
-        save_image(response, f"{title}_{pid}")        
-        
+        save_image(response, f"{title}_{pid}")
 
 
 def main(topic="machine learning", podcast_id=None):
