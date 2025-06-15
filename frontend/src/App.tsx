@@ -9,6 +9,7 @@ import { GiSparkles } from "react-icons/gi";
 import { FaWandMagicSparkles } from "react-icons/fa6";
 import { Home } from "./pages/Home";
 import { MediaPlayerProvider } from "./contexts/mediaPlayer.context";
+import { MediaPlayer } from "./@components/MediaPlayer";
 
 export function AppNew() {
   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -78,9 +79,11 @@ export function AppNew() {
 
 export function App() {
   return (
-    <MediaPlayerProvider>
+  
+    // <MediaPlayerProvider>
       <Home />
-    </MediaPlayerProvider>
+      //{/* <MediaPlayer /> */}
+    // </MediaPlayerProvider>
     // <div className="flex flex-col py-8 items-center justify-center min-h-screen bg-gradient-to-tr from-sky-200 to-[130%] to-blue-700">
     // </div>
   );

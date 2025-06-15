@@ -5,6 +5,8 @@ type MediaPlayerContextType = {
     pause: () => void;
     play: () => void;
 
+    setAutoplay?: (autoplay: boolean) => void;
+    autoplay?: boolean;
     currentPosition: number;
 
     sourceUrl: string | null;
@@ -14,10 +16,15 @@ type MediaPlayerContextType = {
 };
 const MediaPlayerContext = createContext<MediaPlayerContextType | undefined>(undefined)
 
-export function useMediaPlayerContext() {
+export function useMediaPlayerContext({autoPlay = false}: { autoPlay?: boolean } = {}) {
     const ctx = useContext(MediaPlayerContext);
     if (!ctx) {
         throw new Error("useMediaPlayerContext must be used within a MediaPlayerProvider");
+    }
+
+    // If autoPlay is true, set autoplay in the context
+    if (autoPlay && ctx.setAutoplay) {
+        ctx.setAutoplay(true);
     }
     return ctx;
 }
@@ -27,6 +34,7 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentPosition, setCurrentPosition] = useState(0);
     const [sourceUrl, setSourceUrl] = useState<string | null>(null);
+    const [autoplay, setAutoplay] = useState(false);
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -53,6 +61,9 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
         if (sourceUrl) {
             audioRef.current.src = sourceUrl;
             audioRef.current.load(); // Load the new source
+            if (autoplay) {
+                audioRef.current.play();
+            }
         }
 
 
@@ -73,10 +84,25 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
     }, [sourceUrl]);
 
     const play = () => {
+        console.log("Playing audio from source:", sourceUrl);
+
+        if (!audioRef.current) {
+            console.error("Audio element is not initialized.");
+            return;
+        }
+
+        if (audioRef.current.src !== sourceUrl) {
+            audioRef.current.src = sourceUrl ?? "";
+            audioRef.current.load(); // Load the new source
+        }
+
+
         audioRef.current?.play();
     };
 
     const pause = () => {
+        console.log("Pausing audio");
+        
         audioRef.current?.pause();
     };
 
@@ -89,7 +115,9 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
             currentPosition,
             sourceUrl,
             setSourceUrl,
-            toggle
+            toggle,
+            setAutoplay,
+            autoplay
         }}>
             <audio ref={audioRef} style={{ display: "none" }} />
             {children}

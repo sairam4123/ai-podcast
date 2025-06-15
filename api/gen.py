@@ -197,13 +197,13 @@ Use abstract art and design elements to create a visually appealing image.
 author_prompt = """
 Generate an image of {people.name} from {people.country} who is a {people.gender}.
 The image should be in the format of a square.
-Make sure that the image resembles a real person, not a cartoon or an avatar. (An image that will be used in the actual podcast cover image)
+Make sure that the image resembles a real-looking person, NOT a cartoon or an avatar. (An image that will be used in the actual podcast cover image)
 Keep the image clean and professional and high quality.
-Ground it to be more realistic and human-like and not like a AI generated avatar.
+Ground it to be more realistic and human-like and NOT like a AI generated avatar.
 """
 
 people_prompt = """
-{people.name} - {people.country} - {people.gender} is a {people.interviewer} (true if the person is the interviewer, false if the person is the speaker)
+{people.name} is from {people.country}, is a {people.gender} and is {people.interviewer} interviewer.
 """
 
 def generate_podcast(topic, lang) -> Podcast:
