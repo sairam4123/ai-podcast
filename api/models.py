@@ -4,20 +4,20 @@ from uuid import uuid4, UUID
 
 
 class UserProfile(SQLModel, table=True):
-    id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     display_name: str
 
     podcasts: list["Podcast"] = Relationship(back_populates="profile")
 
 
 class Podcast(SQLModel, table=True):
-    id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     title: str
     description: str | None = None
     duration: int | None = None  # Duration in seconds
     cover: str | None = None
 
-    profile_id: UUID = Field(foreign_key="userprofile.id")
+    profile_id: UUID | None = Field(foreign_key="userprofile.id")
     profile: UserProfile = Relationship(back_populates="podcasts")
 
     language: str | None = None
@@ -32,13 +32,20 @@ class Podcast(SQLModel, table=True):
     authors: list["PodcastAuthorPodcast"] = Relationship(back_populates="podcast")
     episodes: list["PodcastEpisode"] = Relationship(back_populates="podcast")
 
+    task: "PodcastGenerationTask" = Relationship(
+        back_populates="podcast",
+    )
+
 
 class PodcastAuthorPersona(SQLModel, table=True):
-    id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
     bio: str | None = None
     background: str | None = None
     profile_image: str | None = None
+
+    gender: str | None = None
+    country: str | None = None
 
     friendlyness: float = Field(default=0.0)
     trustworthiness: float = Field(default=0.0)
@@ -48,11 +55,11 @@ class PodcastAuthorPersona(SQLModel, table=True):
 
     outgoing_relationships: list["PodcastAuthorDynamics"] = Relationship(
         back_populates="author",
-        sa_relationship_kwargs={"primaryjoin": "PodcastAuthorDynamics.author_id == PodcastAuthorPersona.id"}
+        sa_relationship_kwargs={"foreign_keys": "[PodcastAuthorDynamics.other_author_id]"}
     )
     incoming_relationships: list["PodcastAuthorDynamics"] = Relationship(
         back_populates="other_author",
-        sa_relationship_kwargs={"primaryjoin": "PodcastAuthorDynamics.other_author_id == PodcastAuthorPersona.id"}
+        sa_relationship_kwargs={"foreign_keys": "[PodcastAuthorDynamics.author_id]"}
     )
 
 
@@ -70,8 +77,12 @@ class PodcastAuthorDynamics(SQLModel, table=True):
     author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True)
     other_author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True)
 
-    author: PodcastAuthorPersona = Relationship(back_populates="outgoing_relationships")
-    other_author: PodcastAuthorPersona = Relationship(back_populates="incoming_relationships")
+    author: PodcastAuthorPersona = Relationship(back_populates="outgoing_relationships", sa_relationship_kwargs={
+        "foreign_keys": "[PodcastAuthorDynamics.author_id]"
+    })
+    other_author: PodcastAuthorPersona = Relationship(back_populates="incoming_relationships", sa_relationship_kwargs={
+        "foreign_keys": "[PodcastAuthorDynamics.other_author_id]"
+    })
 
     trust: float = Field(default=0.0)
     likes: int = Field(default=0)
@@ -81,12 +92,12 @@ class PodcastAuthorDynamics(SQLModel, table=True):
 
 
 class PodcastEpisode(SQLModel, table=True):
-    id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     number: int
     title: str
     description: str | None = None
     cover: str | None = None
-    audio_file: str
+    audio_file: str | None = None  # Path to the audio file
 
     podcast_id: UUID = Field(foreign_key="podcast.id")
     podcast: Podcast = Relationship(back_populates="episodes")
@@ -95,13 +106,24 @@ class PodcastEpisode(SQLModel, table=True):
 
 
 class Conversation(SQLModel, table=True):
-    id: UUID | None = Field(default_factory=uuid4, primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     text: str
-    start_time: int | None = None
-    end_time: int | None = None
+    start_time: float | None = None
+    end_time: float | None = None
 
     speaker_id: UUID = Field(foreign_key="podcastauthorpersona.id")
     speaker: PodcastAuthorPersona = Relationship()
 
     episode_id: UUID = Field(foreign_key="podcastepisode.id")
     episode: PodcastEpisode = Relationship(back_populates="conversations")
+
+class PodcastGenerationTask(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    status: str = Field(default="pending")  # pending, in_progress, completed, failed
+    progress: int = Field(default=0)  # Progress percentage (0-100)
+
+    progress_message: str | None = None
+    error_message: str | None = None
+
+    podcast_id: UUID | None = Field(foreign_key="podcast.id")
+    podcast: Podcast = Relationship(back_populates="task")

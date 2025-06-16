@@ -1,11 +1,17 @@
 import fastapi
 import pydantic
 import pydub
-from gen import main as generate_podcast
+from sqlmodel import select
+from db import session_maker
+from models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask
+from gen import CreatePodcast, create_podcast as gen_create_podcast
 from uuid import uuid4
 import json
 from fuzzywuzzy import fuzz, process
 from google import genai
+
+import os
+from supabase import AClient as Supabase
 
 from fastapi.responses import FileResponse
 
@@ -26,6 +32,9 @@ app.add_middleware(
 class GeneratePodcast(pydantic.BaseModel):
     topic: str | None = None
     style: str | None = None
+    language: str | None = None
+    description: str | None = None
+
 
 
 
@@ -81,7 +90,7 @@ async def get_podcasts(offset: int = 0, limit: int = 10):
 async def search_podcasts(query: str):
 
     response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-1.5-flash")
-    podcast_search_keys = response.parsed # Type: PodcastTopicsSearch
+    podcast_search_keys = PodcastTopicsSearch.model_validate(response.parsed) # Type: PodcastTopicsSearch
     print(podcast_search_keys)
     results = []
     for podcast_id, podcast in podcasts.items():
@@ -173,32 +182,59 @@ async def get_image(podcast_id: str):
 @app.post("/podcasts")
 async def create_podcast(q_topic: str | None = None, podcast: GeneratePodcast | None = None):
     print(podcast, q_topic)
-    podcast_id = str(uuid4())
+    podcast_id = uuid4()
 
-    podcast = generate_podcast(podcast.topic if podcast else q_topic, podcast_id)
+    task = PodcastGenerationTask(status="pending", progress=0, progress_message="Starting podcast generation...", podcast_id=None)
+    with session_maker() as sess:
+        sess.add(task)
+        sess.commit()
+
+    supabase = Supabase(os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_ROLE_KEY", ""))
+    
+    generated_podcast = await gen_create_podcast(CreatePodcast.model_validate(podcast.model_dump()), task_id=podcast_id, supabase=supabase)
     print(podcast)
-    if not podcast:
+    if not generated_podcast:
         return {"error": "No podcast generated"}, 400
+
     
-    podcast["id"] = podcast_id
-    podcasts[podcast["id"]] = podcast
+    return generated_podcast
+
     
-    audios[podcast["id"]] = podcast["audio_file"]
-    images[podcast["id"]] = podcast["image_file"]
 
-    del podcast["audio_file"]
-    del podcast["image_file"]
-
-    with open("podcasts.json", "w") as f:
-        f.write(json.dumps(podcasts, indent=4))
+@app.get("/episodes/{episode_id}/conversation")
+async def get_podcast_conversation(episode_id: str):
     
-    with open("audios.json", "w") as f:
-        f.write(json.dumps(audios, indent=4))
 
-    with open("images.json", "w") as f:
-        f.write(json.dumps(images, indent=4))
+    with session_maker() as sess:
+        conversation = sess.exec(select(Conversation).where(Conversation.episode_id == episode_id))
 
-    return {**podcast}
+    return {"conversation": conversation.all()}
 
+
+@app.get("/podcasts/{podcast_id}/episodes")
+async def get_podcast_episodes(podcast_id: str):
+    with session_maker() as sess:
+        episodes = sess.exec(select(PodcastEpisode).where(PodcastEpisode.podcast_id == podcast_id)).all()
+        if not episodes:
+            return {"error": "Podcast not found"}, 404
+        return {"episodes": episodes}
+
+    # podcast["id"] = podcast_id
+    # podcasts[podcast["id"]] = podcast
+    
+    # audios[podcast["id"]] = podcast["audio_file"]
+    # images[podcast["id"]] = podcast["image_file"]
+
+    # del podcast["audio_file"]
+    # del podcast["image_file"]
+
+    # with open("podcasts.json", "w") as f:
+    #     f.write(json.dumps(podcasts, indent=4))
+    
+    # with open("audios.json", "w") as f:
+    #     f.write(json.dumps(audios, indent=4))
+
+    # with open("images.json", "w") as f:
+    #     f.write(json.dumps(images, indent=4))
 if __name__ == '__main__':
     pass
