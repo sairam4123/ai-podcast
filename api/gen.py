@@ -4,6 +4,7 @@ from typing import Literal
 from uuid import UUID, uuid4
 from dotenv import load_dotenv
 from inngest import Inngest
+import inngest
 import pydantic
 
 from db import session_maker
@@ -521,8 +522,8 @@ class CreatePodcast(pydantic.BaseModel):
     )
 
 
-def generate_podcast_content(create_podcast: CreatePodcast):
-    response = client.models.generate_content(contents=podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
+async def generate_podcast_content(create_podcast: CreatePodcast):
+    response = await client.aio.models.generate_content(contents=podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
     return PodcastAI.model_validate(response.parsed) 
 
 
@@ -599,7 +600,7 @@ def combine_audio_segments(audio_segments: list[pydub.AudioSegment]) -> tuple[li
     return conversation_markers, combined
 
 
-async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, inngest: Inngest | None = None, supabase: Supabase | None = None) -> Podcast:
+async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, step: inngest.Step | None = None) -> Podcast:
     task_id = task_id or uuid4()
 
     if not create_podcast.topic:
@@ -607,6 +608,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 
     if not supabase:
         raise ValueError("Supabase client is required to create a podcast.")
+
 
     # if not inngest:
     #     raise ValueError("Inngest client is required to create a podcast.")
@@ -622,7 +624,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 
     print(f"Creating podcast for topic: {create_podcast.topic} with ID: {task_id}")
     # Generate the podcast content (metadata and conversation)
-    podcast_metadata: PodcastAI = generate_podcast_content(create_podcast)
+    podcast_metadata: PodcastAI = await generate_podcast_content(create_podcast)
     await podcast_gen_task.progress_update(10, "Generating podcast content...")
     podcast_conversation = podcast_metadata.conversation
 

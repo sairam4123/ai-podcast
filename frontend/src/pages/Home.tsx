@@ -7,7 +7,7 @@ import { api } from "../api/api"
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context"
 import { usePodcastContext } from "../contexts/podcast.context"
 import { cn } from "../lib/cn"
-import { CreatePodcastModal } from "../modals/CreatePodcast"
+import { NavBar } from "../@components/NavBar"
 
 export function Home() {
 
@@ -81,9 +81,9 @@ export function PodcastCard({podcast}: {
         <div onClick={(e) => {
             e.stopPropagation();
             window.location.href = `/podcast/${podcast?.id}`;
-        }} className="relative cursor-pointer active:scale-[0.98] select-none w-48 h-64 hover:brightness-110 group/card hover:scale-[1.03] border border-sky-800/20 transition-all ease-out shadow-md hover:shadow-black/80 shadow-black/60 m-3 min-w-48 bg-sky-500/50 rounded-lg">
+        }} className="relative cursor-pointer z-1 active:scale-[0.98] select-none w-48 h-64 hover:brightness-110 group/card hover:scale-[1.03] border border-sky-800/20 transition-all ease-out shadow-md hover:shadow-black/80 shadow-black/60 m-3 min-w-48 bg-sky-500/50 rounded-lg">
                     <img src={imageUrl ?? "https://i.pinimg.com/736x/e4/fb/2a/e4fb2a1bf8d9ca39b869fa412d72fce2.jpg"} alt="Podcast" className="flex w-48 md:max-h-48 object-cover flex-grow object-center overflow-clip md:max-w-48 aspect-square h-auto md:w-auto mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97% rounded-lg" />
-                    <div className="absolute inset-0 flex flex-col justify-end p-2 gap-0.5 bg-linear-180 from-transparent to-black/50 from-60% rounded-lg">
+                    <div className="absolute inset-0 flex flex-col justify-end p-2 gap-0.5 bg-linear-180 from-transparent to-black/50 from-60% rounded-lg ">
                         <p className="text-lg font-bold line-clamp-1 text-white">{podcast?.podcast_title}</p>
                         <p className="text-xs -mt-1 transition-all text-gray-300 mask-r-from-80% line-clamp-2 mask-r-to-100% overflow-clip text-nowrap group-hover/card:mask-r-to-100% group-hover/card:mask-r-from-100% group-hover/card:text-wrap">
                             {podcast?.podcast_description}    
@@ -133,38 +133,4 @@ export function PodcastCard({podcast}: {
                     </div>
                 </div>
     )
-}
-
-export function NavBar() {
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-    return <nav>
-        <ul className="flex text-base flex-row items-center space-x-4 p-4 from-sky-700/50 shadow-black/30 shadow-lg to-blue-700/50 bg-linear-330 text-white">
-            <li className="font-black text-3xl text-shadow-md"><a href="/">Podolli.AI</a></li>
-            <li className="flex-grow text-base flex justify-center">
-                <SearchBox variant="xl" />
-            </li>
-            <li 
-            onClick={() => {
-                setIsCreateModalOpen(true);
-            }}
-            className="bg-sky-300 cursor-pointer hover:bg-sky-200 transition-all duration-100 ease-out text-center flex flex-row items-center justify-center gap-2 p-3 mr-4 rounded-full text-black">
-                <FaPlus className="text-lg" />
-                Create
-            </li>
-            {/* <li className=""><a href="/podcasts">Explore</a></li>
-            <li className=""><a href="/podcasts">Pricing</a></li> */}
-            <li className="">
-                <a className="text-gray-200 hover:text-white transition-colors">
-                    Sign&nbsp;In
-                </a>
-            </li>
-        </ul>
-        <CreatePodcastModal isOpen={isCreateModalOpen} onClose={() => {
-            setIsCreateModalOpen(false);
-        }} onCreate={(data) => {
-            console.log("Podcast created", data);
-            setIsCreateModalOpen(false);
-        }}/>
-    </nav>
 }

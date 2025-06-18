@@ -1,11 +1,15 @@
-from sqlmodel import SQLModel, Field, Relationship, Column, String
+import datetime
+import functools
+from sqlmodel import DateTime, SQLModel, Field, Relationship, Column, String, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from uuid import uuid4, UUID
 
+utcnow = functools.partial(datetime.datetime.now, tz=datetime.timezone.utc)
 
 class UserProfile(SQLModel, table=True):
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    id: UUID = Field(primary_key=True)
     display_name: str
+    username: str = Field(unique=True)
 
     podcasts: list["Podcast"] = Relationship(back_populates="profile")
 
@@ -35,7 +39,19 @@ class Podcast(SQLModel, table=True):
     task: "PodcastGenerationTask" = Relationship(
         back_populates="podcast",
     )
-
+    created_at: datetime.datetime = Field(
+        default_factory=utcnow,
+        sa_column=Column(DateTime, server_default=func.now(), nullable=False)
+    )
+    updated_at: datetime.datetime = Field(
+        default_factory=utcnow,
+        sa_column=Column(
+            DateTime,
+            server_default=func.now(),
+            onupdate=func.now(),
+            nullable=False,
+        )
+    )
 
 class PodcastAuthorPersona(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -61,6 +77,14 @@ class PodcastAuthorPersona(SQLModel, table=True):
         back_populates="other_author",
         sa_relationship_kwargs={"foreign_keys": "[PodcastAuthorDynamics.author_id]"}
     )
+
+    created_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), nullable=False))
+    updated_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))
+    
 
 
 class PodcastAuthorPodcast(SQLModel, table=True):
@@ -104,6 +128,13 @@ class PodcastEpisode(SQLModel, table=True):
 
     conversations: list["Conversation"] = Relationship(back_populates="episode")
 
+    created_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), nullable=False))
+    updated_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))
+
 
 class Conversation(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -127,3 +158,10 @@ class PodcastGenerationTask(SQLModel, table=True):
 
     podcast_id: UUID | None = Field(foreign_key="podcast.id")
     podcast: Podcast = Relationship(back_populates="task")
+
+    created_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), nullable=False))
+    updated_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))

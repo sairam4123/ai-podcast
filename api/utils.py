@@ -1,4 +1,8 @@
+import functools
+from fastapi import HTTPException, Request
 from supabase import AClient as SupabaseClient
+
+SUPABASE_AUTH_HEADER = "Authorization"
 
 async def update_podcast_generation_task(podcast_id: str, status: str, progress: int = 0, progress_message: str = "", supabase: SupabaseClient | None = None):
     if not supabase:
@@ -61,3 +65,22 @@ class PodcastGenTask():
         self.status = "failed"
         self.error_message = error_message
         await update_error_generation_task(self.podcast_id, self.error_message, self.supabase)
+
+def get_supabase_client(with_service=True):
+    import os
+    if not with_service:
+        return SupabaseClient(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ANON_KEY"])
+    return SupabaseClient(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+
+async def get_current_user(request: Request):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
+
+    token = auth_header.split("Bearer ")[1]
+    supabase = get_supabase_client(with_service=False)
+    user_info = await supabase.auth.get_user(token)
+    if not user_info or not user_info.user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    return user_info.user

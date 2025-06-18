@@ -6,7 +6,6 @@ import { FaSpinner } from "react-icons/fa";
 export function PodcastNew() {
     const { podcast_id } = useParams<{podcast_id: string}>();
     const {data, isLoading, error } = api.useGetPodcast({podcastId: podcast_id });
-    console.log(data)
     return (
         <main className="flex flex-col min-h-screen bg-radial from-sky-700 to-blue-900">
             <NavBar />

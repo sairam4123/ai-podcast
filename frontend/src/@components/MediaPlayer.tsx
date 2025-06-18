@@ -61,9 +61,9 @@ export function MediaPlayer() {
             </div>
             
             { /* Progress Bar */ }
-            <div>
-                <div className="w-full h-1 hover:h-2 group/progress has-hover:rounded-full bg-gray-700 rounded-b-lg">
-                    <div className="h-full bg-sky-500 rounded-b-lg transition-all duration-150 ease-in-out group-hover/progress:rounded-full" style={{ width: `${( 1 - (currentPodcast.duration - currentPosition) / (currentPodcast.duration)) * 100}%` }}></div>
+            <div className="flex flex-col w-full px-0.5 pb-0.5">
+                <div className="w-full h-1 hover:h-2 group/progress has-hover:rounded-full bg-neutral-950 rounded-lg">
+                    <div className="h-full bg-sky-500 rounded-lg transition-all duration-150 ease-in-out group-hover/progress:rounded-full" style={{ width: `${( 1 - (currentPodcast.duration - currentPosition) / (currentPodcast.duration)) * 100}%` }}></div>
                 </div>
             </div>
         </div>

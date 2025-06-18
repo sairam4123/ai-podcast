@@ -8,6 +8,7 @@ import { useGetAudio } from "./getAudio";
 import { useGetAvatarImage } from "./getAvatarImage";
 import { useGetImage } from "./getImage";
 import { useGetPodcast } from "./getPodcast";
+import useGetUserProfile from "./getUserProfile";
 import { useSearchPodcast } from "./searchPodcasts";
 
 // check if the environment is hosted on localhost or local network
@@ -26,5 +27,6 @@ export const api = {
     useGetAudio,
     useGetAvatarImage,
     useGetImage,
-    useGetPodcast
+    useGetPodcast,
+    useGetUserProfile,
 }

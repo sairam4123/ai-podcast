@@ -1,5 +1,9 @@
+import { CgSpinner } from "react-icons/cg";
 import ActionModal, { ActionModalActionRow } from "../@components/ActionModal";
 import { api } from "../api/api";
+import { ImSpinner9 } from "react-icons/im";
+import { FaSpinner } from "react-icons/fa6";
+import { PiSpinnerGap } from "react-icons/pi";
 
 export function CreatePodcastModal({
     isOpen,
@@ -39,21 +43,36 @@ export function CreatePodcastModal({
                     <button type="button" onClick={() => {
                         onClose();
                     }} className="bg-gray-300 text-gray-800 rounded-lg px-4 py-2 hover:bg-gray-400 transition-colors cursor-pointer">Cancel</button>,
-                    <input type="submit" value="Create Podcast" 
-                        onClick={(e) => {
-                            e.preventDefault();
-                            const formData = new FormData(e.currentTarget.closest('form') as HTMLFormElement);
-                            const data = {
-                                topic: formData.get('topic') as string,
-                                description: formData.get('description') as string,
-                                style: formData.get('style') as string,
-                                language: formData.get('language') as string,
-                            };
-                            console.log("Creating podcast with data:", data);
-                            createPodcastMutation.mutate(data);
-                            onClose();
-                        }}
-                    className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition-colors cursor-pointer" />,
+<button
+  type="submit"
+  onClick={(e) => {
+    e.preventDefault();
+    const form = e.currentTarget.closest('form') as HTMLFormElement;
+    const formData = new FormData(form);
+    const data = {
+      topic: formData.get('topic') as string,
+      description: formData.get('description') as string,
+      style: formData.get('style') as string,
+      language: formData.get('language') as string,
+    };
+    console.log("Creating podcast with data:", data);
+    createPodcastMutation.mutate(data);
+  }}
+  className="bg-blue-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition-colors cursor-pointer"
+>
+  <div
+    className="transition-all duration-300 overflow-hidden"
+    style={{
+      width: createPodcastMutation.isLoading ? '1.25rem' : '0px', // 1.25rem = 20px
+      height: createPodcastMutation.isLoading ? '1.25rem' : '0px',
+      marginRight: createPodcastMutation.isLoading ? '0.5rem' : '0px',
+    }}
+  >
+    <PiSpinnerGap className="animate-spin text-xl" />
+  </div>
+  Create Podcast
+</button>
+
                 ]} />
             </form>
         </div>

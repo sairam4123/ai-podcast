@@ -1,11 +1,14 @@
+import io
 import fastapi
+from inngest import Context, Inngest, Step, fast_api, TriggerEvent, Event
 import pydantic
 import pydub
-from sqlmodel import select
+from sqlmodel import desc, select
+from utils import get_current_user, get_supabase_client
 from db import session_maker
-from models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask
+from models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask, UserProfile
 from gen import CreatePodcast, create_podcast as gen_create_podcast
-from uuid import uuid4
+from uuid import UUID, uuid4
 import json
 from fuzzywuzzy import fuzz, process
 from google import genai
@@ -13,7 +16,7 @@ from google import genai
 import os
 from supabase import AClient as Supabase
 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 import pathlib
 
@@ -37,7 +40,7 @@ class GeneratePodcast(pydantic.BaseModel):
 
 
 
-
+inngest = Inngest(app_id="ai-podcast")
 
 podcasts = {}
 pathlib.Path("podcasts.json").touch(exist_ok=True)
@@ -78,22 +81,48 @@ QUERY: {query}
 client = genai.Client()
 
 @app.get("/podcasts")
-async def get_podcasts(offset: int = 0, limit: int = 10):
-    results = []
-    for podcast_id, podcast in list(podcasts.items())[offset:offset + limit]:
-        if "duration" not in podcast: # just in case we don't have it yet
-            podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
-        results.append({"id": podcast_id, **podcast})
-    return {"results": results}
+async def get_podcasts(offset: int = 0, limit: int = 10, v2: bool = False):
+    if v2:
+        with session_maker() as sess:
+            podcasts_db = sess.exec(select(Podcast).order_by(desc(Podcast.created_at))).all()
+            new_podcasts = [{
+                "id": str(p.id),
+                "podcast_title": p.title,
+                "podcast_description": p.description,
+                "language": p.language,
+            } for p in podcasts_db]
+
+            return {"results": new_podcasts[offset:offset + limit]}
+
+    else:
+        results = []
+        for podcast_id, podcast in list(podcasts.items())[offset:offset + limit]:
+            if "duration" not in podcast: # just in case we don't have it yet
+                podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
+            results.append({"id": podcast_id, **podcast})
+        return {"results": results}
 
 @app.get("/podcasts/search")
-async def search_podcasts(query: str):
+async def search_podcasts(query: str, v2: bool = False):
 
+    if v2:
+        with session_maker() as sess:
+            podcasts_db = sess.exec(select(Podcast)).all()
+            new_podcasts = {p.id: {
+                "id": str(p.id),
+                "podcast_title": p.title,
+                "podcast_description": p.description,
+                "language": p.language,
+            } for p in podcasts_db}
+
+    else:
+        new_podcasts = {podcast_id: {"id": podcast_id, **podcast} for podcast_id, podcast in podcasts.items()}
+    
     response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-1.5-flash")
     podcast_search_keys = PodcastTopicsSearch.model_validate(response.parsed) # Type: PodcastTopicsSearch
     print(podcast_search_keys)
     results = []
-    for podcast_id, podcast in podcasts.items():
+    for podcast_id, podcast in new_podcasts.items():
         # search_match = 0
         # for sk in (podcast_search_keys.search_keys or []):
         #     fuzz_ratio = (fuzz.partial_ratio(sk.lower(), podcast["podcast_title"].lower()) * 0.4 + fuzz.partial_ratio(sk.lower(), podcast["podcast_description"].lower()) * 0.2 + fuzz.partial_ratio(sk.lower(), podcast["episode_title"].lower())) * 0.2
@@ -109,19 +138,19 @@ async def search_podcasts(query: str):
         search_match = 0
 
         for sk in (podcast_search_keys.search_keys or []):
-            process_results = process.extract(sk, [podcast["podcast_title"], podcast["podcast_description"], podcast["episode_title"]], limit=1, scorer=fuzz.partial_ratio)
+            process_results = process.extract(sk, [podcast["podcast_title"], podcast["podcast_description"]], limit=1, scorer=fuzz.partial_ratio)
             search_match += process_results[0][1] if process_results else 0
             print("Search match for", podcast["podcast_title"], ":", search_match)
         search_match /= len(podcast_search_keys.search_keys) if podcast_search_keys.search_keys else 1 # is this a good idea?
-        process_results = process.extract(query, [podcast["podcast_title"], podcast["podcast_description"], podcast["episode_title"]], limit=1, scorer=fuzz.partial_ratio)
+        process_results = process.extract(query, [podcast["podcast_title"], podcast["podcast_description"]], limit=1, scorer=fuzz.partial_ratio)
         search_match += process_results[0][1] * 3 if process_results else 0 # Higher weight for the query match
         search_match /= 4 # Normalize the search match
         if search_match < 60:
             print("Skipping podcast", podcast["podcast_title"], "due to low search match:", search_match)
             continue
 
-        if "duration" not in podcast: # just in case we don't have it yet
-            podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
+        # if "duration" not in podcast: # just in case we don't have it yet
+        #     podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
         results.append({"id": podcast_id, **podcast, "search_match": search_match})
     results = sorted(results, key=lambda x: x["search_match"], reverse=True)
     if results:
@@ -139,6 +168,23 @@ async def get_podcast(podcast_id: str):
         return {"podcast": podcast, "success": True, "message": "Podcast found"}
     else:
         return {"error": "Podcast not found"}, 404
+
+
+@app.get("/user/{user_id}/podcasts", dependencies=[fastapi.Depends(get_current_user)])
+async def get_podcasts_created_by(user_id: str):
+    with session_maker() as sess:
+        podcasts_db = sess.exec(select(Podcast).where(Podcast.profile_id == user_id)).all()
+        if not podcasts_db:
+            return {"error": "No podcasts found for this user"}, 404
+        return {"results": podcasts_db}
+
+@app.get("/user/{user_id}/", dependencies=[fastapi.Depends(get_current_user)])
+async def get_user_profile(user_id: str):
+    with session_maker() as sess:
+        user = sess.exec(select(UserProfile).where(UserProfile.id == user_id)).first()
+        if not user:
+            return {"error": "User not found"}, 404
+        return {"user": user}
 
 
 @app.get("/audios/{podcast_id}")
@@ -172,7 +218,14 @@ async def get_image_avatar(podcast_id: str, person_id: str):
 
 
 @app.get("/images/{podcast_id}")
-async def get_image(podcast_id: str):
+async def get_image(podcast_id: str, v2: bool = True):
+
+    if v2:
+        supabase = get_supabase_client(with_service=True)
+        image = await supabase.storage.from_("podcast-cover-images").download(f"{podcast_id}.png")
+        if image:
+            return StreamingResponse(io.BytesIO(image), media_type="image/png")
+        # supabase_image = await supabase.storage.from_("podcast_images").download(f"{podcast_id}.png")
     image = images.get(podcast_id)
     if image:
         return FileResponse(image)
@@ -180,30 +233,151 @@ async def get_image(podcast_id: str):
         return {"error": "Image not found"}, 404
 
 @app.post("/podcasts")
-async def create_podcast(q_topic: str | None = None, podcast: GeneratePodcast | None = None):
-    print(podcast, q_topic)
-    podcast_id = uuid4()
+async def create_podcast(podcast: GeneratePodcast | None = None):
 
+    if not podcast:
+        return {"error": "No podcast generation data provided"}, 400
+    
     task = PodcastGenerationTask(status="pending", progress=0, progress_message="Starting podcast generation...", podcast_id=None)
     with session_maker() as sess:
         sess.add(task)
         sess.commit()
 
-    supabase = Supabase(os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_ROLE_KEY", ""))
+    # supabase = Supabase(os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_ROLE_KEY", ""))
     
-    generated_podcast = await gen_create_podcast(CreatePodcast.model_validate(podcast.model_dump()), task_id=podcast_id, supabase=supabase)
-    print(podcast)
-    if not generated_podcast:
-        return {"error": "No podcast generated"}, 400
+    # generated_podcast = await gen_create_podcast(CreatePodcast.model_validate(podcast.model_dump()), task_id=podcast_id, supabase=supabase)
+    # print(podcast)
+    # if not generated_podcast:
+    #     return {"error": "No podcast generated"}, 400
 
     
-    return generated_podcast
+    await inngest.send(
+        Event(
+            data={
+                "task_id": str(task.id),
+                "topic": podcast.topic,
+                "style": podcast.style,
+                "language": podcast.language,
+                "description": podcast.description,
+            },
+            name="ai-podcast.create_podcast",
+            id=str(uuid4()),
 
+        )
+    )
     
+    return {
+        "podcast_id": str(task.id),
+    }
+
+
+@inngest.create_function(
+        name="Create Podcast",
+        fn_id="create_podcast",
+        trigger=TriggerEvent(
+            event="ai-podcast.create_podcast",
+        ),
+    )
+async def create_podcast_inngest(ctx: Context, step: Step):
+    podcast_data: dict[str, str | UUID] = ctx.event.data # type: ignore
+    print("Creating podcast with data:", podcast_data)
+
+    supabase = get_supabase_client()
+    async def handler():
+        podcast = await gen_create_podcast(
+            CreatePodcast.model_validate(podcast_data),
+            task_id=podcast_data.get("task_id", uuid4()), # type: ignore
+            supabase=supabase,
+            step=step
+        )
+        return podcast.model_dump(mode="json")
+    
+    podcast = await step.run("generate_podcast", handler)
+
+    return podcast
+
+class UserLogin(pydantic.BaseModel):
+    user_name: str
+    password: str
+
+class UserRegister(UserLogin):
+    email: str | None = None
+    full_name: str | None = None
+    profile_image: str | None = None
+
+@app.post("/login")
+async def login(user_login: UserLogin):
+    supabase = get_supabase_client(with_service=True)
+
+    if not user_login.user_name or not user_login.password:
+        return {"error": "Username and password are required"}, 400
+    
+    with session_maker() as sess:
+        user = sess.exec(
+            select(UserProfile).where(UserProfile.username == user_login.user_name)
+        ).first()
+    
+    if not user:
+        return {"error": "User not found"}, 404
+    
+    user = await supabase.auth.admin.get_user_by_id(str(user.id))
+    user = user.user
+    if not user:
+        return {"error": "User not found"}, 404
+    
+    auth = await supabase.auth.sign_in_with_password({
+        "email": user.email or "",
+        "password": user_login.password
+    })
+
+    return auth
+
+
+@app.post("/register")
+async def register(user_register: UserRegister):
+    supabase = get_supabase_client(with_service=True)
+    if not user_register.user_name or not user_register.password:
+        return {"error": "Username and password are required"}, 400
+    
+    if not user_register.email:
+        return {"error": "Email is required"}, 400
+    
+    if not user_register.full_name:
+        return {"error": "Full name is required"}, 400
+    
+    supabase_user = await supabase.auth.sign_up({
+        "email": user_register.email,
+        "password": user_register.password,
+    })
+
+    if not supabase_user.user:
+        return {"error": "User registration failed"}, 400
+    
+    user = UserProfile(
+        username=user_register.user_name,
+        display_name=user_register.full_name,
+        id=UUID(supabase_user.user.id),
+    )
+
+    with session_maker() as sess:
+        sess.add(user)
+        sess.commit()
+
+    print("User registered:", user.model_dump())
+    
+    return user
+
+@app.post("/signout")
+async def signout():
+    supabase = get_supabase_client(with_service=True)
+    try:
+        await supabase.auth.sign_out()
+        return {"message": "User signed out successfully"}
+    except Exception as e:
+        return {"error": str(e)}, 500
 
 @app.get("/episodes/{episode_id}/conversation")
 async def get_podcast_conversation(episode_id: str):
-    
 
     with session_maker() as sess:
         conversation = sess.exec(select(Conversation).where(Conversation.episode_id == episode_id))
@@ -236,5 +410,7 @@ async def get_podcast_episodes(podcast_id: str):
 
     # with open("images.json", "w") as f:
     #     f.write(json.dumps(images, indent=4))
+fast_api.serve(app, inngest,functions=[create_podcast_inngest], serve_path="/inngest")
+
 if __name__ == '__main__':
     pass

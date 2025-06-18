@@ -15,6 +15,7 @@ export function useGetAllPodcast({
     const params = new URLSearchParams({
         limit: limit.toString(),
         offset: offset.toString(),
+        v2: "true",
     });
     const {data, loading, error, resetData, refetch} = useFetch<{results: Podcast[]}>(API_URL + `/podcasts?${params}`, {enabled: !!params.toString()});
     return {

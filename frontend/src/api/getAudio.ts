@@ -11,7 +11,7 @@ export function useGetAudio({podcast_id}: {podcast_id: string}, {enabled = true}
         // check if the data is a valid audio
         const isValidAudio = data.type.startsWith("audio/");
         if (!isValidAudio) return null;
-        return new Blob([data], { type: "audio/mpeg" });
+        return new Blob([data], { type: data.type });
     }, [data]);
 
     const audioUrl = useMemo(() => {
