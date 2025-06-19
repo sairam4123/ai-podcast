@@ -23,7 +23,7 @@ export function PodcastNew() {
 export function NotFound() {
     const { podcast_id } = useParams<{podcast_id: string}>();
     return (<div className="flex flex-col flex-grow justify-center items-center bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
-                    <img src="/vite.svg" alt="Podcast Not Found" className="aspect-square h-32 mb-4" />
+                    <img src="/notfound.png" alt="Podcast Not Found" className="aspect-square h-64 mb-4" />
                     <h1 className="text-4xl ml-4 mt-2 font-black text-shadow-md text-white">
                         404 - Podcast Not Found
                     </h1>

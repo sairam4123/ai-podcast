@@ -10,3 +10,7 @@ engine = create_engine(
 @contextlib.contextmanager
 def session_maker():
     yield Session(engine)
+
+def get_session():
+    with session_maker() as session:
+        yield session

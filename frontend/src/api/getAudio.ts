@@ -11,7 +11,7 @@ export function useGetAudio({podcast_id}: {podcast_id: string}, {enabled = true}
     const [loading, setLoading] = useState<boolean>(false);
 
 
-    console.log("Audio URL:", audioUrl);
+    // console.log("Audio URL:", audioUrl, "Loading:", loading,);
 
     // const {data, loading, error, resetData, refetch} = useLoadFile<File>(API_URL + `/audios/${podcast_id}`, {enabled});
     // const audio = data?.audio ? URL.createObjectURL(data.audio) : null;

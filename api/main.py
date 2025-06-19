@@ -94,6 +94,7 @@ async def get_podcasts(offset: int = 0, limit: int = 10, v2: bool = False):
                 "updated_at": p.updated_at.isoformat() if p.updated_at else None,
                 "view_count": p.view_count,
                 "like_count": p.like_count,
+                "duration": p.duration,
             } for p in podcasts_db]
 
             return {"results": new_podcasts[offset:offset + limit]}

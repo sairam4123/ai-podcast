@@ -6,6 +6,7 @@ import { getUser, isSignedIn, supabase } from "../lib/supabase";
 import MenuButton from "./MenuButton";
 import { api } from "../api/api";
 import Spinner from "./Spinner";
+import { href, useNavigate } from "react-router";
 
 export function NavBar() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -17,6 +18,8 @@ export function NavBar() {
   const {isLoading, error, data} = api.useGetUserProfile({
     userId: user?.id ?? "",
 })
+
+const navigate = useNavigate();
 
   useEffect(() => {
     async function isSignedInAsync() {
@@ -45,13 +48,20 @@ export function NavBar() {
 
     return <nav>
         <ul className="flex text-base flex-row items-center space-x-4 p-4 from-sky-700/50 shadow-black/30 shadow-lg to-blue-700/50 bg-linear-330 text-white">
-            <li className="font-black text-3xl text-shadow-md"><a href="/">Podolli.AI</a></li>
+            <li className="font-black text-3xl text-shadow-md "><a onClick={
+                (e) => {
+                    e.preventDefault();
+                    navigate("/");
+                }
+                
+            } href="/">Podolli.AI</a></li>
             <li className="flex-grow text-base flex justify-center">
                 <SearchBox variant="xl" />
             </li>
             <li 
             onClick={() => {
-                setIsCreateModalOpen(true);
+                // setIsCreateModalOpen(true);
+                navigate("/create");
             }}
             className="bg-sky-300 cursor-pointer hover:bg-sky-200 transition-all duration-100 ease-out text-center flex flex-row items-center justify-center gap-2 p-3 mr-4 rounded-full text-black">
                 <FaPlus className="text-lg" />
@@ -67,7 +77,8 @@ export function NavBar() {
                         label: "Profile",
                         value: "profile",
                         onSelect() {
-                            window.location.href = `/user/${user?.id}`;
+                            navigate(`/user/${user?.id}`);
+                            // window.location.href = `/user/${user?.id}`;
                         },
                     },
                     { label: "Podcasts", value: "podcasts", 

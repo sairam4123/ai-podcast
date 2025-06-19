@@ -18,7 +18,7 @@ class Podcast(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     title: str
     description: str | None = None
-    duration: int | None = None  # Duration in seconds
+    duration: float | None = None  # Duration in seconds
     cover: str | None = None
 
     profile_id: UUID | None = Field(foreign_key="userprofile.id")

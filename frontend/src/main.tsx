@@ -9,6 +9,7 @@ import { MediaPlayer } from './@components/MediaPlayer'
 import { PodcastProvider } from './contexts/podcast.context'
 import { PodcastNew } from './pages/PodcastNew'
 import Login from './pages/Login'
+import Create from './pages/Create'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
+        <Route path="/create" element={<Create />} />
         <Route path="/podcast/:podcast_id" element={<PodcastNew />} />
         <Route path="/login" element={
           <Login />

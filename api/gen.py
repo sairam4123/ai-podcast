@@ -7,7 +7,7 @@ from inngest import Inngest
 import inngest
 import pydantic
 
-from db import session_maker
+from db import get_session, session_maker
 from models import Conversation, Podcast, PodcastAuthorPersona, PodcastAuthorPodcast, PodcastEpisode
 from utils import PodcastGenTask, create_podcast_generation_task
 load_dotenv()
@@ -87,6 +87,8 @@ Explain the topic intuitively, breaking down complex concepts into simple terms 
 * More debates and arguments in between guests to spice it up (HEATED DISCUSSIONS).
 * Makes sure that the topic is included in the description or episode title of the podcast.
 * If list or steps are generated, make sure to keep the same person speaking throughout the list or steps. (Don't change the speaker in between the list or steps).
+* == DO NOT USE MARKDOWN FORMATTING IN THE TEXT, JUST PLAIN TEXT. ==
+* Keep the conversation in the requested language, but use English for technical terms if needed.
 
 **Key points:**
 
@@ -667,9 +669,9 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 
     podcast.episodes.append(episode)
 
-    with session_maker() as sess:
-        sess.add(podcast)
-        sess.commit()
+    sess = next(get_session())
+    sess.add(podcast)
+    sess.flush()
     
         
     image_gen_tasks = [
@@ -700,6 +702,15 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
     
     buffer = io.BytesIO()
     combined_audio.export(buffer, format="wav")
+
+    podcast.duration = len(combined_audio) / 1000.0  # duration in seconds
+
+    sess.add(podcast)
+    sess.add_all(turns)
+    sess.commit()
+
+    await podcast_gen_task.progress_update(85, "Saving podcast metadata and audio...")
+
     buffer.seek(0)  # Reset the buffer position to the beginning
 
     await podcast_gen_task.progress_update(90, "Saving podcast audio...")
