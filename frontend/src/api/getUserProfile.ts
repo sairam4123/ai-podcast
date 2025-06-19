@@ -15,7 +15,7 @@ export default function useGetUserProfile({userId}: { userId: string }) {
     enabled: !!userId,
  });   
 
- console.log("useGetUserProfile", {data, isLoading, error});
+//  console.log("useGetUserProfile", {data, isLoading, error});
  return {
     data,
     isLoading,

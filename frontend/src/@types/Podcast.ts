@@ -19,6 +19,9 @@ export type Podcast = {
         start_time?: number;
         end_time?: number;
     }[]
+
+    created_at: string;
+    updated_at: string;
 }
 
 // export type PodcastNew = {

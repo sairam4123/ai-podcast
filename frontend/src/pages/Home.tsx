@@ -13,7 +13,7 @@ export function Home() {
 
     const {data, error, isLoading} = api.useGetAllPodcast({
         limit: 10,
-        offset: 4,
+        offset: 0,
     })
     return <main className="flex flex-col min-h-screen bg-radial from-sky-700 to-blue-900">
     <NavBar />
@@ -77,6 +77,14 @@ export function PodcastCard({podcast}: {
 
     const isCurrentPodcast = currentPodcast?.id === podcast?.id;
 
+//     const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+// //     console.log("User's Time Zone:", currentTimeZone);
+
+// //     console.log("created_at from DB:", podcast?.created_at);
+// // console.log("Parsed Date:",  Date.parse(podcast?.created_at));
+// // console.log("Now:", new Date());
+
+
     return (
         <div onClick={(e) => {
             e.stopPropagation();
@@ -94,7 +102,8 @@ export function PodcastCard({podcast}: {
                             </span>
                             <FaCircle className="text-gray-200 text-[5px]" />
                             <span>
-                                2 days ago
+                                {getRelativeTime(podcast?.created_at)}
+                                {/* <TimeAgo date={getRelativeTime(podcast?.created_at)} /> */}
                             </span>
                         </p>
                     </div>
@@ -133,4 +142,29 @@ export function PodcastCard({podcast}: {
                     </div>
                 </div>
     )
+}
+
+function getRelativeTime(dateString: string) {
+  const now = new Date();
+  const date = new Date(dateString+"Z"); // assuming UTC string from DB 
+  const diff = (now.getTime() - date.getTime()) / 1000; // in seconds
+
+  const times = [
+    { unit: 'year', seconds: 31536000 },
+    { unit: 'month', seconds: 2592000 },
+    { unit: 'week', seconds: 604800 },
+    { unit: 'day', seconds: 86400 },
+    { unit: 'hour', seconds: 3600 },
+    { unit: 'minute', seconds: 60 },
+    { unit: 'second', seconds: 1 },
+  ];
+
+  for (const t of times) {
+    const delta = Math.floor(diff / t.seconds);
+    if (delta >= 1) {
+      return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(-delta, t.unit as Intl.RelativeTimeFormatUnit);
+    }
+  }
+
+  return 'just now';
 }

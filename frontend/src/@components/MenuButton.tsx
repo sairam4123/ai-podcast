@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, KeyboardEvent, MouseEvent } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 type MenuOption = {
   label: string;
@@ -107,10 +108,24 @@ export default function MenuButton({
         {children}
       </button>
 
+      <AnimatePresence>
       {open && (
-        <div
+        <motion.div
           id="dropdown-menu"
           role="menu"
+          initial={{
+            opacity: 0,
+            y: -10,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          exit={{
+            opacity: 0,
+            y: -10,
+          }}
+          transition={{ duration: 0.3 }}
           aria-label="Options"
           onKeyDown={handleKeyDown}
           className="absolute right-0 mt-2 w-44 bg-sky-900 rounded-md shadow-lg border border-sky-100 z-10"
@@ -134,8 +149,9 @@ export default function MenuButton({
               </li>
             ))}
           </ul>
-        </div>
+        </motion.div>
       )}
+    </AnimatePresence>
     </div>
   );
 }

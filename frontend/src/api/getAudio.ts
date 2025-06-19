@@ -1,35 +1,70 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useLoadFile from "../lib/useLoadFile";
 import { API_URL } from "./api";
+import { supabase } from "../lib/supabase";
+
 
 export function useGetAudio({podcast_id}: {podcast_id: string}, {enabled = true}: {enabled?: boolean}) {
-    const {data, loading, error, resetData, refetch} = useLoadFile<File>(API_URL + `/audios/${podcast_id}`, {enabled});
+
+    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [error, setError] = useState<Error | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+
+
+    console.log("Audio URL:", audioUrl);
+
+    // const {data, loading, error, resetData, refetch} = useLoadFile<File>(API_URL + `/audios/${podcast_id}`, {enabled});
     // const audio = data?.audio ? URL.createObjectURL(data.audio) : null;
 
-    const audioBlob = useMemo(() => {
-        if (!data) return null;
-        // check if the data is a valid audio
-        const isValidAudio = data.type.startsWith("audio/");
-        if (!isValidAudio) return null;
-        return new Blob([data], { type: data.type });
-    }, [data]);
+    // const audioBlob = useMemo(() => {
+    //     if (!data) return null;
+    //     // check if the data is a valid audio
+    //     const isValidAudio = data.type.startsWith("audio/");
+    //     if (!isValidAudio) return null;
+    //     return new Blob([data], { type: data.type });
+    // }, [data]);
 
-    const audioUrl = useMemo(() => {
-        if (!audioBlob) return null;
-        return URL.createObjectURL(audioBlob);
-    }, [audioBlob]);
+    // const audioUrl = useMemo(async () => {
+    //     // if (!audioBlob) return null;
+
+    //     if (!await supabase.storage.from("podcasts").exists(`${podcast_id}.wav`)) {
+    //         throw new Error("Audio file does not exist");
+    //     }
+    //     const {data} = await supabase.storage.from("podcasts").getPublicUrl(podcast_id);
+    //     return data.publicUrl;
+
+
+    //     // return URL.createObjectURL(audioBlob);
+    // }, [podcast_id]);
 
     useEffect(() => {
-        return () => {
-          if (audioUrl) URL.revokeObjectURL(audioUrl);
+        if (!podcast_id || !enabled) return;
+        setLoading(true);
+        const fetchAudio = async () => {
+            try {
+                const { data } = supabase.storage.from("podcasts").getPublicUrl(`${podcast_id}.wav`);
+                if (!data.publicUrl) throw new Error("Audio file does not exist");
+                setAudioUrl(data.publicUrl);
+            } catch (err) {
+                console.error("Error fetching audio:", err);
+                setError(err as Error);
+            }
+            finally {
+                setLoading(false);
+            }
         };
-      }, [audioUrl]);
+        fetchAudio();
+    }, [podcast_id, enabled]);
+
+    // useEffect(() => {
+    //     // return () => {
+    //     //   if (audioUrl) URL.revokeObjectURL(audioUrl);
+    //     // };
+    //   }, [audioUrl]);
 
     return {
         audioUrl,
         isLoading: loading,
         error,
-        resetData,
-        refetch,
     }
 }

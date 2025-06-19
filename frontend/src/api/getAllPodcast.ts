@@ -17,6 +17,7 @@ export function useGetAllPodcast({
         offset: offset.toString(),
         v2: "true",
     });
+    console.log(params)
     const {data, loading, error, resetData, refetch} = useFetch<{results: Podcast[]}>(API_URL + `/podcasts?${params}`, {enabled: !!params.toString()});
     return {
         data: data,
