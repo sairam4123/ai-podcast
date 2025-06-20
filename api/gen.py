@@ -3,15 +3,16 @@ import time
 from typing import Literal
 from uuid import UUID, uuid4
 from dotenv import load_dotenv
+load_dotenv()
+
 from inngest import Inngest
 import inngest
 import pydantic
 from sqlmodel import select
 
-from db import get_session, session_maker
-from models import Conversation, Podcast, PodcastAuthorPersona, PodcastAuthorPodcast, PodcastEpisode, PodcastGenerationTask
-from utils import PodcastGenTask, create_podcast_generation_task
-load_dotenv()
+from api.db import get_session, session_maker
+from api.models import Conversation, Podcast, PodcastAuthorPersona, PodcastAuthorPodcast, PodcastEpisode, PodcastGenerationTask
+from api.utils import PodcastGenTask, create_podcast_generation_task
 
 import random
 import os
