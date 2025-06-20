@@ -6,9 +6,10 @@ from dotenv import load_dotenv
 from inngest import Inngest
 import inngest
 import pydantic
+from sqlmodel import select
 
 from db import get_session, session_maker
-from models import Conversation, Podcast, PodcastAuthorPersona, PodcastAuthorPodcast, PodcastEpisode
+from models import Conversation, Podcast, PodcastAuthorPersona, PodcastAuthorPodcast, PodcastEpisode, PodcastGenerationTask
 from utils import PodcastGenTask, create_podcast_generation_task
 load_dotenv()
 
@@ -602,7 +603,7 @@ def combine_audio_segments(audio_segments: list[pydub.AudioSegment]) -> tuple[li
     return conversation_markers, combined
 
 
-async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, step: inngest.Step | None = None) -> Podcast:
+async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None, step: inngest.Step | None = None) -> Podcast:
     task_id = task_id or uuid4()
 
     if not create_podcast.topic:
@@ -623,6 +624,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         language = detect_topic_language(create_podcast.topic)
         create_podcast.language = language
     
+    
 
     print(f"Creating podcast for topic: {create_podcast.topic} with ID: {task_id}")
     # Generate the podcast content (metadata and conversation)
@@ -635,13 +637,10 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
             description=podcast_metadata.podcastDescription,
             language=podcast_metadata.language,
             tags=podcast_metadata.tags,
-            profile_id=None)
+            profile_id=profile_id)
     
-    episode = PodcastEpisode(
-        number=int(podcast_metadata.episodeNumber),
-        title=podcast_metadata.episodeTitle,
-        podcast_id=podcast.id,
-    )
+
+    
 
     podcast_id = podcast.id
 
@@ -654,6 +653,31 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         author_id=persona.id,
         podcast_id=podcast.id,
     ) for persona, author in zip(personas, podcast_metadata.people)]
+    
+    sess = next(get_session())
+    sess.add(podcast)
+    sess.commit()
+
+    image_gen_tasks = [
+        asyncio.create_task(save_podcast_cover(podcast,)),
+        asyncio.create_task(generate_author_images([author.author for author in podcast.authors]))
+    ]
+
+    episode = PodcastEpisode(
+        number=int(podcast_metadata.episodeNumber),
+        title=podcast_metadata.episodeTitle,
+        podcast_id=podcast.id,
+    )
+
+    sess2 = next(get_session())
+
+    task = sess2.exec(select(PodcastGenerationTask).where(PodcastGenerationTask.id == task_id)).one_or_none()
+    if task is None:
+        raise ValueError(f"Podcast generation task with ID {task_id} not found. Something went terribly wrong.")
+    task.podcast_id = podcast.id
+
+    sess2.add(task)
+    sess2.commit() # update the task with the podcast ID at the earliest possible moment
 
     persona_map = {author.id: persona for persona, author in zip(personas, podcast_metadata.people)}
     # Add the conversation turns to the podcast
@@ -667,18 +691,15 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
     ) for turn in podcast_conversation]
     episode.conversations = turns
 
-    podcast.episodes.append(episode)
-
     sess = next(get_session())
+    podcast = sess.exec(select(Podcast).where(Podcast.id == podcast.id)).one_or_none()
+    if podcast is None:
+        raise ValueError(f"Podcast with ID {podcast.id} not found. Something went terribly wrong.")
+    podcast.episodes.append(episode)
+    
     sess.add(podcast)
     sess.flush()
-    
         
-    image_gen_tasks = [
-        asyncio.create_task(save_podcast_cover(podcast,)),
-        asyncio.create_task(generate_author_images([author.author for author in podcast.authors]))
-    ]
-
     # Generate the audio for the podcast
     await podcast_gen_task.progress_update(20, "Selecting voices for the podcast...")
 
@@ -699,6 +720,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
     for idx, turn in enumerate(turns):
         turn.start_time = markers[idx][0]
         turn.end_time = markers[idx][1]
+        turn.podcast_id = podcast.id
     
     buffer = io.BytesIO()
     combined_audio.export(buffer, format="wav")
@@ -721,6 +743,8 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 
     await podcast_gen_task.progress_update(100, "Podcast generation completed successfully.")
     await podcast_gen_task.complete()
+
+    sess.close()
 
     return podcast
 

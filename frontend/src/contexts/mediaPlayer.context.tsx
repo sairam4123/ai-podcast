@@ -4,6 +4,7 @@ type MediaPlayerContextType = {
     isPlaying: boolean;
     pause: () => void;
     play: () => void;
+    seek: (position: number) => void;
 
     setAutoplay?: (autoplay: boolean) => void;
     autoplay?: boolean;
@@ -100,6 +101,19 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
         audioRef.current?.play();
     };
 
+    const seek = (position: number) => {
+        if (!audioRef.current) {
+            console.error("Audio element is not initialized.");
+            return;
+        }
+        if (position < 0 || position > audioRef.current.duration) {
+            console.error("Seek position is out of bounds.");
+            return;
+        }
+        audioRef.current.currentTime = position;
+        setCurrentPosition(position);
+    };
+
     const pause = () => {
         console.log("Pausing audio");
         
@@ -112,6 +126,7 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
             isPlaying,
             pause,
             play,
+            seek,
             currentPosition,
             sourceUrl,
             setSourceUrl,

@@ -1,8 +1,11 @@
 import datetime
 import functools
+from typing import Optional
 from sqlmodel import DateTime, SQLModel, Field, Relationship, Column, String, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from uuid import uuid4, UUID
+from sqlalchemy.sql import and_
+from sqlalchemy.orm import foreign
 
 utcnow = functools.partial(datetime.datetime.now, tz=datetime.timezone.utc)
 
@@ -36,8 +39,11 @@ class Podcast(SQLModel, table=True):
     authors: list["PodcastAuthorPodcast"] = Relationship(back_populates="podcast")
     episodes: list["PodcastEpisode"] = Relationship(back_populates="podcast")
 
-    task: "PodcastGenerationTask" = Relationship(
+    task: Optional["PodcastGenerationTask"] = Relationship(
         back_populates="podcast",
+        sa_relationship_kwargs={
+        "lazy": "joined",
+    }
     )
     created_at: datetime.datetime = Field(
         default_factory=utcnow,
@@ -51,6 +57,10 @@ class Podcast(SQLModel, table=True):
             onupdate=func.now(),
             nullable=False,
         )
+    )
+
+    conversations: list["Conversation"] = Relationship(
+        back_populates="podcast",
     )
 
 class PodcastAuthorPersona(SQLModel, table=True):
@@ -95,6 +105,18 @@ class PodcastAuthorPodcast(SQLModel, table=True):
     author: PodcastAuthorPersona = Relationship(back_populates="authored_podcasts")
 
     is_host: bool = Field(default=False)
+
+    conversations: list["Conversation"] = Relationship(
+        back_populates="podcast_author",
+        sa_relationship_kwargs={
+            "lazy": "joined",
+            "primaryjoin": lambda: and_(
+            Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id),
+            Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id),
+            ),
+            "uselist": True,
+        }
+    )
 
 
 class PodcastAuthorDynamics(SQLModel, table=True):
@@ -145,8 +167,23 @@ class Conversation(SQLModel, table=True):
     speaker_id: UUID = Field(foreign_key="podcastauthorpersona.id")
     speaker: PodcastAuthorPersona = Relationship()
 
+    podcast_id: UUID | None = Field(foreign_key="podcast.id")
+    podcast: Podcast | None = Relationship(back_populates="conversations")
+
     episode_id: UUID = Field(foreign_key="podcastepisode.id")
     episode: PodcastEpisode = Relationship(back_populates="conversations")
+
+    podcast_author: "PodcastAuthorPodcast" = Relationship(
+        back_populates="conversations",
+        sa_relationship_kwargs={
+            "lazy": "joined",
+            "primaryjoin":lambda: and_(
+                Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id),
+                Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id),
+            ),
+            "uselist": False,
+        },
+    )
 
 class PodcastGenerationTask(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -157,7 +194,9 @@ class PodcastGenerationTask(SQLModel, table=True):
     error_message: str | None = None
 
     podcast_id: UUID | None = Field(foreign_key="podcast.id")
-    podcast: Podcast = Relationship(back_populates="task")
+    podcast: Optional[Podcast] = Relationship(back_populates="task", sa_relationship_kwargs={
+        "lazy": "joined",
+    })
 
     created_at: datetime.datetime | None = Field(
         default_factory=utcnow,sa_column=Column(

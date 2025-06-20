@@ -1,3 +1,5 @@
+import { Podcast } from "./Podcast";
+
 export type PodcastGenTask = {
     id: string;
     podcast_id: string;
@@ -9,4 +11,5 @@ export type PodcastGenTask = {
     progress?: number; // Optional progress percentage (0-100)
     progress_message?: string; // Optional message to show progress
 
+    podcast: Podcast;
 }

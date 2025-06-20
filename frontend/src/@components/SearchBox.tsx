@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { FaSearch } from "react-icons/fa";
 import { cn } from "../lib/cn";
 
+import { AnimatePresence, motion } from "framer-motion";
+
 const variants = {
     'md': 'max-w-md w-full',
     'lg': 'max-w-lg w-full',
@@ -27,14 +29,24 @@ export function SearchBox({
         <input type="text" ref={inputRef} placeholder="What's in your mind?"
             onChange={(e) => {setInitialSearchTerm(e.target.value)}}
              value={intialSearchTerm} className="flex grow z-10 selection:bg-black/25 ring-0 outline-none focus:placeholder:text-black/70 text-black placeholder:text-black/50" />
-            
-        {intialSearchTerm && <div className="hidden group-focus-within:block z-10 inset-0">
-            <div className="absolute translate-y-14 h-48 rounded-lg z-10 inset-0 bg-white">
+        
+        <div className="hidden group-focus-within:block z-10 inset-0">
+            <AnimatePresence>
+            {intialSearchTerm &&
+                <motion.div 
+
+                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: -10 }}
+                    
+
+                className="absolute translate-y-14 h-48 rounded-lg z-10 inset-0 bg-white">
 
                 <div className="flex items-center justify-center h-full text-gray-500">
                 <p className="text-sm">Search results will appear here...</p>
             </div>
-            </div>
-        </div>}
+            </motion.div>}
+            </AnimatePresence>
+        </div>
     </div>
 }

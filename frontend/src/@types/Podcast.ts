@@ -22,6 +22,9 @@ export type Podcast = {
 
     created_at: string;
     updated_at: string;
+
+    language: string;
+    tags: string[];
 }
 
 // export type PodcastNew = {

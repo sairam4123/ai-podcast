@@ -3,7 +3,9 @@ import fastapi
 from inngest import Context, Inngest, Step, fast_api, TriggerEvent, Event
 import pydantic
 import pydub
-from sqlmodel import desc, select
+from sqlmodel import and_, asc, desc, select, any_
+from sqlalchemy.orm import selectinload, joinedload
+# from sqlalchemy import select
 from utils import get_current_user, get_supabase_client
 from db import session_maker
 from models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask, UserProfile
@@ -163,7 +165,27 @@ async def search_podcasts(query: str, v2: bool = False):
     return {"results": []}
 
 @app.get("/podcasts/{podcast_id}")
-async def get_podcast(podcast_id: str):
+async def get_podcast(podcast_id: str, v2: bool = False):
+
+    if v2:
+        with session_maker() as sess:
+            podcast_db = sess.exec(select(Podcast).where(Podcast.id == podcast_id)).first()
+            if not podcast_db:
+                return {"error": "Podcast not found"}, 404
+            podcast = {
+                "id": str(podcast_db.id),
+                "podcast_title": podcast_db.title,
+                "podcast_description": podcast_db.description,
+                "language": podcast_db.language,
+                "created_at": podcast_db.created_at.isoformat() if podcast_db.created_at else None,
+                "updated_at": podcast_db.updated_at.isoformat() if podcast_db.updated_at else None,
+                "view_count": podcast_db.view_count,
+                "like_count": podcast_db.like_count,
+                "duration": podcast_db.duration,
+                "tags": podcast_db.tags,
+            }
+            return {"podcast": podcast, "success": True, "message": "Podcast found"}
+
     podcast = podcasts.get(podcast_id)
     if not podcast:
         return {"error": "Podcast not found"}, 404
@@ -236,6 +258,27 @@ async def get_image(podcast_id: str, v2: bool = True):
         return FileResponse(image)
     else:
         return {"error": "Image not found"}, 404
+
+@app.get("/queue")
+async def get_queue(offset: int = 0, limit: int = 10):
+    with session_maker() as sess:
+        tasks = sess.exec(select(PodcastGenerationTask).options(joinedload(PodcastGenerationTask.podcast))
+                  .order_by(desc(PodcastGenerationTask.created_at))
+                  .offset(offset).limit(limit)
+                  ).all()
+        
+        # brittle code - DO NOT TOUCH
+        return {
+    "tasks": [
+        {
+            **task.model_dump(),
+            "podcast": task.podcast.model_dump() if task.podcast else None,
+        }
+        for task in tasks
+    ]
+}
+
+
 
 @app.post("/podcasts")
 async def create_podcast(podcast: GeneratePodcast | None = None):
@@ -389,6 +432,25 @@ async def get_podcast_conversation(episode_id: str):
 
     return {"conversation": conversation.all()}
 
+@app.get("/podcasts/{podcast_id}/conversations")
+async def get_podcast_conversations(podcast_id: str):
+    with session_maker() as sess:
+        # Now query conversations where episode_id is in episode_ids
+        conversations = sess.exec(
+            select(Conversation)
+            .where(Conversation.podcast_id == podcast_id)
+            .options(selectinload(Conversation.speaker), selectinload(Conversation.podcast_author))  # Load speaker relationship
+            .order_by(asc(Conversation.start_time))  # Order by start_time
+        ).unique().all()
+
+        if not conversations:
+            return {"error": "No conversations found"}, 404
+
+        return {"conversations": [{
+            **conversation.model_dump(),
+            "speaker": conversation.speaker.model_dump() if conversation.speaker else None,
+            "podcast_author": (conversation.podcast_author.model_dump() if conversation.podcast_author else {}),
+        } for conversation in conversations]}
 
 @app.get("/podcasts/{podcast_id}/episodes")
 async def get_podcast_episodes(podcast_id: str):

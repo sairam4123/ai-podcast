@@ -15,7 +15,6 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MediaPlayerProvider>
     <PodcastProvider>
-
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
@@ -25,8 +24,8 @@ createRoot(document.getElementById('root')!).render(
           <Login />
         } />
       </Routes>
-    </BrowserRouter>
     <MediaPlayer />
+    </BrowserRouter>
     </PodcastProvider>
     </MediaPlayerProvider>
   </StrictMode>,

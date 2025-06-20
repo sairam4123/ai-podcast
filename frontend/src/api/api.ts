@@ -6,8 +6,10 @@ import { useGeneratePodcast } from "./generatePodcast";
 import { useGetAllPodcast } from "./getAllPodcast";
 import { useGetAudio } from "./getAudio";
 import { useGetAvatarImage } from "./getAvatarImage";
+import { useGetConversation } from "./getConversation";
 import { useGetImage } from "./getImage";
 import { useGetPodcast } from "./getPodcast";
+import { useGetQueue } from "./getQueue";
 import useGetUserProfile from "./getUserProfile";
 import { useSearchPodcast } from "./searchPodcasts";
 
@@ -29,4 +31,6 @@ export const api = {
     useGetImage,
     useGetPodcast,
     useGetUserProfile,
+    useGetQueue,
+    useGetConversation,
 }

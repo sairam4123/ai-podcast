@@ -9,6 +9,7 @@ import { usePodcastContext } from "../contexts/podcast.context"
 import { cn } from "../lib/cn"
 import { NavBar } from "../@components/NavBar"
 import { useNavigate } from "react-router"
+import PodcastCardSkeleton from "../@components/PodcastSkeleton"
 
 export function Home() {
 
@@ -27,6 +28,14 @@ export function Home() {
                 {data?.results.map((podcast, index) => {
                     return <PodcastCard key={podcast.id} podcast={podcast} />
                 })}
+                {
+                    isLoading && Array.from({ length: 6 }).map((_, index) => (
+                        <PodcastCardSkeleton key={index} />
+                    ))
+                }
+                {
+                    error && <div className="text-red-500 text-center w-full">Error loading podcasts: {error.message}</div>
+                }
                 {/* <PodcastCard />
                 <PodcastCard />
                 <PodcastCard />
@@ -91,7 +100,7 @@ export function PodcastCard({podcast}: {
     return (
         <div onClick={(e) => {
         }} className="relative cursor-pointer z-1 active:scale-[0.98] select-none w-48 h-64 hover:brightness-110 group/card hover:scale-[1.03] border border-sky-800/20 transition-all ease-out shadow-md hover:shadow-black/80 shadow-black/60 m-3 min-w-48 bg-sky-500/50 rounded-lg">
-                    <img src={imageUrl ?? "https://i.pinimg.com/736x/e4/fb/2a/e4fb2a1bf8d9ca39b869fa412d72fce2.jpg"} alt="Podcast" className="flex group-hover/card:brightness-60 group-hover/card:blur-[1px] transition-all w-48 md:max-h-48 object-cover flex-grow object-center overflow-clip md:max-w-48 aspect-square h-auto md:w-auto mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97% rounded-lg" />
+                    <img src={imageUrl ?? "/podcastplaceholdercover.png"} alt="Podcast" className="flex group-hover/card:brightness-60 group-hover/card:blur-[1px] transition-all w-48 md:max-h-48 object-cover flex-grow object-center overflow-clip md:max-w-48 aspect-square h-auto md:w-auto mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97% rounded-lg" />
                     
                     <div className={cn("absolute inset-0 group-hover/card:flex hidden", (isCurrentPodcast) && "flex")}>
                         <div onClick={(e) => {

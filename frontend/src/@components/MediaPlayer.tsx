@@ -3,10 +3,12 @@ import { api } from "../api/api";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
 import { formatDuration } from "../lib/formatDuration";
+import { useNavigate } from "react-router";
 
 export function MediaPlayer() {
     const {currentPosition, isPlaying, pause, play} = useMediaPlayerContext();
     const {currentPodcast} = usePodcastContext();
+    const navigate = useNavigate();
 
     const {imageUrl} = api.useGetImage({
         podcastId: currentPodcast?.id ?? "",})
@@ -19,11 +21,16 @@ export function MediaPlayer() {
     return (
         <div className="fixed flex flex-col h-28 drop-shadow-lg drop-shadow-black/50 bottom-4 border border-sky-200 transform -translate-x-1/2 left-1/2 w-11/12 rounded-lg bg-sky-950 z-50">
             <div className="flex flex-row flex-grow items-center gap-2 justify-between">
-                <img className="h-26 w-auto rounded-lg aspect-square mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%" src={imageUrl ?? "https://i.pinimg.com/736x/e4/fb/2a/e4fb2a1bf8d9ca39b869fa412d72fce2.jpg"}></img>
+                <img className="h-26 w-auto rounded-lg aspect-square mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%" src={imageUrl ?? "/podcastplaceholdercover.png"}></img>
                 <div className="flex flex-col flex-grow">
                     <div>
                         <p className="text-lg font-bold text-gray-100">
-                            <a href={`/podcast/${currentPodcast?.id}`} className="hover:underline hover:text-sky-50 transition-all duration-150 ease-in-out">
+                            <a onClick={
+                                (e) => {
+                                    e.preventDefault();
+                                    navigate(`/podcast/${currentPodcast?.id}`);
+                                }
+                            } className="hover:underline hover:text-sky-50 transition-all duration-150 ease-in-out">
                             {currentPodcast?.podcast_title ?? "Podcast Title.."}
                             </a>
                         </p>
