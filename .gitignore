@@ -13,3 +13,4 @@ podcasts.json
 images.json
 
 gen*.json
+.vercel

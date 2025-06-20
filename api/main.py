@@ -6,10 +6,10 @@ import pydub
 from sqlmodel import and_, asc, desc, select, any_
 from sqlalchemy.orm import selectinload, joinedload
 # from sqlalchemy import select
-from utils import get_current_user, get_supabase_client
-from db import session_maker
-from models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask, UserProfile
-from gen import CreatePodcast, create_podcast as gen_create_podcast
+from api.utils import get_current_user, get_supabase_client
+from api.db import session_maker
+from api.models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask, UserProfile
+from api.gen import CreatePodcast, create_podcast as gen_create_podcast
 from uuid import UUID, uuid4
 import json
 from fuzzywuzzy import fuzz, process

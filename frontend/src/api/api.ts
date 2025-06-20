@@ -21,7 +21,7 @@ const isLocalNetwork = window.location.hostname.startsWith("192.168.") || window
 // console.log("isLocalNetwork", isLocalNetwork);
 // console.log("window.location.hostname", window.location.hostname);
 
-const VITE_API_URL = process.env.VITE_APP_API_URL
+const VITE_API_URL = import.meta.env.VITE_APP_API_URL 
 
 export const API_URL = VITE_API_URL ? VITE_API_URL : `http${isLocalhost || isLocalNetwork ? '' : 's'}://${window.location.hostname}:8000/api`;
 
