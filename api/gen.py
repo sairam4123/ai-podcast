@@ -41,16 +41,16 @@ speech_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_se
 
 VOICE_MODEL = "Chirp3" # "Standard" | "Wavenet" | "Chirp3"
 
-TTS_FOLDER = "tts"
-FINAL_FOLDER = "finals" # Folder to save the final podcast
-IMAGES_FOLDER = "images" # Folder to save the images
+# TTS_FOLDER = "tts"
+# FINAL_FOLDER = "finals" # Folder to save the final podcast
+# IMAGES_FOLDER = "images" # Folder to save the images
 
-if not os.path.exists(FINAL_FOLDER):
-    os.makedirs(FINAL_FOLDER)
-if not os.path.exists(TTS_FOLDER):
-    os.makedirs(TTS_FOLDER)
-if not os.path.exists(IMAGES_FOLDER):
-    os.makedirs(IMAGES_FOLDER)
+# if not os.path.exists(FINAL_FOLDER):
+#     os.makedirs(FINAL_FOLDER)
+# if not os.path.exists(TTS_FOLDER):
+#     os.makedirs(TTS_FOLDER)
+# if not os.path.exists(IMAGES_FOLDER):
+#     os.makedirs(IMAGES_FOLDER)
 
 
 # model = genai.GenerativeModel('gemini-1.5-flash', generation_config={"response_mime_type": "application/json"})
