@@ -1,25 +1,25 @@
 import contextlib
 from sqlalchemy import NullPool
 from sqlmodel import create_engine, Session
-
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 # Make it async
 
-engine = create_engine(
-    "postgresql+psycopg2://postgres:aipodcast-123@db.kzgbfmhlcmfjknkbvggg.supabase.co:5432/postgres",
+engine = create_async_engine(
+    "postgresql+asyncpg://postgres:aipodcast-123@db.kzgbfmhlcmfjknkbvggg.supabase.co:5432/postgres",
     echo=True, poolclass=NullPool)
 
-@contextlib.contextmanager
-def session_maker():
-    sess = Session(engine)
+@contextlib.asynccontextmanager
+async def session_maker():
+    sess = AsyncSession(engine)
     try:
         yield sess
     except Exception as e:
-        sess.rollback()
+        await sess.rollback()
         raise e
     finally:
-        sess.close()
+        await sess.close()
 
-def get_session():
-    with session_maker() as session:
+async def get_session():
+    async with session_maker() as session:
         yield session

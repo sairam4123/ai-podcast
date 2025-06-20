@@ -667,14 +667,15 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         podcast_id=podcast.id,
     ) for persona, author in zip(personas, podcast_metadata.people)]
     
-    sess = next(get_session())
-    sess.add(podcast)
-    sess.commit()
-
     image_gen_tasks = [
         asyncio.create_task(save_podcast_cover(podcast,)),
         asyncio.create_task(generate_author_images([author.author for author in podcast.authors]))
     ]
+
+    async with session_maker() as sess:
+        sess.add(podcast)
+        await sess.commit()
+
 
     episode = PodcastEpisode(
         number=int(podcast_metadata.episodeNumber),
@@ -682,15 +683,14 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         podcast_id=podcast.id,
     )
 
-    sess2 = next(get_session())
+    async with session_maker() as sess:
+        task = (await sess.execute(select(PodcastGenerationTask).where(PodcastGenerationTask.id == task_id))).scalar_one_or_none()
+        if task is None:
+            raise ValueError(f"Podcast generation task with ID {task_id} not found. Something went terribly wrong.")
+        task.podcast_id = podcast.id
 
-    task = sess2.exec(select(PodcastGenerationTask).where(PodcastGenerationTask.id == task_id)).one_or_none()
-    if task is None:
-        raise ValueError(f"Podcast generation task with ID {task_id} not found. Something went terribly wrong.")
-    task.podcast_id = podcast.id
-
-    sess2.add(task)
-    sess2.commit() # update the task with the podcast ID at the earliest possible moment
+        sess.add(task)
+        await sess.commit() # update the task with the podcast ID at the earliest possible moment
 
     persona_map = {author.id: persona for persona, author in zip(personas, podcast_metadata.people)}
     # Add the conversation turns to the podcast
@@ -707,45 +707,45 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 
     await podcast_gen_task.progress_update(15, "Saving podcast metadata and episode...")
 
-    sess = next(get_session())
-    podcast = sess.exec(select(Podcast).where(Podcast.id == podcast.id)).one_or_none()
-    if podcast is None:
-        raise ValueError(f"Podcast not found. Something went terribly wrong.")
-    podcast.episodes.append(episode)
+    async with session_maker() as sess:
+        podcast = (await sess.execute(select(Podcast).where(Podcast.id == podcast.id))).scalar_one_or_none()
+        if podcast is None:
+            raise ValueError(f"Podcast not found. Something went terribly wrong.")
+        podcast.episodes.append(episode)
     
-    sess.add(podcast)
-    sess.flush()
+        sess.add(podcast)
+        await sess.flush()
         
-    # Generate the audio for the podcast
-    await podcast_gen_task.progress_update(20, "Selecting voices for the podcast...")
+        # Generate the audio for the podcast
+        await podcast_gen_task.progress_update(20, "Selecting voices for the podcast...")
 
-    # Currently, voices are selected automatically based on the people in the podcast and the language.
-    print("Selecting voices for the podcast...")
-    voices = await select_voice_people(podcast_metadata.people, podcast_metadata.language)
-    print(f"Selected voices: \n{', '.join([f'{person} - {voice.name}' for person, voice in voices.items()])}")
+        # Currently, voices are selected automatically based on the people in the podcast and the language.
+        print("Selecting voices for the podcast...")
+        voices = await select_voice_people(podcast_metadata.people, podcast_metadata.language)
+        print(f"Selected voices: \n{', '.join([f'{person} - {voice.name}' for person, voice in voices.items()])}")
 
-    conv_audios = await save_conversation_audio(podcast_metadata.people, podcast_conversation, voices)
+        conv_audios = await save_conversation_audio(podcast_metadata.people, podcast_conversation, voices)
 
-    await podcast_gen_task.progress_update(50, "Generating audio segments for the podcast...")
+        await podcast_gen_task.progress_update(50, "Generating audio segments for the podcast...")
 
-    # Combine the audio segments into a single podcast audio file
-    print("Combining audio segments...")
-    markers, combined_audio = combine_audio_segments(conv_audios)
+        # Combine the audio segments into a single podcast audio file
+        print("Combining audio segments...")
+        markers, combined_audio = combine_audio_segments(conv_audios)
 
-    await podcast_gen_task.progress_update(80, "Combining audio segments...")
-    for idx, turn in enumerate(turns):
-        turn.start_time = markers[idx][0]
-        turn.end_time = markers[idx][1]
-        turn.podcast_id = podcast.id
-    
-    buffer = io.BytesIO()
-    combined_audio.export(buffer, format="wav")
+        await podcast_gen_task.progress_update(80, "Combining audio segments...")
+        for idx, turn in enumerate(turns):
+            turn.start_time = markers[idx][0]
+            turn.end_time = markers[idx][1]
+            turn.podcast_id = podcast.id
+        
+        buffer = io.BytesIO()
+        combined_audio.export(buffer, format="wav")
 
-    podcast.duration = len(combined_audio) / 1000.0  # duration in seconds
+        podcast.duration = len(combined_audio) / 1000.0  # duration in seconds
 
-    sess.add(podcast)
-    sess.add_all(turns)
-    sess.commit()
+        sess.add(podcast)
+        sess.add_all(turns)
+        await sess.commit()
 
     await podcast_gen_task.progress_update(85, "Saving podcast metadata and audio...")
 
@@ -759,8 +759,6 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 
     await podcast_gen_task.progress_update(100, "Podcast generation completed successfully.")
     await podcast_gen_task.complete()
-
-    sess.close()
 
     return podcast
 

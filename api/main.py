@@ -85,8 +85,8 @@ client = genai.Client()
 @app.get("/podcasts")
 async def get_podcasts(offset: int = 0, limit: int = 10, v2: bool = False):
     if v2:
-        with session_maker() as sess:
-            podcasts_db = sess.exec(select(Podcast).order_by(desc(Podcast.created_at))).all()
+        async with session_maker() as sess:
+            podcasts_db = (await sess.execute(select(Podcast).order_by(desc(Podcast.created_at)))).scalars().all()
             new_podcasts = [{
                 "id": str(p.id),
                 "podcast_title": p.title,
@@ -113,8 +113,8 @@ async def get_podcasts(offset: int = 0, limit: int = 10, v2: bool = False):
 async def search_podcasts(query: str, v2: bool = False):
 
     if v2:
-        with session_maker() as sess:
-            podcasts_db = sess.exec(select(Podcast)).all()
+        async with session_maker() as sess:
+            podcasts_db = (await sess.execute(select(Podcast))).scalars().all()
             new_podcasts = {p.id: {
                 "id": str(p.id),
                 "podcast_title": p.title,
@@ -168,8 +168,8 @@ async def search_podcasts(query: str, v2: bool = False):
 async def get_podcast(podcast_id: str, v2: bool = False):
 
     if v2:
-        with session_maker() as sess:
-            podcast_db = sess.exec(select(Podcast).where(Podcast.id == podcast_id)).first()
+        async with session_maker() as sess:
+            podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
             if not podcast_db:
                 return {"error": "Podcast not found"}, 404
             podcast = {
@@ -199,16 +199,16 @@ async def get_podcast(podcast_id: str, v2: bool = False):
 
 @app.get("/user/{user_id}/podcasts", dependencies=[fastapi.Depends(get_current_user)])
 async def get_podcasts_created_by(user_id: str):
-    with session_maker() as sess:
-        podcasts_db = sess.exec(select(Podcast).where(Podcast.profile_id == user_id)).all()
+    async with session_maker() as sess:
+        podcasts_db = (await sess.execute(select(Podcast).where(Podcast.profile_id == user_id))).scalars().all()
         if not podcasts_db:
             return {"error": "No podcasts found for this user"}, 404
         return {"results": podcasts_db}
 
 @app.get("/user/{user_id}/", dependencies=[fastapi.Depends(get_current_user)])
 async def get_user_profile(user_id: str):
-    with session_maker() as sess:
-        user = sess.exec(select(UserProfile).where(UserProfile.id == user_id)).first()
+    async with session_maker() as sess:
+        user = (await sess.execute(select(UserProfile).where(UserProfile.id == user_id))).scalar_one_or_none()
         if not user:
             return {"error": "User not found"}, 404
         return {"user": user}
@@ -261,11 +261,11 @@ async def get_image(podcast_id: str, v2: bool = True):
 
 @app.get("/queue")
 async def get_queue(offset: int = 0, limit: int = 10):
-    with session_maker() as sess:
-        tasks = sess.exec(select(PodcastGenerationTask).options(joinedload(PodcastGenerationTask.podcast))
+    async with session_maker() as sess:
+        tasks = (await sess.execute(select(PodcastGenerationTask).options(joinedload(PodcastGenerationTask.podcast))
                   .order_by(desc(PodcastGenerationTask.created_at))
                   .offset(offset).limit(limit)
-                  ).all()
+                  )).scalars().all()
         
         # brittle code - DO NOT TOUCH
         return {
@@ -287,9 +287,9 @@ async def create_podcast(podcast: GeneratePodcast | None = None):
         return {"error": "No podcast generation data provided"}, 400
     
     task = PodcastGenerationTask(status="pending", progress=0, progress_message="Starting podcast generation...", podcast_id=None)
-    with session_maker() as sess:
+    async with session_maker() as sess:
         sess.add(task)
-        sess.commit()
+        await sess.commit()
 
     # supabase = Supabase(os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_ROLE_KEY", ""))
     
@@ -360,10 +360,10 @@ async def login(user_login: UserLogin):
     if not user_login.user_name or not user_login.password:
         return {"error": "Username and password are required"}, 400
     
-    with session_maker() as sess:
-        user = sess.exec(
+    async with session_maker() as sess:
+        user = (await sess.execute(
             select(UserProfile).where(UserProfile.username == user_login.user_name)
-        ).first()
+        )).scalar_one_or_none()
     
     if not user:
         return {"error": "User not found"}, 404
@@ -416,9 +416,9 @@ async def register(user_register: UserRegister):
         id=UUID(supabase_user.user.id),
     )
 
-    with session_maker() as sess:
+    async with session_maker() as sess:
         sess.add(user)
-        sess.commit()
+        await sess.commit()
 
     print("User registered:", user.model_dump())
     
@@ -436,21 +436,21 @@ async def signout():
 @app.get("/episodes/{episode_id}/conversation")
 async def get_podcast_conversation(episode_id: str):
 
-    with session_maker() as sess:
-        conversation = sess.exec(select(Conversation).where(Conversation.episode_id == episode_id))
+    async with session_maker() as sess:
+        conversation = await sess.execute(select(Conversation).where(Conversation.episode_id == episode_id))
 
-    return {"conversation": conversation.all()}
+    return {"conversation": conversation.scalars().all()}
 
 @app.get("/podcasts/{podcast_id}/conversations")
 async def get_podcast_conversations(podcast_id: str):
-    with session_maker() as sess:
+    async with session_maker() as sess:
         # Now query conversations where episode_id is in episode_ids
-        conversations = sess.exec(
+        conversations = (await sess.execute(
             select(Conversation)
             .where(Conversation.podcast_id == podcast_id)
             .options(selectinload(Conversation.speaker), selectinload(Conversation.podcast_author))  # Load speaker relationship
             .order_by(asc(Conversation.start_time))  # Order by start_time
-        ).unique().all()
+        )).scalars().unique().all()
 
         if not conversations:
             return {"error": "No conversations found"}, 404
@@ -463,8 +463,8 @@ async def get_podcast_conversations(podcast_id: str):
 
 @app.get("/podcasts/{podcast_id}/episodes")
 async def get_podcast_episodes(podcast_id: str):
-    with session_maker() as sess:
-        episodes = sess.exec(select(PodcastEpisode).where(PodcastEpisode.podcast_id == podcast_id)).all()
+    async with session_maker() as sess:
+        episodes = (await sess.execute(select(PodcastEpisode).where(PodcastEpisode.podcast_id == podcast_id))).scalars().all()
         if not episodes:
             return {"error": "Podcast not found"}, 404
         return {"episodes": episodes}
