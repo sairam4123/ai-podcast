@@ -6,7 +6,7 @@ from sqlmodel import create_engine, Session
 # Make it async
 
 engine = create_engine(
-    "postgresql://postgres:aipodcast-123@db.kzgbfmhlcmfjknkbvggg.supabase.co:5432/postgres",
+    "postgresql://postgres:aipodcast-123@db.kzgbfmhlcmfjknkbvggg.supabase.co:5432/postgres?pgbouncer=true",
     echo=True, poolclass=NullPool)
 
 @contextlib.contextmanager
