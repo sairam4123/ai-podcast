@@ -45,19 +45,19 @@ class GeneratePodcast(pydantic.BaseModel):
 inngest = Inngest(app_id="ai-podcast")
 
 podcasts = {}
-pathlib.Path("podcasts.json").touch(exist_ok=True)
-with open("podcasts.json", "r") as f:
-    podcasts = json.loads(f.read() or "{}")
+# pathlib.Path("podcasts.json").touch(exist_ok=True)
+# with open("podcasts.json", "r") as f:
+#     podcasts = json.loads(f.read() or "{}")
 
 audios = {}
-pathlib.Path("audios.json").touch(exist_ok=True)
-with open("audios.json", "r") as f:
-    audios = json.loads(f.read() or "{}")
+# pathlib.Path("audios.json").touch(exist_ok=True)
+# with open("audios.json", "r") as f:
+#     audios = json.loads(f.read() or "{}")
 
 images = {}
-pathlib.Path("images.json").touch(exist_ok=True)
-with open("images.json", "r") as f:
-    images = json.loads(f.read() or "{}")
+# pathlib.Path("images.json").touch(exist_ok=True)
+# with open("images.json", "r") as f:
+#     images = json.loads(f.read() or "{}")
 
 def remap_os_safe_title(title: str) -> str:
     # Replace spaces with underscores and remove special characters
