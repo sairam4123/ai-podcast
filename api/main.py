@@ -381,6 +381,15 @@ async def login(user_login: UserLogin):
     return auth
 
 
+@app.middleware("http")
+async def log_errors(request: fastapi.Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise e
+
 @app.post("/register")
 async def register(user_register: UserRegister):
     supabase = get_supabase_client(with_service=True)
