@@ -16,6 +16,7 @@ load_dotenv()
 import random
 import os
 import json
+import base64
 
 import gtts
 import pydub
@@ -27,7 +28,15 @@ import io
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from supabase import AClient as Supabase
 
-speech_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_service_account_json(os.environ["GEN_LANG_JSON"])
+def get_service_account_info() -> dict:
+    res = base64.b64decode(os.environ["GEN_LANG_JSON_KEY"]).decode("utf-8")
+    res = json.loads(res)
+    return res
+    
+
+speech_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_service_account_info(
+    get_service_account_info()
+)
 
 VOICE_MODEL = "Chirp3" # "Standard" | "Wavenet" | "Chirp3"
 
@@ -624,6 +633,9 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         language = detect_topic_language(create_podcast.topic)
         create_podcast.language = language
     
+    await podcast_gen_task.progress_update(9, "Generating podcast metadata...")
+
+
     
 
     print(f"Creating podcast for topic: {create_podcast.topic} with ID: {task_id}")
@@ -691,6 +703,8 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         podcast_id=podcast.id,
     ) for turn in podcast_conversation]
     episode.conversations = turns
+
+    await podcast_gen_task.progress_update(15, "Saving podcast metadata and episode...")
 
     sess = next(get_session())
     podcast = sess.exec(select(Podcast).where(Podcast.id == podcast.id)).one_or_none()
