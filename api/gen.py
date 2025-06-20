@@ -688,13 +688,14 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         end_time=None,  # Will be set later after audio generation
         episode_id=episode.id,
         episode=episode,
+        podcast_id=podcast.id,
     ) for turn in podcast_conversation]
     episode.conversations = turns
 
     sess = next(get_session())
     podcast = sess.exec(select(Podcast).where(Podcast.id == podcast.id)).one_or_none()
     if podcast is None:
-        raise ValueError(f"Podcast with ID {podcast.id} not found. Something went terribly wrong.")
+        raise ValueError(f"Podcast not found. Something went terribly wrong.")
     podcast.episodes.append(episode)
     
     sess.add(podcast)
