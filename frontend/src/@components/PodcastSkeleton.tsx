@@ -25,16 +25,15 @@ export default function PodcastCardSkeleton() {
   return (
     <div className="relative cursor-pointer z-1 w-48 h-64 border border-sky-800/20 transition-all ease-out shadow-md shadow-black/60 m-3 min-w-48 bg-sky-500/30 rounded-lg overflow-hidden select-none">
       {/* Image shimmer */}
-      <ShimmerBlock className="w-full h-48 rounded-lg" />
+      <ShimmerBlock className="w-full h-47 rounded-lg" />
 
       {/* Content shimmer */}
       <div className="absolute inset-0 flex flex-col justify-end p-2 gap-1 bg-gradient-to-t from-black/60 via-black/30 to-transparent rounded-lg">
         <ShimmerBlock className="h-5 w-11/12" /> {/* Title */}
         <ShimmerBlock className="h-3 w-4/5" />   {/* Desc line 1 */}
-        <ShimmerBlock className="h-3 w-3/5" />   {/* Desc line 2 */}
         <div className="flex items-center gap-2 mt-1">
           <ShimmerBlock className="h-3 w-8 rounded-sm" />
-          <ShimmerBlock className="h-3 w-10 rounded-sm" />
+          <ShimmerBlock className="h-3 w-16 rounded-sm" />
         </div>
       </div>
     </div>

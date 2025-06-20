@@ -41,9 +41,6 @@ class Podcast(SQLModel, table=True):
 
     task: Optional["PodcastGenerationTask"] = Relationship(
         back_populates="podcast",
-        sa_relationship_kwargs={
-        "lazy": "joined",
-    }
     )
     created_at: datetime.datetime = Field(
         default_factory=utcnow,
@@ -109,7 +106,6 @@ class PodcastAuthorPodcast(SQLModel, table=True):
     conversations: list["Conversation"] = Relationship(
         back_populates="podcast_author",
         sa_relationship_kwargs={
-            "lazy": "joined",
             "primaryjoin": lambda: and_(
             Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id),
             Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id),
@@ -176,7 +172,6 @@ class Conversation(SQLModel, table=True):
     podcast_author: "PodcastAuthorPodcast" = Relationship(
         back_populates="conversations",
         sa_relationship_kwargs={
-            "lazy": "joined",
             "primaryjoin":lambda: and_(
                 Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id),
                 Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id),
@@ -194,9 +189,7 @@ class PodcastGenerationTask(SQLModel, table=True):
     error_message: str | None = None
 
     podcast_id: UUID | None = Field(foreign_key="podcast.id")
-    podcast: Optional[Podcast] = Relationship(back_populates="task", sa_relationship_kwargs={
-        "lazy": "joined",
-    })
+    podcast: Optional[Podcast] = Relationship(back_populates="task")
 
     created_at: datetime.datetime | None = Field(
         default_factory=utcnow,sa_column=Column(
