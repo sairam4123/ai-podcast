@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getToken, supabase } from "./supabase";
+import { getToken } from "./supabase";
 
 type Status = "IDLE" | "LOADING" | "SUCCESS" | "FAILURE";
 

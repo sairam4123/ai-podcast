@@ -2,7 +2,6 @@ import { FaPause, FaPlay, FaSpinner } from "react-icons/fa";
 import { FaRepeat } from "react-icons/fa6";
 import { Podcast } from "../@types/Podcast";
 import { useGetAudio } from "../api/getAudio";
-import { useEffect, useRef } from "react";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { formatDuration } from "../lib/formatDuration";
 import { useGetImage } from "../api/getImage";
@@ -13,9 +12,9 @@ export function TopicComponent({
   ...props
 }: { staggerIndex: number } & Podcast) {
 
-  const {audioUrl, refetch, isLoading} = useGetAudio({podcast_id: props.id}, {enabled: false});
+  const {audioUrl, isLoading} = useGetAudio({podcast_id: props.id}, {enabled: false});
   const {imageUrl, isLoading: imageLoading} = useGetImage({podcastId: props.id});
-  const {audioRef, isPlaying, pause, play, toggle} = useAudioPlayer({})
+  const {audioRef, isPlaying, toggle} = useAudioPlayer({})
 
   const navigate = useNavigate();
 
@@ -72,9 +71,9 @@ export function TopicComponent({
         <div className="flex flex-row px-2 items-center justify-end space-x-6">
           <div className="lg:flex transition-all hidden group-hover:opacity-100 opacity-0 flex-row items-center justify-center space-x-2">
             <button onClick={() => {
-               if (!audioRef.current?.src) {
-                refetch()
-               }
+              //  if (!audioRef.current?.src) {
+              //   refetch()
+              //  }
                toggle()
             }} className="transition-all bg-zinc-600 group/play cursor-pointer active:bg-zinc-950 active:scale-[0.97] drop-shadow-sm drop-shadow-black text-white hover:bg-zinc-500 rounded-lg p-2">
               {isLoading ? <FaSpinner className="text-lg animate-spin" /> : (!isPlaying) ? <FaPlay className="text-lg group-active/play:text-zinc-300" /> : <FaPause className="text-lg group-active/play:text-zinc-300 animate-pulse" />}
@@ -85,7 +84,7 @@ export function TopicComponent({
           </div>
         </div>
       </div>
-      <audio ref={audioRef} src={audioUrl} controls className="hidden" />
+      <audio ref={audioRef} src={audioUrl ?? undefined} controls className="hidden" />
     </div>
   );
 }

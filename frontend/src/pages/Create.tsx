@@ -172,7 +172,7 @@ export default function Create() {
 function HorizontalPodcastCard({ task }: { task?: PodcastGenTask }) {
   console.log("Rendering HorizontalPodcastCard with task:", task);
 
-  const [trackedTask, setTrackedTask] = useState<PodcastGenTask | null>(task);
+  const [trackedTask, setTrackedTask] = useState<PodcastGenTask | null>(task ?? null);
 
   
   useEffect(() => {
@@ -213,10 +213,10 @@ function HorizontalPodcastCard({ task }: { task?: PodcastGenTask }) {
                 })
                 return;
             }
-            setTrackedTask({
-                ...trackedTask,
+            setTrackedTask(trackedTaskPrev => ({
+                ...trackedTaskPrev,
                 ...payload.payload.record,
-            })
+            }))
             // You can handle the update here, e.g., refetch data or update state
         }).subscribe((status) => {
             if (status === "SUBSCRIBED") {
@@ -232,10 +232,10 @@ function HorizontalPodcastCard({ task }: { task?: PodcastGenTask }) {
         // Cleanup function to unsubscribe from the channel
         supabase.channel(`topic:${task?.id}`).unsubscribe();
     }
-}, [task?.id])
+}, [task?.id, task?.status, trackedTask?.podcast?.id]);
 
 const navigate = useNavigate();
-const {imageUrl, isLoading} = api.useGetImage({
+const {imageUrl} = api.useGetImage({
   podcastId: trackedTask?.podcast?.id ?? "",
 })
 return (

@@ -4,10 +4,10 @@ import { API_URL } from "./api";
 
 export function useSearchPodcast({
     searchTerm,
-    limit = 10,
-    offset = 0,
-    sortBy = "relevance",
-    sortOrder = "desc",
+    // limit = 10,
+    // offset = 0,
+    // sortBy = "relevance",
+    // sortOrder = "desc",
 }: {
     searchTerm: string;
     limit?: number;

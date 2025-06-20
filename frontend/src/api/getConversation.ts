@@ -1,3 +1,4 @@
+import { Conversation } from "../@types/Conversation";
 import useFetch from "../lib/useFetch";
 import { API_URL } from "./api";
 
@@ -6,7 +7,7 @@ export function useGetConversation({podcastId}: {podcastId?: string}) {
         v2: "true",
     });
 
-    const {data, loading, error} = useFetch<{success: boolean, message: string, conversation: any}>(
+    const {data, loading, error} = useFetch<{success: boolean, message: string, conversations: Conversation[]}>(
         API_URL + "/podcasts/" + podcastId + "/conversations" + "?" + params.toString(),
         {enabled: !!podcastId}
     );

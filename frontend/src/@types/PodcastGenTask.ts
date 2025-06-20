@@ -11,5 +11,10 @@ export type PodcastGenTask = {
     progress?: number; // Optional progress percentage (0-100)
     progress_message?: string; // Optional message to show progress
 
-    podcast: Podcast;
+    podcast: Podcast & GenTaskPodcast;
+}
+
+export type GenTaskPodcast = {
+    title: string;
+    description: string;
 }

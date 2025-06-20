@@ -12,11 +12,11 @@ const variants = {
 
 export function SearchBox({
     searchTerm,
-    setSearchTerm,
+    // setSearchTerm,
     variant = 'md'
 }: {
     searchTerm?: string;
-    setSearchTerm: (term: string) => void;
+    setSearchTerm?: (term: string) => void;
     variant?: keyof typeof variants;
 }) {
     const [intialSearchTerm, setInitialSearchTerm] = useState(searchTerm || '');
@@ -38,7 +38,7 @@ export function SearchBox({
                 animate={{ opacity: 1, y: 0 }}
                 initial={{ opacity: 0, y: -10 }}
                 exit={{ opacity: 0, y: -10 }}
-                    
+
 
                 className="absolute translate-y-14 h-48 rounded-lg z-10 inset-0 bg-white">
 

@@ -6,7 +6,7 @@ import { getUser, isSignedIn, supabase } from "../lib/supabase";
 import MenuButton from "./MenuButton";
 import { api } from "../api/api";
 import Spinner from "./Spinner";
-import { href, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 export function NavBar() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -92,7 +92,8 @@ const navigate = useNavigate();
                     },
                     isDangerous: true },
                 ]}>
-                    {data ? data.user.display_name : <Spinner isLoading={isLoading || loading} size="1.25rem" marginRight="0px"/>}
+                    {data ? data.user.display_name : error ? error.message : <Spinner isLoading={isLoading || loading} size="1.25rem" marginRight="0px"/>
+                    }
                     </MenuButton>}
             </li>
         </ul>

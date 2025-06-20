@@ -1,7 +1,6 @@
-import { FaSpinner } from "react-icons/fa";
 import { Podcast } from "../@types/Podcast";
-import { useGetAvatarImage } from "../api/getAvatarImage";
-import { cn } from "../lib/cn";
+// import { useGetAvatarImage } from "../api/getAvatarImage";
+// import { cn } from "../lib/cn";
 import { removeSSMLtags } from "../lib/removeSSMLtags";
 import { Conversation as ConversationType } from "../@types/Conversation";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
@@ -60,7 +59,7 @@ export function Conversation({
 
 
 
-const MessageCard = ({message: conv, podcastId, person, isCurrent, onClick, currentPosition, isPlaying, id, isHost}: {
+const MessageCard = ({message: conv, person, isCurrent, onClick, currentPosition, isPlaying, id, isHost}: {
     message: ConversationType
     podcastId: Podcast["id"]
     person: ConversationType["speaker"]

@@ -1,14 +1,11 @@
-import { CgSpinner } from "react-icons/cg";
 import ActionModal, { ActionModalActionRow } from "../@components/ActionModal";
 import { api } from "../api/api";
-import { ImSpinner9 } from "react-icons/im";
-import { FaSpinner } from "react-icons/fa6";
 import { PiSpinnerGap } from "react-icons/pi";
 
 export function CreatePodcastModal({
     isOpen,
     onClose,
-    onCreate
+    // onCreate
 }: {
     isOpen: boolean;
     onClose: () => void;

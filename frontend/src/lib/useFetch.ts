@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getToken, supabase } from "./supabase";
+import { getToken } from "./supabase";
 
 type FetchOpts = {
     enabled: boolean;
@@ -48,7 +48,7 @@ export default function useFetch<T>(url: string, opts: FetchOpts = {enabled: tru
     return {loading, data, error, resetData, refetch}
 } 
 
-export function useFetchWithAuth<T>(url: string, opts: FetchOpts = {enabled: true}): {loading: boolean, data: any, error: Error | null, resetData: () => void; refetch: () => void} {
+export function useFetchWithAuth<T>(url: string, opts: FetchOpts = {enabled: true}): {loading: boolean, data: T | null, error: Error | null, resetData: () => void; refetch: () => void} {
    const [loading, setLoading] = useState(false);
    const [data, setData] = useState<T | null>(null);
    const [error, setError] = useState<Error | null>(null);

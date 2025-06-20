@@ -19,8 +19,11 @@ export function PodcastNew() {
             <div className="flex flex-col flex-grow gap-4 overflow-hidden p-4">
                 {isLoading ? <div className="flex flex-col items-center justify-center flex-grow">
                     <FaSpinner className="animate-spin text-4xl text-gray-200" />
-                </div> : data?.[1] === 404 ? <NotFound /> :
+                </div> : (data as unknown as number[])?.[1] === 404 ? <NotFound /> :
                 <PodcastCard podcast={data?.podcast} />}
+                {
+                    error && <div className="text-red-500 text-center w-full">Error loading podcast: {error.message}</div>
+                }
             </div>
         </main>
     )
@@ -28,23 +31,23 @@ export function PodcastNew() {
 
 export function PodcastCard({podcast}: {podcast?: Podcast}) {
 
-    const {audioUrl, isLoading: audioLoading} = api.useGetAudio({podcast_id: podcast?.id}, {enabled: !!podcast?.id});
+    const {audioUrl, isLoading: audioLoading} = api.useGetAudio({podcast_id: podcast?.id ?? ""}, {enabled: !!podcast?.id});
 
     const {
         play, pause, setSourceUrl, isPlaying
     } = useMediaPlayerContext();
 
-    const {imageUrl} = useGetImage({podcastId: podcast?.id});
+    const {imageUrl} = useGetImage({podcastId: podcast?.id ?? ""});
     const { setCurrentPodcast } = usePodcastContext();
     const {data, isLoading, error} = api.useGetConversation({podcastId: podcast?.id});
 
     return (
         <div className="flex flex-row flex-1 gap-4 overflow-hidden">
             <div className="flex flex-col flex-1/5 bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
-                <img src={imageUrl ?? "/podcastplaceholdercover.png"} alt={podcast?.title} className="w-48 aspect-square mx-auto h-auto object-cover rounded-lg" />
+                <img src={imageUrl ?? "/podcastplaceholdercover.png"} alt={podcast?.podcast_title} className="w-48 aspect-square mx-auto h-auto object-cover rounded-lg" />
                 <h2 className="text-xl font-bold text-white">{podcast?.podcast_title}</h2>
                 <p className="text-gray-200">{podcast?.podcast_description}</p>
-                <p className="text-gray-400 text-sm">{formatDuration(podcast?.duration)}</p>
+                <p className="text-gray-400 text-sm">{podcast?.duration ? formatDuration(podcast?.duration) : "N/A"}</p>
                 <div className="flex flex-row items-center flex-wrap justify-start gap-2">
                     {
                         podcast?.tags?.map((tag, index) => (
@@ -62,7 +65,7 @@ export function PodcastCard({podcast}: {podcast?: Podcast}) {
                                 pause();
                             } else {
                                 setSourceUrl(audioUrl ?? "");
-                                setCurrentPodcast(podcast);
+                                setCurrentPodcast(podcast!);
                                 play();
                             }
                         }}
@@ -77,7 +80,7 @@ export function PodcastCard({podcast}: {podcast?: Podcast}) {
                 <h2 className="text-xl font-bold text-white">Transcript</h2>
 
                 {
-                    (data?.[1] === 404 || 
+                    ((data as unknown as number[])?.[1] === 404 || 
                     data?.conversations?.length === 0 && !isLoading) ?
                     <TranscriptMissing /> :
                     isLoading ? <div className="flex flex-col items-center justify-center flex-grow">
