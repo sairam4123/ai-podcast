@@ -20,7 +20,8 @@ const isLocalNetwork = window.location.hostname.startsWith("192.168.") || window
 console.log("isLocalhost", isLocalhost);
 console.log("isLocalNetwork", isLocalNetwork);
 console.log("window.location.hostname", window.location.hostname);
-export const API_URL = `http://${window.location.hostname}:8000`;
+
+export const API_URL = `http${isLocalhost || isLocalNetwork ? '' : 's'}://${window.location.hostname}:8000`;
 
 export const api = {
     useSearchPodcast,
