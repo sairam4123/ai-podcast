@@ -1,4 +1,5 @@
 import contextlib
+from sqlalchemy import NullPool
 from sqlmodel import create_engine, Session
 
 
@@ -6,7 +7,7 @@ from sqlmodel import create_engine, Session
 
 engine = create_engine(
     "postgresql://postgres:aipodcast-123@db.kzgbfmhlcmfjknkbvggg.supabase.co:5432/postgres",
-    echo=True)
+    echo=True, poolclass=NullPool)
 
 @contextlib.contextmanager
 def session_maker():
