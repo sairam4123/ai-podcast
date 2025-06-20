@@ -22,7 +22,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 
 import pathlib
 
-app = fastapi.FastAPI()
+app = fastapi.FastAPI(root_path="/api")
 
 # Add CORS middleware to allow requests from any origin
 from fastapi.middleware.cors import CORSMiddleware

@@ -17,11 +17,13 @@ import { useSearchPodcast } from "./searchPodcasts";
 // ?
 const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 const isLocalNetwork = window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") || window.location.hostname.startsWith("172.");
-console.log("isLocalhost", isLocalhost);
-console.log("isLocalNetwork", isLocalNetwork);
-console.log("window.location.hostname", window.location.hostname);
+// console.log("isLocalhost", isLocalhost);
+// console.log("isLocalNetwork", isLocalNetwork);
+// console.log("window.location.hostname", window.location.hostname);
 
-export const API_URL = `http${isLocalhost || isLocalNetwork ? '' : 's'}://${window.location.hostname}:8000`;
+const VITE_API_URL = process.env.VITE_APP_API_URL
+
+export const API_URL = VITE_API_URL ? VITE_API_URL : `http${isLocalhost || isLocalNetwork ? '' : 's'}://${window.location.hostname}:8000/api`;
 
 export const api = {
     useSearchPodcast,
