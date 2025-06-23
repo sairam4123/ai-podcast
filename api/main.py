@@ -319,7 +319,7 @@ async def get_podcasts_created_by(user_id: str):
             return {"error": "No podcasts found for this user"}, 404
         return {"results": podcasts_db}
 
-@app.get("/user/{user_id}/", dependencies=[fastapi.Depends(get_current_user)])
+@app.get("/user/{user_id}", dependencies=[fastapi.Depends(get_current_user)])
 async def get_user_profile(user_id: str):
     async with session_maker() as sess:
         user = (await sess.execute(select(UserProfile).where(UserProfile.id == user_id))).scalar_one_or_none()
