@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 db_url = "postgresql+asyncpg://postgres.kzgbfmhlcmfjknkbvggg:aipodcast-123@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
 engine = create_async_engine(
     db_url,
-    echo=True)
+    echo=True, poolclass=NullPool,)
 
 @contextlib.asynccontextmanager
 async def session_maker():
