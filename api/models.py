@@ -7,7 +7,8 @@ from uuid import uuid4, UUID
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import foreign
 
-utcnow = functools.partial(datetime.datetime.now, tz=datetime.timezone.utc)
+# utcnow = functools.partial(datetime.datetime.now, datetime.timezone.utc)
+utcnow = lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
 class UserProfile(SQLModel, table=True):
     id: UUID = Field(primary_key=True)

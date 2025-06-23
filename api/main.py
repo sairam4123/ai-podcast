@@ -1,6 +1,6 @@
 import io
 import fastapi
-from inngest import Context, Inngest, Step, fast_api, TriggerEvent, Event
+from inngest import Context, Inngest, Step, fast_api, TriggerEvent, Event, TriggerCron
 import pydantic
 import pydub
 from sqlmodel import and_, asc, desc, select, any_
@@ -40,7 +40,7 @@ class GeneratePodcast(pydantic.BaseModel):
     language: str | None = None
     description: str | None = None
 
-
+podolli_epoch = 1743465600 # April Fools 00:00:00 2025 UTC
 
 inngest = Inngest(app_id="ai-podcast")
 
@@ -109,6 +109,35 @@ async def get_podcasts(offset: int = 0, limit: int = 10, v2: bool = False):
             results.append({"id": podcast_id, **podcast})
         return {"results": results}
 
+
+@app.get("/podcasts/trending")
+async def get_trending_podcasts(offset: int = 0, limit: int = 10):
+    async with session_maker() as sess:
+        podcasts_db = (await sess.execute(
+            select(Podcast).where(and_(
+                Podcast.trending_score > 0,
+            )).order_by(desc(Podcast.trending_score)).offset(offset).limit(limit)
+        )).scalars().all()
+
+        if not podcasts_db:
+            return {"error": "No trending podcasts found"}, 404
+        
+        new_podcasts = [
+            {
+                "id": str(p.id),
+                "podcast_title": p.title,
+                "podcast_description": p.description,
+                "language": p.language,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+                "view_count": p.view_count,
+                "like_count": p.like_count,
+                "duration": p.duration,
+            } for p in podcasts_db
+        ]
+
+        return {"results": new_podcasts}
+
 @app.get("/podcasts/search")
 async def search_podcasts(query: str, v2: bool = False):
 
@@ -163,6 +192,91 @@ async def search_podcasts(query: str, v2: bool = False):
     if results:
         return {"results": results}
     return {"results": []}
+
+@app.post("/analytics/podcasts/play")
+async def play_button_pressed(podcast_id: str):
+    async with session_maker() as sess:
+        podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
+        if not podcast_db:
+            return {"error": "Podcast not found"}, 404
+        
+        podcast_db.view_count += 1
+        await sess.commit()
+        
+        return {"message": "Podcast play count updated", "view_count": podcast_db.view_count}
+
+
+@app.post("/podcasts/{podcast_id}/like")
+async def like_button_pressed(podcast_id: str):
+    async with session_maker() as sess:
+        podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
+        if not podcast_db:
+            return {"error": "Podcast not found"}, 404
+        
+        podcast_db.like_count += 1
+        await sess.commit()
+        
+        return {"message": "Podcast like count updated", "like_count": podcast_db.like_count}
+    
+
+@inngest.create_function(
+        fn_id="update_trend_analytics",
+        name="Update Trend Analytics",
+        trigger=TriggerCron(
+            cron="*/5 * * * *",  # Every five minutes
+        )
+)
+async def update_trend_analytics(ctx: Context, step: Step):
+    async def handler():
+        # Fetch the latest podcasts
+        async with session_maker() as sess:
+            podcasts_db = (await sess.execute(select(Podcast).order_by(desc(Podcast.created_at)))).scalars().all()
+            if not podcasts_db:
+                return {"message": "No podcasts found"}
+            
+            print("Calculating trending scores for podcasts...")
+            for podcast in podcasts_db:
+                podcast.trending_score = podcast.view_count + (podcast.like_count * 1.5) - (podcast.dislike_count) + ((podcast.created_at.timestamp() - podolli_epoch) / 45000)
+                print("Calculating trending score for podcast:", podcast.title, "Score:", podcast.trending_score)
+
+            sess.add_all(podcasts_db)
+            await sess.commit()
+        print("Trend analytics updated successfully")
+        return {"message": "Trend analytics updated successfully"}
+        
+    await step.run("commit_trending_scores", handler=handler)
+    return {"message": "Trend analytics updated successfully"}
+
+
+@app.get("/podcasts/featured")
+async def get_featured_podcasts(offset: int = 0, limit: int = 10):
+    async with session_maker() as sess:
+        podcasts_db = (await sess.execute(
+            select(Podcast).where(and_(
+                Podcast.is_featured == True,
+            )).order_by(desc(Podcast.trending_score)).offset(offset).limit(limit)
+        )).scalars().all()
+
+        if not podcasts_db:
+            return {"error": "No featured podcasts found"}, 404
+        
+        new_podcasts = [
+            {
+                "id": str(p.id),
+                "podcast_title": p.title,
+                "podcast_description": p.description,
+                "language": p.language,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+                "view_count": p.view_count,
+                "like_count": p.like_count,
+                "duration": p.duration,
+            } for p in podcasts_db
+        ]
+
+        return {"results": new_podcasts}
+    
+
 
 @app.get("/podcasts/{podcast_id}")
 async def get_podcast(podcast_id: str, v2: bool = False):
@@ -279,7 +393,6 @@ async def get_queue(offset: int = 0, limit: int = 10):
 }
 
 
-
 @app.post("/podcasts")
 async def create_podcast(podcast: GeneratePodcast | None = None):
 
@@ -290,6 +403,7 @@ async def create_podcast(podcast: GeneratePodcast | None = None):
     async with session_maker() as sess:
         sess.add(task)
         await sess.commit()
+        await sess.refresh(task)  # Refresh to get the generated ID
 
     # supabase = Supabase(os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_ROLE_KEY", ""))
     
@@ -379,7 +493,6 @@ async def login(user_login: UserLogin):
     })
 
     return auth
-
 
 @app.middleware("http")
 async def log_errors(request: fastapi.Request, call_next):
@@ -486,7 +599,7 @@ async def get_podcast_episodes(podcast_id: str):
 
     # with open("images.json", "w") as f:
     #     f.write(json.dumps(images, indent=4))
-fast_api.serve(app, inngest,functions=[create_podcast_inngest], serve_path="/inngest")
+fast_api.serve(app, inngest,functions=[create_podcast_inngest, update_trend_analytics], serve_path="/inngest")
 
 if __name__ == '__main__':
     pass

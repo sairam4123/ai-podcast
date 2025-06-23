@@ -28,3 +28,28 @@ export default function Shimmer({ className = "", rounded = "rounded-md" }: Shim
     </div>
   );
 }
+
+const shimmerStyle = {
+  backgroundImage:
+    "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
+};
+
+export function ShimmerBlock({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={clsx(
+        "relative overflow-hidden bg-slate-300/50",
+        className,
+        "rounded-md"
+      )}
+    >
+      <motion.div
+        className="absolute inset-0"
+        initial={{ x: "-100%" }}
+        animate={{ x: "100%" }}
+        transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+        style={{ ...shimmerStyle }}
+      />
+    </div>
+  );
+}

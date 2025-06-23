@@ -2,8 +2,9 @@ import { FaBackward, FaForward, FaPause, FaPlay } from "react-icons/fa";
 import { api } from "../api/api";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
-import { formatDuration } from "../lib/formatDuration";
+import { formatDuration } from "../utils/formatDuration";
 import { useNavigate } from "react-router";
+import { AnimatePresence, motion } from "framer-motion";
 
 export function MediaPlayer() {
     const {currentPosition, isPlaying, pause, play} = useMediaPlayerContext();
@@ -19,7 +20,21 @@ export function MediaPlayer() {
     }
 
     return (
-        <div className="fixed flex flex-col h-28 drop-shadow-lg drop-shadow-black/50 bottom-4 border border-sky-200 transform -translate-x-1/2 left-1/2 w-11/12 rounded-lg bg-sky-950 z-50">
+        <AnimatePresence>
+        {currentPodcast?.id && <motion.div initial={{
+            opacity: 0,
+            y: 20,
+        }} animate={{
+            opacity: 1,
+            y: 0,
+        }} exit={{
+            opacity: 0,
+            y: 20,
+        }} transition={{
+            ease: "easeInOut",
+            duration: 0.3,
+            type: "spring",
+        }} className="fixed flex flex-col h-28 drop-shadow-lg drop-shadow-black/50 bottom-4 border border-sky-200 transform -translate-x-1/2 left-1/2 w-11/12 rounded-lg bg-sky-950 z-50">
             <div className="flex flex-row flex-grow items-center gap-2 justify-between">
                 <img className="h-26 w-auto rounded-lg aspect-square mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%" src={imageUrl ?? "/podcastplaceholdercover.png"}></img>
                 <div className="flex flex-col flex-grow">
@@ -73,6 +88,7 @@ export function MediaPlayer() {
                     <div className="h-full bg-sky-500 rounded-lg transition-all duration-150 ease-in-out group-hover/progress:rounded-full" style={{ width: `${( 1 - (currentPodcast.duration - currentPosition) / (currentPodcast.duration)) * 100}%` }}></div>
                 </div>
             </div>
-        </div>
+        </motion.div>}
+        </AnimatePresence>
     );
 }

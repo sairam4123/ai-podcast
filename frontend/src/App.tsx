@@ -86,8 +86,8 @@ import Create from './pages/Create'
 export function App() {
   return (
   
-    <MediaPlayerProvider>
     <PodcastProvider>
+    <MediaPlayerProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -99,7 +99,7 @@ export function App() {
       </Routes>
     <MediaPlayer />
     </BrowserRouter>
-    </PodcastProvider>
     </MediaPlayerProvider>
+    </PodcastProvider>
   );
 }

@@ -7,7 +7,7 @@ from pydub import AudioSegment
 import google.cloud.texttospeech as tts
 
 
-from gen import detect_topic_language
+# from gen import detect_topic_language
 
 def unique_languages_from_voices(voices: Sequence[tts.Voice]):
     language_set = set()
@@ -36,11 +36,13 @@ def shift_down(audio: AudioSegment, semitones: float) -> AudioSegment:
     new_sample_rate = int(audio.frame_rate * (2.0 ** (semitones / 12.0)))
     return audio._spawn(audio.raw_data, overrides={'frame_rate': new_sample_rate}).set_frame_rate(audio.frame_rate)
 
-def list_voices(language_code=None):
+def list_voices(language_code=None, model=None):
     client = tts.TextToSpeechClient.from_service_account_json("gen-lang-client.json")
     response = client.list_voices(language_code=language_code)
     voices = sorted(response.voices, key=lambda voice: voice.name)
-
+    if model:
+        voices = [voice for voice in voices if model in voice.name]
+    
     print(f" Voices: {len(voices)} ".center(60, "-"))
     for voice in voices:
         languages = ", ".join(voice.language_codes)
@@ -74,20 +76,25 @@ def text_to_wav(voice_name: str, text: str):
     print(f"Generating {count:03d} - {voice_name} with pitch shift of {pitch_shift} semitones")
 
     file: AudioSegment = AudioSegment.from_wav(io.BytesIO(response.audio_content))
-    file = shift_down(file, pitch_shift)  # Shift down by 2 semitones
+    # file = shift_down(file, pitch_shift)  # Shift down by 2 semitones
 
     
     file.export(f"{count:03d}-{voice_name}.wav", format="wav")
     count += 1
+
+# def text_to_wav():
         
 
-# list_voices()
+list_voices("en-IN", "Chirp3")
 
-print(detect_topic_language("explain the process behind time-sharing in operating systems"))
+# print(detect_topic_language("explain the process behind time-sharing in operating systems"))
 
-text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
-text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
-text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
-text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
-text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
-text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+# text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+# text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+# text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+# text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+# text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+# text_to_wav("en-GB-Chirp3-HD-Charon", "Ah, like time-sharing! So the OS juggles running programs using these scheduling rules to decide who gets the CPU next. Cool!")
+text_to_wav("en-IN-Chirp3-HD-Achernar", "May I have your attention please? 2,2,1,0,6, Pune, Mumbai Chatrapati Shivaji Maharaj Terminus, Express, is on, platform number 2.")
+text_to_wav("en-IN-Chirp3-HD-Aoede", "May I have your attention please? 2,2,7,3,2, Mumbai Chatrapati Shivaji Maharaj Terminus, Hydrabad, Express, is on platform number 5.")
+text_to_wav("en-IN-Chirp3-HD-Callirrhoe", "May I have your attention please? 0,1,5,3,9, Pune, Satara, Express, will depart at the scheduled time of, 18 hours, 30 minutes, from platform number 1.")

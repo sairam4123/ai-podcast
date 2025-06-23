@@ -26,6 +26,9 @@ import google.genai as genai
 import google.cloud.texttospeech as tts
 import io
 
+from sqlalchemy.orm import selectinload, joinedload
+
+
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from supabase import AClient as Supabase
 
@@ -35,9 +38,13 @@ def get_service_account_info() -> dict:
     return res
     
 
-speech_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_service_account_info(
-    get_service_account_info()
-)
+def get_speech_client():
+    tts_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_service_account_info(
+    get_service_account_info())
+    return tts_client
+
+speech_client = get_speech_client()
+
 
 VOICE_MODEL = "Chirp3" # "Standard" | "Wavenet" | "Chirp3"
 
@@ -328,7 +335,8 @@ def remap_os_safe_title(title: str) -> str:
 
 async def select_voice_people(people: list[PersonAI], lang: str) -> dict[str, tts.Voice]:
 
-    speech_client = tts.TextToSpeechAsyncClient.from_service_account_json(os.environ["GEN_LANG_JSON"])
+    # speech_client = tts.TextToSpeechAsyncClient.from_service_account_json(os.environ["GEN_LANG_JSON"])
+    speech_client = get_speech_client()
 
     voices = {}
     used_voices = set()
@@ -541,7 +549,8 @@ async def generate_podcast_content(create_podcast: CreatePodcast):
 
 
 async def generate_audio(turn: ConversationAI, voice: tts.Voice, country: str) -> io.BytesIO:
-    speech_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_service_account_json(os.environ["GEN_LANG_JSON"])
+    # speech_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_service_account_json(os.environ["GEN_LANG_JSON"])
+    speech_client = get_speech_client()
     pronunciations = turn.pronunciations or []
     print([pron for pron in pronunciations])
     # filename = os.path.join(TTS_FOLDER, filename)
@@ -635,8 +644,6 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         create_podcast.language = language
     
     await podcast_gen_task.progress_update(9, "Generating podcast metadata...")
-
-
     
 
     print(f"Creating podcast for topic: {create_podcast.topic} with ID: {task_id}")
@@ -646,13 +653,12 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
     podcast_conversation = podcast_metadata.conversation
 
     podcast = Podcast(
-            title=podcast_metadata.podcastTitle,
-            description=podcast_metadata.podcastDescription,
-            language=podcast_metadata.language,
-            tags=podcast_metadata.tags,
-            profile_id=profile_id)
-    
-
+        title=podcast_metadata.podcastTitle,
+        description=podcast_metadata.podcastDescription,
+        language=podcast_metadata.language,
+        tags=podcast_metadata.tags,
+        profile_id=profile_id
+    )
     
 
     podcast_id = podcast.id
@@ -675,13 +681,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
     async with session_maker() as sess:
         sess.add(podcast)
         await sess.commit()
-
-
-    episode = PodcastEpisode(
-        number=int(podcast_metadata.episodeNumber),
-        title=podcast_metadata.episodeTitle,
-        podcast_id=podcast.id,
-    )
+        await sess.refresh(podcast)
 
     async with session_maker() as sess:
         task = (await sess.execute(select(PodcastGenerationTask).where(PodcastGenerationTask.id == task_id))).scalar_one_or_none()
@@ -692,27 +692,39 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         sess.add(task)
         await sess.commit() # update the task with the podcast ID at the earliest possible moment
 
-    persona_map = {author.id: persona for persona, author in zip(personas, podcast_metadata.people)}
-    # Add the conversation turns to the podcast
-    turns = [Conversation(
-        text=turn.text,
-        speaker_id=persona_map[turn.speaker].id,
-        start_time=None,  # Will be set later after audio generation
-        end_time=None,  # Will be set later after audio generation
-        episode_id=episode.id,
-        episode=episode,
-        podcast_id=podcast.id,
-    ) for turn in podcast_conversation]
-    episode.conversations = turns
 
     await podcast_gen_task.progress_update(15, "Saving podcast metadata and episode...")
 
     async with session_maker() as sess:
-        podcast = (await sess.execute(select(Podcast).where(Podcast.id == podcast.id))).scalar_one_or_none()
+
+        episode = PodcastEpisode(
+            number=int(podcast_metadata.episodeNumber),
+            title=podcast_metadata.episodeTitle,
+            podcast_id=podcast.id,
+        )
+
+        persona_map = {author.id: persona for persona, author in zip(personas, podcast_metadata.people)}
+        # Add the conversation turns to the podcast
+        turns = [Conversation(
+            text=turn.text,
+            speaker_id=persona_map[turn.speaker].id,
+            start_time=None,  # Will be set later after audio generation
+            end_time=None,  # Will be set later after audio generation
+            episode_id=episode.id,
+            episode=episode,
+            podcast_id=podcast.id,
+        ) for turn in podcast_conversation]
+        episode.conversations = turns
+
+        print("Getting new podcast from the database...")
+        podcast = (await sess.execute(select(Podcast).where(Podcast.id == podcast.id).options(
+            selectinload(Podcast.authors), selectinload(Podcast.episodes).selectinload(PodcastEpisode.conversations)
+        ))).scalar_one_or_none()
         if podcast is None:
+            print("Podcast not found in the database. Something went terribly wrong.")
             raise ValueError(f"Podcast not found. Something went terribly wrong.")
         podcast.episodes.append(episode)
-    
+        print("Saving podcast metadata and episode...")
         sess.add(podcast)
         await sess.flush()
         
@@ -723,16 +735,16 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         print("Selecting voices for the podcast...")
         voices = await select_voice_people(podcast_metadata.people, podcast_metadata.language)
         print(f"Selected voices: \n{', '.join([f'{person} - {voice.name}' for person, voice in voices.items()])}")
+        await podcast_gen_task.progress_update(50, "Generating audio segments for the podcast...")
 
         conv_audios = await save_conversation_audio(podcast_metadata.people, podcast_conversation, voices)
 
-        await podcast_gen_task.progress_update(50, "Generating audio segments for the podcast...")
+        await podcast_gen_task.progress_update(80, "Combining audio segments...")
 
+        markers, combined_audio = combine_audio_segments(conv_audios)
         # Combine the audio segments into a single podcast audio file
         print("Combining audio segments...")
-        markers, combined_audio = combine_audio_segments(conv_audios)
 
-        await podcast_gen_task.progress_update(80, "Combining audio segments...")
         for idx, turn in enumerate(turns):
             turn.start_time = markers[idx][0]
             turn.end_time = markers[idx][1]

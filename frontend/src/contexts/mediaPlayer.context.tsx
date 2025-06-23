@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { usePlayPressed } from "../api/analytics/PlayPressed";
+import { usePodcastContext } from "./podcast.context";
 
 type MediaPlayerContextType = {
     isPlaying: boolean;
@@ -84,7 +86,13 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
         };
     }, [sourceUrl]);
 
+    const {currentPodcast} = usePodcastContext();
+
+    const {mutate} = usePlayPressed({ podcastId: currentPodcast?.id ?? "" });
+
     const play = () => {
+
+        mutate({});
         console.log("Playing audio from source:", sourceUrl);
 
         if (!audioRef.current) {

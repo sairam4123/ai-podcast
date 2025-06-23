@@ -3,7 +3,7 @@ import { FaRepeat } from "react-icons/fa6";
 import { Podcast } from "../@types/Podcast";
 import { useGetAudio } from "../api/getAudio";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
-import { formatDuration } from "../lib/formatDuration";
+import { formatDuration } from "../utils/formatDuration";
 import { useGetImage } from "../api/getImage";
 import { useNavigate } from "react-router";
 

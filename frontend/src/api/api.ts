@@ -7,9 +7,11 @@ import { useGetAllPodcast } from "./getAllPodcast";
 import { useGetAudio } from "./getAudio";
 import { useGetAvatarImage } from "./getAvatarImage";
 import { useGetConversation } from "./getConversation";
+import { useGetFeaturedPodcasts } from "./getFeaturedPodcasts";
 import { useGetImage } from "./getImage";
 import { useGetPodcast } from "./getPodcast";
 import { useGetQueue } from "./getQueue";
+import { useGetTrendingPodcasts } from "./getTrendingPodcasts";
 import useGetUserProfile from "./getUserProfile";
 import { useSearchPodcast } from "./searchPodcasts";
 
@@ -36,4 +38,6 @@ export const api = {
     useGetUserProfile,
     useGetQueue,
     useGetConversation,
+    useGetFeaturedPodcasts,
+    useGetTrendingPodcasts,
 }
