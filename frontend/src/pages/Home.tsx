@@ -1,7 +1,7 @@
 import { api } from "../api/api"
 import { NavBar } from "../@components/NavBar"
 import PodcastCardSkeleton, { PodcastCard } from "../@components/PodcastCard"
-import PodcastFeaturedCard from "../@components/PodcastFeaturedCard"
+import PodcastFeaturedCard, { PodcastFeaturedCardSkeleton } from "../@components/PodcastFeaturedCard"
 
 export function Home() {
 
@@ -76,7 +76,7 @@ export function Home() {
                 })}
                 {
                     featuredIsLoading && Array.from({ length: 5 }).map((_, index) => (
-                        <PodcastCardSkeleton key={index} />
+                        <PodcastFeaturedCardSkeleton key={index} />
                     ))
                 }
                 {

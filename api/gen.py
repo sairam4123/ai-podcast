@@ -750,8 +750,6 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
             turn.end_time = markers[idx][1]
             turn.podcast_id = podcast.id
         
-        buffer = io.BytesIO()
-        combined_audio.export(buffer, format="wav")
 
         podcast.duration = len(combined_audio) / 1000.0  # duration in seconds
 
@@ -759,6 +757,8 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
         sess.add_all(turns)
         await sess.commit()
 
+    buffer = io.BytesIO()
+    combined_audio.export(buffer, format="wav")
     await podcast_gen_task.progress_update(85, "Saving podcast metadata and audio...")
 
     buffer.seek(0)  # Reset the buffer position to the beginning

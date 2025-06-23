@@ -39,7 +39,7 @@ export function MediaPlayer() {
                 <img className="h-26 w-auto rounded-lg aspect-square mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%" src={imageUrl ?? "/podcastplaceholdercover.png"}></img>
                 <div className="flex flex-col flex-grow">
                     <div>
-                        <p className="text-lg font-bold text-gray-100">
+                        <p className="text-lg cursor-pointer font-bold text-gray-100">
                             <a onClick={
                                 (e) => {
                                     e.preventDefault();
