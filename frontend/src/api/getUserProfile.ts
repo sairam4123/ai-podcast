@@ -11,7 +11,7 @@ export default function useGetUserProfile({userId}: { userId: string }) {
     display_name: string;
     id: string;
     username: string;
- } }>(API_URL + `/user/${userId}`, {
+ } }>(API_URL + `/user/${userId}/`, {
     enabled: !!userId,
  });   
 

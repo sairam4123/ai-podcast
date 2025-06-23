@@ -48,7 +48,11 @@ const navigate = useNavigate();
 
     return <nav>
         <ul className="flex text-base flex-row items-center space-x-4 p-4 from-sky-700/50 shadow-black/30 shadow-lg to-blue-700/50 bg-linear-330 text-white">
-            <li className="font-black text-3xl text-shadow-md "><a onClick={
+            <li className="font-black  flex flex-row gap-2 text-3xl text-shadow-md ">
+            
+            <img className="h-10 w-auto object-cover scale-180" src="/logo.png" alt="Podolli.AI Logo" />
+
+            <a onClick={
                 (e) => {
                     e.preventDefault();
                     navigate("/");
