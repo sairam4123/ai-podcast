@@ -3,9 +3,9 @@ import { Podcast } from "../@types/Podcast"
 import { api } from "../api/api"
 import { usePodcastContext } from "../contexts/podcast.context"
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context"
-import Shimmer from "../@components/Shimmer";
 import clsx from "clsx"
 import { motion } from "framer-motion"
+import { cn } from "../lib/cn"
 
 
 export default function PodcastFeaturedCard({
@@ -45,11 +45,12 @@ export default function PodcastFeaturedCard({
             </p>
 
             <p onClick={() => {
+              if (audioLoading) return; // Prevent play if audio is still loading
                 setSourceUrl(audioUrl ?? "");
                 setCurrentPodcast(podcast);
                 setIsPodcastPlaying(true);
                 play();
-            }} className="text-white mt-auto text-sm flex w-fit ml-auto items-center justify-center gap-2 text-center rounded-full bg-sky-600 px-4 py-2 hover:bg-sky-500 font-light select-none">
+            }} className={cn("text-white mt-auto text-sm flex w-fit ml-auto items-center justify-center gap-2 text-center rounded-full bg-sky-600 px-4 py-2 hover:bg-sky-500 font-light select-none", audioLoading && "cursor-wait opacity-60")}>
                 <FaPlay></FaPlay>
             </p>
             </div>
