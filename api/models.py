@@ -1,7 +1,7 @@
 import datetime
 import functools
 from typing import Optional
-from sqlmodel import DateTime, SQLModel, Field, Relationship, Column, String, func
+from sqlmodel import DateTime, SQLModel, Field, Relationship, Column, String, func, JSON
 from sqlalchemy.dialects.postgresql import ARRAY
 from uuid import uuid4, UUID
 from sqlalchemy.sql import and_
@@ -9,6 +9,19 @@ from sqlalchemy.orm import foreign
 
 # utcnow = functools.partial(datetime.datetime.now, datetime.timezone.utc)
 utcnow = lambda: datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+
+# class GenerationStyle:
+#     def __init__(self, topic: str, style: str, language: str, description: str,):
+#         self.topic = topic
+#         self.style = style
+#         self.language = language
+#         self.description = description
+
+#     def __composite_values__(self):
+#         return self.topic, self.style, self.language, self.description
+
+#     def __repr__(self):
+#         return f"{self.topic} - {self.style} - {self.language} - {self.description}"
 
 class UserProfile(SQLModel, table=True):
     id: UUID = Field(primary_key=True)
@@ -191,6 +204,10 @@ class PodcastGenerationTask(SQLModel, table=True):
 
     podcast_id: UUID | None = Field(foreign_key="podcast.id")
     podcast: Optional[Podcast] = Relationship(back_populates="task")
+
+    generation_data: dict | None = Field(
+        default=None, sa_column=Column(JSON, nullable=True)
+    )  # JSON or other data related to the generation task
 
     created_at: datetime.datetime | None = Field(
         default_factory=utcnow,sa_column=Column(

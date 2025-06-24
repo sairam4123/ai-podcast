@@ -24,7 +24,7 @@ export default function Create() {
     <div className="flex flex-col min-h-screen lg:h-screen select-none bg-radial pb-32 from-sky-700 to-blue-900">
       <NavBar />
       <div className="flex flex-col lg:flex-row flex-1 gap-4 p-4 overflow-hidden">
-        <div className="flex flex-col flex-1/3 bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
+        <div className="flex flex-col flex-1/3 overflow-y-auto bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
           <h1 className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
             Create a new podcast
           </h1>
@@ -48,7 +48,7 @@ export default function Create() {
               value={description}
               className="border bg-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter podcast description"
-              rows={4}
+              rows={3}
             ></textarea>
             <label className="text-sm font-semibold text-gray-50">Style</label>
             <input

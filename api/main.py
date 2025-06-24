@@ -3,7 +3,7 @@ import fastapi
 from inngest import Context, Inngest, Step, fast_api, TriggerEvent, Event, TriggerCron
 import pydantic
 import pydub
-from sqlmodel import and_, asc, desc, select, any_
+from sqlmodel import and_, asc, desc, or_, select, any_
 from sqlalchemy.orm import selectinload, joinedload
 # from sqlalchemy import select
 from api.utils import get_current_user, get_supabase_client
@@ -268,6 +268,50 @@ async def update_trend_analytics(ctx: Context, step: Step):
     return {"message": "Trend analytics updated successfully"}
 
 
+@inngest.create_function(
+        fn_id="generate_pending_podcasts",
+        name="Generate Pending Podcasts",
+        trigger=TriggerCron(
+            cron="*/30 * * * *",  # Every 30 minutes
+        )
+)
+async def generate_pending_podcasts(ctx: Context, step: Step):
+    async def handler():
+        async with session_maker() as sess:
+            tasks = (await sess.execute(
+                select(PodcastGenerationTask).where(or_(PodcastGenerationTask.status == "pending"))
+                .order_by(PodcastGenerationTask.created_at)
+            )).scalars().all()
+
+            if not tasks:
+                return {"message": "No pending podcast generation tasks found"}
+
+            print("Generating podcasts for pending tasks...")
+            for task in tasks:
+                print("Processing task:", task.id)
+            
+                if not task.generation_data:
+                    print("No generation data found for task:", task.id)
+                    continue
+                await inngest.send(
+                    Event(
+                        data={
+                            "task_id": str(task.id),
+                            "topic": task.generation_data["topic"],
+                            "style": task.generation_data["style"],
+                            "language": task.generation_data["language"],
+                            "description": task.generation_data["description"],
+                        },
+                        name="ai-podcast.create_podcast",
+                        id=str(uuid4()),
+                    )
+                )
+
+        return {"message": "Pending podcasts generated successfully"}
+    
+    await step.run("generate_pending_podcasts", handler=handler)
+    return {"message": "Pending podcasts generation completed"}
+
 @app.get("/podcasts/featured")
 async def get_featured_podcasts(offset: int = 0, limit: int = 10):
     async with session_maker() as sess:
@@ -419,7 +463,14 @@ async def create_podcast(podcast: GeneratePodcast | None = None):
     if not podcast:
         return {"error": "No podcast generation data provided"}, 400
     
-    task = PodcastGenerationTask(status="pending", progress=0, progress_message="Starting podcast generation...", podcast_id=None)
+    task = PodcastGenerationTask(status="pending", progress=0, progress_message="Starting podcast generation...", podcast_id=None,
+        generation_data={
+            "topic": podcast.topic,
+            "style": podcast.style,
+            "language": podcast.language,
+            "description": podcast.description,
+        } if podcast else None
+    )
     async with session_maker() as sess:
         sess.add(task)
         await sess.commit()
@@ -637,7 +688,7 @@ async def get_podcast_episodes(podcast_id: str):
 
     # with open("images.json", "w") as f:
     #     f.write(json.dumps(images, indent=4))
-fast_api.serve(app, inngest,functions=[create_podcast_inngest, update_trend_analytics], serve_path="/inngest")
+fast_api.serve(app, inngest,functions=[create_podcast_inngest, update_trend_analytics, generate_pending_podcasts], serve_path="/inngest")
 
 if __name__ == '__main__':
     pass

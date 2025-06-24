@@ -58,7 +58,7 @@ const navigate = useNavigate();
                     navigate("/");
                 }
                 
-            } className="lg:text-3xl text-xl my-auto" href="/">Podolli.AI</a></li>
+            } className="lg:text-3xl text-lg my-auto" href="/">Podolli.AI</a></li>
             <li className="flex-grow hidden text-base md:flex justify-center">
                 <SearchBox variant="xl" />
             </li>
