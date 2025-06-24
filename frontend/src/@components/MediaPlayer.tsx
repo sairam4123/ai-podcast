@@ -36,7 +36,7 @@ export function MediaPlayer() {
             type: "spring",
         }} className="fixed flex flex-col h-28 drop-shadow-lg drop-shadow-black/50 bottom-4 border border-sky-200 transform -translate-x-1/2 left-1/2 w-11/12 rounded-lg bg-sky-950 z-50">
             <div className="flex flex-row flex-grow items-center gap-2 justify-between">
-                <img className="h-26 w-auto rounded-lg aspect-square mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%" src={imageUrl ?? "/podcastplaceholdercover.png"}></img>
+                <img className="lg:h-26 h-22 w-auto rounded-lg aspect-square mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%" src={imageUrl ?? "/podcastplaceholdercover.png"}></img>
                 <div className="flex flex-col flex-grow">
                     <div>
                         <p className="text-lg cursor-pointer font-bold text-gray-100">
@@ -49,7 +49,7 @@ export function MediaPlayer() {
                             {currentPodcast?.podcast_title ?? "Podcast Title.."}
                             </a>
                         </p>
-                        <p className="text-sm text-gray-300">{currentPodcast?.podcast_description ?? "Description..."}</p>
+                        <p className="lg:text-sm text-xs line-clamp-2 text-gray-300">{currentPodcast?.podcast_description ?? "Description..."}</p>
                         {/* <p className="text-xs text-gray-400">{formatDuration(currentPodcast?.duration)}</p> */}
                     </div>
                     <div className="flex flex-row items-center justify-between px-2 mt-2">

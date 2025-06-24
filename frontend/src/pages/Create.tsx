@@ -21,9 +21,9 @@ export default function Create() {
   const [description, setDescription] = useState("");
 
   return (
-    <div className="flex flex-col h-screen select-none bg-radial from-sky-700 to-blue-900">
+    <div className="flex flex-col min-h-screen lg:h-screen select-none bg-radial pb-32 from-sky-700 to-blue-900">
       <NavBar />
-      <div className="flex flex-row flex-1 gap-4 p-4 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 gap-4 p-4 overflow-hidden">
         <div className="flex flex-col flex-1/3 bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
           <h1 className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
             Create a new podcast
@@ -240,12 +240,12 @@ const {imageUrl} = api.useGetImage({
 })
 return (
     <div
-    className="h-28 w-full bg-linear-60 from-25% from-sky-700 to-sky-500 shadow-2xl border-sky-700 border shadow-black/30 hover:shadow-black/40 gap-2 rounded-lg hover:scale-102 transition-all ease-in-out hover:brightness-110 flex flex-row"
+    className="lg:h-28 h-24 w-full bg-linear-60 from-25% from-sky-700 to-sky-500 shadow-2xl border-sky-700 border shadow-black/30 hover:shadow-black/40 gap-2 rounded-lg hover:scale-102 transition-all ease-in-out hover:brightness-110 flex flex-row"
     tabIndex={0}
     >
       <div className="p-1">
         <img
-          className="h-26 min-w-26 rounded-lg aspect-square mask-radial-from-91% mask-radial-fartest-side mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%"
+          className="lg:h-26 h-20 min-w-20 lg:min-w-26 rounded-lg aspect-square mask-radial-from-91% mask-radial-fartest-side mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%"
           src={
             
             imageUrl ??
@@ -269,12 +269,12 @@ return (
                     navigate(`/podcast/${trackedTask?.podcast_id}`);
                 }}
                 href={`/podcast/${trackedTask?.podcast_id}`}
-                className="hover:underline hover:text-sky-50 transition-all cursor-pointer duration-150 ease-in-out"
+                className="hover:underline text-base hover:text-sky-50 line-clamp-1 transition-all cursor-pointer duration-150 ease-in-out"
               >
                 {trackedTask?.podcast?.title ?? "Podcast Title.."}
               </a>
             </p>
-            <p className="text-sm cursor-default text-gray-300">
+            <p className="cursor-default text-xs line-clamp-2 text-gray-300">
               {trackedTask?.podcast?.description ?? "Description..."}
             </p>
             {/* <p className="text-xs text-gray-400">{formatDuration(currentPodcast?.duration)}</p> */}
@@ -292,9 +292,9 @@ return (
                 ? "Failed"
                 : "Unknown Status"}
             </p>
-            {trackedTask?.status === "in_progress" && <p className="text-sm text-gray-200">
+            {trackedTask?.status === "in_progress" && <p className="text-xs text-gray-200">
                 {trackedTask?.progress !== undefined
-                ? `Progress: ${trackedTask.progress}% - ${trackedTask?.progress_message}`
+                ? `${trackedTask.progress}% - ${trackedTask?.progress_message}`
                 : "No progress available"}
             </p>
             }

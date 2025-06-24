@@ -15,6 +15,7 @@ import { PodcastProvider } from './contexts/podcast.context'
 import { PodcastNew } from './pages/PodcastNew'
 import Login from './pages/Login'
 import Create from './pages/Create'
+import Register from "./pages/Register";
 
 
 // export function AppNew() {
@@ -96,6 +97,7 @@ export function App() {
         <Route path="/login" element={
           <Login />
         } />
+        <Route path="/register" element={<Register />} />
       </Routes>
     <MediaPlayer />
     </BrowserRouter>

@@ -14,6 +14,8 @@ import { useGetQueue } from "./getQueue";
 import { useGetTrendingPodcasts } from "./getTrendingPodcasts";
 import useGetUserProfile from "./getUserProfile";
 import { useSearchPodcast } from "./searchPodcasts";
+import useUserLogin from "./userLogin";
+import useUserRegister from "./userRegister";
 
 // check if the environment is hosted on localhost or local network
 // ?
@@ -35,9 +37,11 @@ export const api = {
     useGetAvatarImage,
     useGetImage,
     useGetPodcast,
-    useGetUserProfile,
     useGetQueue,
     useGetConversation,
     useGetFeaturedPodcasts,
     useGetTrendingPodcasts,
+    useGetUserProfile,
+    useUserLogin,
+    useUserRegister,
 }

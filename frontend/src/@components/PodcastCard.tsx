@@ -79,7 +79,15 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
   // // console.log("Now:", new Date());
 
   return (
-    <div className="relative cursor-pointer z-1 active:scale-[0.98] select-none w-48 h-64 hover:brightness-110 group/card hover:scale-[1.03] border border-sky-800/20 transition-all ease-out shadow-md hover:shadow-black/80 shadow-black/60 m-3 min-w-48 bg-sky-500/50 rounded-lg">
+    <div onClick={(e) => {
+      e.stopPropagation();
+      console.log("Clicked on podcast card", podcast?.id);
+      setSourceUrl(audioUrl);
+      setCurrentPodcast(podcast!);
+      if (!isPlaying || !isCurrentPodcast) {
+        play();
+      }
+    }} className="relative cursor-pointer z-1 active:scale-[0.98] select-none w-48 h-64 hover:brightness-110 group/card hover:scale-[1.03] border border-sky-800/20 transition-all ease-out shadow-md hover:shadow-black/80 shadow-black/60 m-3 min-w-48 bg-sky-500/50 rounded-lg">
       <img
         src={imageUrl ?? "/podcastplaceholdercover.png"}
         alt="Podcast"

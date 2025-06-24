@@ -17,10 +17,30 @@ from google import genai
 
 import os
 from supabase import AClient as Supabase
+from supabase import AuthApiError
 
 from fastapi.responses import FileResponse, StreamingResponse
 
 import pathlib
+
+
+ERROR_CODES = {
+    'auth_email_not_confirmed': 40001,
+    'auth_invalid_credentials': 40002,
+    'auth_user_not_found': 40003,
+    'auth_user_already_exists': 40004,
+    'auth_invalid_token': 40005, 
+    'auth_incomplete_registration': 40006,
+    'auth_user_not_authenticated': 40007,
+    'auth_email_invalid': 40008,
+    'auth_email_already_exists': 40009,
+
+
+    'unknown_error': 50000,
+    'podcast_not_found': 40401,
+    'podcast_creation_failed': 40402,
+}
+
 
 app = fastapi.FastAPI(root_path="/api")
 
@@ -480,17 +500,25 @@ async def login(user_login: UserLogin):
         )).scalar_one_or_none()
     
     if not user:
-        return {"error": "User not found"}, 404
+        return {"emsg": "User not found", "ecode": ERROR_CODES["auth_user_not_found"]}, 404
     
     user = await supabase.auth.admin.get_user_by_id(str(user.id))
     user = user.user
     if not user:
-        return {"error": "User not found"}, 404
+        return {"emsg": "User not found", "ecode": ERROR_CODES["auth_user_not_found"]}, 404
     
-    auth = await supabase.auth.sign_in_with_password({
-        "email": user.email or "",
-        "password": user_login.password
-    })
+    try:
+        auth = await supabase.auth.sign_in_with_password({
+            "email": user.email or "",
+            "password": user_login.password
+        })
+    except AuthApiError as e:
+        if e.code == 'email_not_confirmed':
+            return {"emsg": e.message, "ecode": ERROR_CODES["auth_email_not_confirmed"]}, 401
+        elif e.code == 'invalid_credentials':
+            return {"emsg": e.message, "ecode": ERROR_CODES["auth_invalid_credentials"]}, 401
+        else:
+            return {"emsg": e.message, "ecode": ERROR_CODES["unknown_error"]}, 400
 
     return auth
 
@@ -507,18 +535,28 @@ async def log_errors(request: fastapi.Request, call_next):
 async def register(user_register: UserRegister):
     supabase = get_supabase_client(with_service=True)
     if not user_register.user_name or not user_register.password:
-        return {"error": "Username and password are required"}, 400
+        return {"emsg": "Username and password are required", "ecode": ERROR_CODES["auth_incomplete_registration"]}, 400
     
     if not user_register.email:
-        return {"error": "Email is required"}, 400
+        return {"emsg": "Email is required", "ecode": ERROR_CODES["auth_incomplete_registration"]}, 400
     
     if not user_register.full_name:
-        return {"error": "Full name is required"}, 400
+        return {"emsg": "Full name is required", "ecode": ERROR_CODES["auth_incomplete_registration"]}, 400
     
-    supabase_user = await supabase.auth.sign_up({
-        "email": user_register.email,
-        "password": user_register.password,
-    })
+    try:
+        supabase_user = await supabase.auth.sign_up({
+            "email": user_register.email,
+            "password": user_register.password,
+        })
+    except AuthApiError as e:
+        if e.code == 'user_already_exists':
+            return {"emsg": "User already exists", "ecode": ERROR_CODES["auth_user_already_exists"]}, 400
+        elif e.code == 'email_address_invalid':
+            return {"emsg": "Invalid email address", "ecode": ERROR_CODES["auth_email_invalid"]}, 400
+        elif e.code == 'email_exists':
+            return {"emsg": "Email already exists", "ecode": ERROR_CODES["auth_email_already_exists"]}, 400
+        else:
+            return {"emsg": str(e), "ecode": ERROR_CODES["unknown_error"]}, 500
 
     if not supabase_user.user:
         return {"error": "User registration failed"}, 400
@@ -535,7 +573,7 @@ async def register(user_register: UserRegister):
 
     print("User registered:", user.model_dump())
     
-    return user
+    return {"user": user, "success": True, "message": "User registered successfully"}
 
 @app.post("/signout")
 async def signout():

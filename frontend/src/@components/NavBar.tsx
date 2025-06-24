@@ -58,9 +58,12 @@ const navigate = useNavigate();
                     navigate("/");
                 }
                 
-            } href="/">Podolli.AI</a></li>
-            <li className="flex-grow text-base flex justify-center">
+            } className="lg:text-3xl text-xl my-auto" href="/">Podolli.AI</a></li>
+            <li className="flex-grow hidden text-base md:flex justify-center">
                 <SearchBox variant="xl" />
+            </li>
+            <li className="flex-grow md:hidden flex justify-center">
+
             </li>
             <li 
             onClick={() => {
@@ -69,7 +72,7 @@ const navigate = useNavigate();
             }}
             className="bg-sky-300 cursor-pointer hover:bg-sky-200 transition-all duration-100 ease-out text-center flex flex-row items-center justify-center gap-2 p-3 mr-4 rounded-full text-black">
                 <FaPlus className="text-lg" />
-                Create
+                <p className="lg:flex hidden">Create</p>
             </li>
             {/* <li className=""><a href="/podcasts">Explore</a></li>
             <li className=""><a href="/podcasts">Pricing</a></li> */}

@@ -8,15 +8,18 @@ export default function Button({
     className = "",
     children,
     type = "button",
+    disabled = false,
 }: {
     onClick?: ((e: React.MouseEvent<HTMLButtonElement>) => void) | (() => void);
     isLoading?: boolean;
     className?: string;
     children?: React.ReactNode;
     type?: "button" | "submit" | "reset";
+    disabled?: boolean;
 }) {
     return <button
       type={type}
+      disabled={disabled}
       onClick={(e) => {
         e.preventDefault();
         onClick?.(e as React.MouseEvent<HTMLButtonElement>);

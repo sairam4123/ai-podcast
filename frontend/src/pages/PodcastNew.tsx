@@ -16,7 +16,7 @@ export function PodcastNew() {
     podcastId: podcast_id,
   });
   return (
-    <main className="flex flex-col h-screen min-h-screen bg-radial from-sky-700 to-blue-900">
+    <main className="flex flex-col lg:h-screen min-h-screen bg-radial from-sky-700 to-blue-900">
       <NavBar />
       <div className="flex flex-col flex-grow gap-4 overflow-hidden p-4">
         {isLoading ? (
@@ -53,7 +53,7 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
   });
 
   return (
-    <div className="flex flex-row flex-1 gap-4 overflow-hidden">
+    <div className="flex flex-col lg:flex-row flex-1 gap-4 pb-32 overflow-hidden">
       <div className="flex flex-col flex-1/5 bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
         <img
           src={imageUrl ?? "/podcastplaceholdercover.png"}
@@ -95,7 +95,7 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
           </Button>
         </div>
       </div>
-      <div className="flex flex-col flex-2/3 bg-sky-500/20 border overflow-hidden border-sky-300/50 space-y-2 p-2 rounded-lg">
+      <div className="flex flex-col flex-2/3 max-h-[32rem] lg:max-h-full bg-sky-500/20 border overflow-hidden border-sky-300/50 space-y-2 p-2 rounded-lg">
         <h2 className="text-xl font-bold text-white">Transcript</h2>
 
         {(data as unknown as number[])?.[1] === 404 ||

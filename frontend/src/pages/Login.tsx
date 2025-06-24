@@ -1,5 +1,5 @@
 import Button from "../@components/Button";
-import useUserLogin from "../api/login";
+import useUserLogin from "../api/userLogin";
 import { supabase } from "../lib/supabase";
 
 export default function Login() {
@@ -31,7 +31,7 @@ export default function Login() {
             <h2 className="text-2xl font-bold text-center">Login</h2>
             <form>
             <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Username</label>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
                 <input
                 type="text"
                 name="username"
