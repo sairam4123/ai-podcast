@@ -45,14 +45,14 @@ ERROR_CODES = {
 app = fastapi.FastAPI(root_path="/api")
 
 # Add CORS middleware to allow requests from any origin
-from fastapi.middleware.cors import CORSMiddleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-)
+# from fastapi.middleware.cors import CORSMiddleware
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # Allows all origins
+#     allow_credentials=True,
+#     allow_methods=["*"],  # Allows all methods
+#     allow_headers=["*"],  # Allows all headers
+# )
 
 class GeneratePodcast(pydantic.BaseModel):
     topic: str | None = None
@@ -688,7 +688,11 @@ async def get_podcast_episodes(podcast_id: str):
 
     # with open("images.json", "w") as f:
     #     f.write(json.dumps(images, indent=4))
-fast_api.serve(app, inngest,functions=[create_podcast_inngest, update_trend_analytics, generate_pending_podcasts], serve_path="/inngest")
+fast_api.serve(app, inngest, functions=[
+    create_podcast_inngest, 
+    update_trend_analytics, 
+    generate_pending_podcasts
+], serve_path="/inngest")
 
 if __name__ == '__main__':
     pass
