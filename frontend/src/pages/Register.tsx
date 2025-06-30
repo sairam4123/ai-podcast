@@ -75,7 +75,7 @@ export default function Register() {
 
 
                 <Button
-                type="button"
+                type="submit"
                     
                     isLoading={registerMutation.isLoading}
                     onClick={(e) => {

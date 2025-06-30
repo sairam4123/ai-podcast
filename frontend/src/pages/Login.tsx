@@ -51,7 +51,7 @@ export default function Login() {
                 />
             </div>
             <Button
-                type="button"
+                type="submit"
                 isLoading={loginMutation.isLoading}
                 onClick={(e) => {
                 e.preventDefault();            
