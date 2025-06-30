@@ -92,7 +92,11 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
 
     const play = () => {
 
-        mutate({});
+        try {
+            mutate({});
+        } catch (error) {
+            console.error("Error while mutating playPressed:", error);
+        }
         console.log("Playing audio from source:", sourceUrl);
 
         if (!audioRef.current) {

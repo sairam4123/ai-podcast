@@ -9,6 +9,7 @@ import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
 import { cn } from "../lib/cn";
 import { getRelativeTime } from "../utils/getRelativeTime";
+import { formatNumber } from "../utils/formatNumber";
 
 const shimmerStyle = {
   backgroundImage:
@@ -164,7 +165,7 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
         </p>
         <p className="flex flex-row items-center gap-1.5 text-gray-200 text-xs">
           <span className="flex-row flex items-center gap-1">
-            <FaPlay className="text-gray-200 text-[10px]" /> 2.5K
+            <FaPlay className="text-gray-200 text-[10px]" /> {formatNumber(podcast?.view_count ?? 0)}
           </span>
           <FaCircle className="text-gray-200 text-[5px]" />
           <span>
