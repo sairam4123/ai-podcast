@@ -15,6 +15,14 @@
       "destination": "/api/main.py"
     },
     {
+      "source": "/inngest",
+      "destination": "/api/app.py"
+    },
+    {
+      "source": "/inngest/(.*)",
+      "destination": "/api/app.py"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
