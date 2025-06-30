@@ -16,11 +16,11 @@
     },
     {
       "source": "/inngest",
-      "destination": "/api/app.py"
+      "destination": "/api/main.py"
     },
     {
       "source": "/inngest/(.*)",
-      "destination": "/api/app.py"
+      "destination": "/api/main.py"
     },
     {
       "source": "/(.*)",
