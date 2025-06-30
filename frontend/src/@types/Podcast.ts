@@ -25,6 +25,10 @@ export type Podcast = {
 
     language: string;
     tags: string[];
+
+    view_count: number;
+    like_count: number;
+    dislike_count: number;
 }
 
 // export type PodcastNew = {
