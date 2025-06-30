@@ -26,9 +26,12 @@ import google.genai as genai
 import google.cloud.texttospeech as tts
 import io
 
-import pydub
-# connect the ffmpeg library to pydub
-pydub.AudioSegment.converter = "ffmpeg-linux-x64.gz"
+import platform
+if platform.system() == "Linux":
+    import pydub
+    # connect the ffmpeg library to pydub
+    pydub.AudioSegment.converter = "ffmpeg-linux-x64.gz"
+
 
 from sqlalchemy.orm import selectinload, joinedload
 
