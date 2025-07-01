@@ -241,12 +241,12 @@ const {imageUrl} = api.useGetImage({
 })
 return (
     <div
-    className="lg:h-28 h-24 w-full bg-linear-60 from-25% from-sky-700 to-sky-500 shadow-2xl border-sky-700 border shadow-black/30 hover:shadow-black/40 gap-2 rounded-lg hover:scale-102 transition-all ease-in-out hover:brightness-110 flex flex-row"
+    className="lg:h-32 h-38 w-full bg-linear-60 from-25% from-sky-700 to-sky-500 shadow-2xl border-sky-700 border shadow-black/30 hover:shadow-black/40 gap-2 rounded-lg hover:scale-102 transition-all ease-in-out hover:brightness-110 flex flex-row"
     tabIndex={0}
     >
       <div className="p-1">
         <img
-          className={`${!imageUrl && "animate-pulse"} lg:h-26 h-20 min-w-20 lg:min-w-26 rounded-lg aspect-square mask-radial-from-91% mask-radial-fartest-side mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%`}
+          className={`${!imageUrl && "animate-pulse"} lg:h-30 h-24 min-w-24 lg:min-w-30 rounded-lg aspect-square mask-radial-from-91% mask-radial-fartest-side mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%`}
           src={
             imageUrl ??
             "/podcastplaceholdercover.png"
@@ -280,8 +280,8 @@ return (
             {/* <p className="text-xs text-gray-400">{formatDuration(currentPodcast?.duration)}</p> */}
           </div>
         </div>
-        <div className="flex flex-col items-start justify-start">
-            <p className="text-sm text-gray-50">
+        <div className="flex flex-col gap-2 lg:flex-row mt-2 items-center justify-start">
+            <p className={`text-sm px-2 py-1 rounded-full bg-amber-900 text-gray-50 ${trackedTask?.status === "pending" ? "bg-amber-700 animate-pulse" : trackedTask?.status === "in_progress" ? "bg-blue-700" : trackedTask?.status === "completed" ? "bg-green-700" : trackedTask?.status === "failed" ? "bg-red-700" : "bg-gray-700"} transition-all duration-200`}>
                 {trackedTask?.status === "pending"
                 ? "Pending"
                 : trackedTask?.status === "in_progress"
@@ -292,7 +292,7 @@ return (
                 ? "Failed"
                 : "Unknown Status"}
             </p>
-            {trackedTask?.status === "in_progress" && <p className="text-xs text-gray-200">
+            {trackedTask?.status === "in_progress" && <p className="text-sm rounded-full bg-blue-700 px-2 py-1 text-gray-200">
                 {trackedTask?.progress !== undefined
                 ? `${trackedTask.progress}% - ${trackedTask?.progress_message}`
                 : "No progress available"}
