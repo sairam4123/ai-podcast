@@ -108,7 +108,11 @@ client = genai.Client()
 async def get_podcasts(offset: int = 0, limit: int = 10, v2: bool = False):
     if v2:
         async with session_maker() as sess:
-            podcasts_db = (await sess.execute(select(Podcast).order_by(desc(Podcast.created_at)))).scalars().all()
+            podcasts_db = (await sess.execute(select(Podcast).where(
+                and_(Podcast.is_public == True,
+                     Podcast.is_generating == False
+                     )
+            ).order_by(desc(Podcast.created_at)))).scalars().all()
             new_podcasts = [{
                 "id": str(p.id),
                 "podcast_title": p.title,
@@ -118,6 +122,7 @@ async def get_podcasts(offset: int = 0, limit: int = 10, v2: bool = False):
                 "updated_at": p.updated_at.isoformat() if p.updated_at else None,
                 "view_count": p.view_count,
                 "like_count": p.like_count,
+                "dislike_count": p.dislike_count,
                 "duration": p.duration,
             } for p in podcasts_db]
 
@@ -154,6 +159,7 @@ async def get_trending_podcasts(offset: int = 0, limit: int = 10):
                 "updated_at": p.updated_at.isoformat() if p.updated_at else None,
                 "view_count": p.view_count,
                 "like_count": p.like_count,
+                "dislike_count": p.dislike_count,
                 "duration": p.duration,
             } for p in podcasts_db
         ]
@@ -239,7 +245,18 @@ async def like_button_pressed(podcast_id: str):
         await sess.commit()
         
         return {"message": "Podcast like count updated", "like_count": podcast_db.like_count}
-    
+
+@app.post("/podcasts/{podcast_id}/dislike")
+async def dislike_button_pressed(podcast_id: str):
+    async with session_maker() as sess:
+        podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
+        if not podcast_db:
+            return {"error": "Podcast not found"}, 404
+        
+        podcast_db.dislike_count += 1
+        await sess.commit()
+        
+        return {"message": "Podcast dislike count updated", "dislike_count": podcast_db.dislike_count}    
 
 @inngest.create_function(
         fn_id="update_trend_analytics",
@@ -359,6 +376,7 @@ async def get_featured_podcasts(offset: int = 0, limit: int = 10):
                 "updated_at": p.updated_at.isoformat() if p.updated_at else None,
                 "view_count": p.view_count,
                 "like_count": p.like_count,
+                "dislike_count": p.dislike_count,
                 "duration": p.duration,
             } for p in podcasts_db
         ]
