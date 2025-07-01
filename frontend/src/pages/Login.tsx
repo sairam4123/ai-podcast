@@ -1,12 +1,18 @@
+import toast from "react-hot-toast";
 import Button from "../@components/Button";
 import useUserLogin from "../api/userLogin";
 import { supabase } from "../lib/supabase";
+import { Link, useNavigate } from "react-router";
 
 export default function Login() {
 
+    const navigate = useNavigate();
     const loginMutation = useUserLogin({
         onSuccess: (data) => {
             console.log("Login successful", data);
+            toast.success("Login successful!", {
+                duration: 5000,
+            });
             // Handle successful login, e.g., redirect to dashboard
             supabase.auth.setSession(data.session).then(({ error }) => {
                 if (error) {
@@ -14,12 +20,13 @@ export default function Login() {
                 } else {
                     console.log("Session set successfully");
                     // Redirect to dashboard or perform other actions
-                    window.location.href = "/"; // Adjust the redirect path as needed
+                    navigate('/') // Adjust the redirect path as needed
                 }
             }
             );
         },
         onFailure: (error) => {
+            toast.error("Login failed. Please check your credentials and try again.");
             console.error("Error logging in", error);
             // Handle login error, e.g., show an error message
         },
@@ -40,7 +47,7 @@ export default function Login() {
                 placeholder="Enter your username"
                 />
             </div>
-            <div className="mb-6">
+            <div className="mb-2">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
                 <input
                 type="password"
@@ -50,6 +57,14 @@ export default function Login() {
                 placeholder="*******"
                 />
             </div>
+            <p className="flex flex-col items-center justify-center text-sm text-gray-600 my-2 mb-4 gap-2">
+            <p className="text-sm text-gray-600 text-center">
+                Don't have an account? <Link to='/register' className="text-blue-600 hover:underline">Register Now!</Link>
+            </p>
+            <p className="text-sm text-gray-600 text-center">
+                <a href="/forgot-password" className="text-blue-600 hover:underline">Forgot Password? No problem!</a>
+            </p>
+            </p>
             <Button
                 type="submit"
                 isLoading={loginMutation.isLoading}
@@ -68,11 +83,12 @@ export default function Login() {
                 }}
                 className="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                 >
-                   <p className="flex items-center justify-center">
+                   <p className="flex items-center uppercase mx-auto justify-center">
                     Login
                     </p> 
             </Button>
             </form>
+            
         </div>
         </div>
     );

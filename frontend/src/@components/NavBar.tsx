@@ -7,6 +7,7 @@ import MenuButton from "./MenuButton";
 import { api } from "../api/api";
 import Spinner from "./Spinner";
 import { useNavigate } from "react-router";
+import toast from "react-hot-toast";
 
 export function NavBar() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -92,6 +93,7 @@ const navigate = useNavigate();
                     },
                     { label: "Sign Out", value: "signout", onSelect() {
                         supabase.auth.signOut();
+                        toast.success("Signed out successfully")
                         console.log("User signed out");
                         setUser(null);
                         setIsSignedIn(false);
