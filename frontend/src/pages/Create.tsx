@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { PodcastGenTask } from "../@types/PodcastGenTask";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router";
+import { ShimmerBlock } from "../@components/Shimmer";
 
 export default function Create() {
     
@@ -247,7 +248,6 @@ return (
         <img
           className="lg:h-26 h-20 min-w-20 lg:min-w-26 rounded-lg aspect-square mask-radial-from-91% mask-radial-fartest-side mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%"
           src={
-            
             imageUrl ??
             "/podcastplaceholdercover.png"
           }
@@ -271,11 +271,11 @@ return (
                 href={`/podcast/${trackedTask?.podcast_id}`}
                 className="hover:underline text-base hover:text-sky-50 line-clamp-1 transition-all cursor-pointer duration-150 ease-in-out"
               >
-                {trackedTask?.podcast?.title ?? "Podcast Title.."}
+                {trackedTask?.podcast?.title ? <ShimmerBlock className="w-24" /> : trackedTask?.podcast?.title}
               </a>
             </p>
             <p className="cursor-default text-xs line-clamp-2 text-gray-300">
-              {trackedTask?.podcast?.description ?? "Description..."}
+              {trackedTask?.podcast?.description ? <ShimmerBlock className="w-48 h-4" /> : trackedTask?.podcast?.description}
             </p>
             {/* <p className="text-xs text-gray-400">{formatDuration(currentPodcast?.duration)}</p> */}
           </div>
