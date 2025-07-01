@@ -5,8 +5,6 @@ from uuid import UUID, uuid4
 from dotenv import load_dotenv
 load_dotenv()
 
-from inngest import Inngest
-import inngest
 import pydantic
 from sqlmodel import select
 
@@ -629,7 +627,7 @@ def combine_audio_segments(audio_segments: list[pydub.AudioSegment]) -> tuple[li
     return conversation_markers, combined
 
 
-async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None, step: inngest.Step | None = None) -> Podcast:
+async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None) -> Podcast:
     task_id = task_id or uuid4()
 
     if not create_podcast.topic:
@@ -782,42 +780,42 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
     return podcast
 
 
-if __name__ == "__main__":
-    import dotenv
-    dotenv.load_dotenv()
+# if __name__ == "__main__":
+#     import dotenv
+#     dotenv.load_dotenv()
 
-    import os
-    import math
+#     import os
+#     import math
 
-    task_id = uuid4()
+#     task_id = uuid4()
 
-    async def main():
-        await create_podcast_generation_task(
-            podcast_id=str(task_id),
-            status="pending",
-            progress=0,
-            supabase=Supabase(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"]),
-        )
-        await create_podcast(
-            CreatePodcast(
-                topic="php programming language",
-                language="en-IN",
-                style="casual, friendly, and engaging",
-                description="Explain the PHP programming language and it's use in web development, including its history, features, and how it compares to other languages like Python and JavaScript.",
-            ),
-            task_id=task_id,
-            # inngest=Inngest(app_id=os.environ["INNGEST_APP_ID"],),
-            supabase=Supabase(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
-        )
+#     async def main():
+#         await create_podcast_generation_task(
+#             podcast_id=str(task_id),
+#             status="pending",
+#             progress=0,
+#             supabase=Supabase(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"]),
+#         )
+#         await create_podcast(
+#             CreatePodcast(
+#                 topic="php programming language",
+#                 language="en-IN",
+#                 style="casual, friendly, and engaging",
+#                 description="Explain the PHP programming language and it's use in web development, including its history, features, and how it compares to other languages like Python and JavaScript.",
+#             ),
+#             task_id=task_id,
+#             # inngest=Inngest(app_id=os.environ["INNGEST_APP_ID"],),
+#             supabase=Supabase(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+#         )
     
-    start_time = time.time()
+#     start_time = time.time()
     
-    asyncio.run(main())
+#     asyncio.run(main())
 
-    end_time = time.time()
+#     end_time = time.time()
 
-    print(f"Podcast generation completed in {end_time - start_time} seconds.")
-    print(f"Completion time: {(end_time - start_time) // 60:.0f} mins {math.fmod((end_time - start_time), 60):.0f} secs.")
+#     print(f"Podcast generation completed in {end_time - start_time} seconds.")
+#     print(f"Completion time: {(end_time - start_time) // 60:.0f} mins {math.fmod((end_time - start_time), 60):.0f} secs.")
 
     # topic = input("Enter the topic for the podcast (default: machine learning): ")
     # topic = topic.strip() if topic else "machine learning"

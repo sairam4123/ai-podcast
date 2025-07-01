@@ -42,7 +42,7 @@ export function useGetAudio({podcast_id}: {podcast_id: string}, {enabled = true}
             try {
                 let data
                 if (!await supabase.storage.from("podcasts").exists(`${podcast_id}.mp3`)) {
-                    data = await supabase.storage.from("podcasts").getPublicUrl(`${podcast_id}.wav`);
+                    data = supabase.storage.from("podcasts").getPublicUrl(`${podcast_id}.wav`);
                 } else {
                     data = supabase.storage.from("podcasts").getPublicUrl(`${podcast_id}.mp3`);
                 }
