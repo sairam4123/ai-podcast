@@ -271,11 +271,11 @@ return (
                 href={`/podcast/${trackedTask?.podcast_id}`}
                 className="hover:underline text-base hover:text-sky-50 line-clamp-1 transition-all cursor-pointer duration-150 ease-in-out"
               >
-                {trackedTask?.podcast?.title ? <ShimmerBlock className="w-24" /> : trackedTask?.podcast?.title}
+                {!trackedTask?.podcast?.title ? <ShimmerBlock className="w-24" /> : trackedTask?.podcast?.title}
               </a>
             </p>
             <p className="cursor-default text-xs line-clamp-2 text-gray-300">
-              {trackedTask?.podcast?.description ? <ShimmerBlock className="w-48 h-4" /> : trackedTask?.podcast?.description}
+              {!trackedTask?.podcast?.description ? <ShimmerBlock className="w-48 h-4" /> : trackedTask?.podcast?.description}
             </p>
             {/* <p className="text-xs text-gray-400">{formatDuration(currentPodcast?.duration)}</p> */}
           </div>
