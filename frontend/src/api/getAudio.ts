@@ -40,8 +40,12 @@ export function useGetAudio({podcast_id}: {podcast_id: string}, {enabled = true}
         setLoading(true);
         const fetchAudio = async () => {
             try {
+                const exists = await supabase.storage.from("podcasts").exists(`${podcast_id}.mp3`)
+                if (exists.error) {
+                    console.error("Error checking audio existence:", exists.error);
+                }
                 let data
-                if (!await supabase.storage.from("podcasts").exists(`${podcast_id}.mp3`)) {
+                if (!exists.data) {
                     data = supabase.storage.from("podcasts").getPublicUrl(`${podcast_id}.wav`);
                 } else {
                     data = supabase.storage.from("podcasts").getPublicUrl(`${podcast_id}.mp3`);
