@@ -136,6 +136,28 @@ async def get_podcasts(offset: int = 0, limit: int = 10, v2: bool = False):
             results.append({"id": podcast_id, **podcast})
         return {"results": results}
 
+@app.get("/podcasts/@me")
+async def get_my_podcasts(offset: int = 0, limit: int = 10, user: UserProfile = fastapi.Depends(get_current_user)):
+    async with session_maker() as sess:
+        podcasts_db = (await sess.execute(select(Podcast).where(
+            and_(Podcast.profile_id == user.id,
+                    Podcast.is_generating == False
+                    )
+        ).order_by(desc(Podcast.created_at)))).scalars().all()
+        new_podcasts = [{
+            "id": str(p.id),
+            "podcast_title": p.title,
+            "podcast_description": p.description,
+            "language": p.language,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+            "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+            "view_count": p.view_count,
+            "like_count": p.like_count,
+            "dislike_count": p.dislike_count,
+            "duration": p.duration,
+        } for p in podcasts_db]
+
+        return {"results": new_podcasts[offset:offset + limit]}
 
 @app.get("/podcasts/trending")
 async def get_trending_podcasts(offset: int = 0, limit: int = 10):

@@ -7,13 +7,13 @@ export type Conversation = {
     start_time: number;
     end_time: number;
 
-    podcast_author?: {
+    podcast_author: {
         author_id: string;
         is_host: boolean;
         podcast_id: string;
     }
 
-    speaker?: {
+    speaker: {
         id: string;
         name: string;
         bio?: string;

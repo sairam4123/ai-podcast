@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import useLoadFile from "../lib/useLoadFile";
-import { API_URL } from "./api";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export function useGetAvatarImage({ personId }: { personId: string }) {

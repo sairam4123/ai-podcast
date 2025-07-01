@@ -1,3 +1,5 @@
+import { Conversation } from "./Conversation";
+
 export type Podcast = {
     id: string;
     podcast_title: string;
@@ -13,12 +15,7 @@ export type Podcast = {
         interviewer: boolean;
     }[]
 
-    conversation?: {
-        speaker: string;
-        text: string;
-        start_time?: number;
-        end_time?: number;
-    }[]
+    conversation: Conversation[];
 
     created_at: string;
     updated_at: string;
