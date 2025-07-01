@@ -1,2 +1,3 @@
 api/migrations/*
-api/speech.py
+api/*.py
+!api/dist/

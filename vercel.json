@@ -12,15 +12,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/main.py"
+      "destination": "/api/dist/main.py"
     },
     {
       "source": "/inngest",
-      "destination": "/api/main.py"
+      "destination": "/api/dist/main.py"
     },
     {
       "source": "/inngest/(.*)",
-      "destination": "/api/main.py"
+      "destination": "/api/dist/main.py"
     },
     {
       "source": "/(.*)",
