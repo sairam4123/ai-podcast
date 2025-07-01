@@ -291,10 +291,18 @@ async def generate_pending_podcasts(ctx: Context, step: Step):
             print("Generating podcasts for pending tasks...")
             for task in tasks:
                 print("Processing task:", task.id)
-            
+
                 if not task.generation_data:
                     print("No generation data found for task:", task.id)
                     continue
+                generation_data = task.generation_data
+
+                if not generation_data.get("topic") or not generation_data.get("language"):
+                    print("Incomplete generation data for task:", task.id)
+                    print("Deleting task:", task.id)
+                    await sess.delete(task)
+                    continue
+
                 await inngest.send(
                     Event(
                         data={
