@@ -1479,6 +1479,7 @@ async def generate_pending_podcasts(ctx: Context, step: Step):
                         id=str(uuid4()),
                     )
                 )
+            await sess.commit()
 
         return {"message": "Pending podcasts generated successfully"}
     
