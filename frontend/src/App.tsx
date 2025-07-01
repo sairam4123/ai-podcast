@@ -7,6 +7,7 @@
 // import { useGeneratePodcast } from "./api/generatePodcast";
 // import { FaWandMagicSparkles } from "react-icons/fa6";
 import { Home } from "./pages/Home";
+import { Toaster } from 'react-hot-toast'
 
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { MediaPlayerProvider } from './contexts/mediaPlayer.context'
@@ -100,6 +101,7 @@ export function App() {
         <Route path="/register" element={<Register />} />
       </Routes>
     <MediaPlayer />
+        <Toaster />
     </BrowserRouter>
     </MediaPlayerProvider>
     </PodcastProvider>
