@@ -137,8 +137,8 @@ class Podcast(SQLModel, table=True):
     view_count: int = Field(default=0)
     trending_score: float = Field(default=0.0)
     is_featured: bool = Field(default=False)
-    is_generating: bool = Field(default=False)
-    is_public: bool = Field(default=True)
+    is_generating: bool = Field(default=False, nullable=True)
+    is_public: bool = Field(default=True, nullable=True)
 
     authors: list["PodcastAuthorPodcast"] = Relationship(back_populates="podcast")
     episodes: list["PodcastEpisode"] = Relationship(back_populates="podcast")
@@ -360,11 +360,11 @@ import google.genai as genai
 import google.cloud.texttospeech as tts
 import io
 
-import platform
-if platform.system() == "Linux":
-    import pydub
-    # connect the ffmpeg library to pydub
-    pydub.AudioSegment.converter = "ffmpeg-linux-x64.gz"
+# import platform
+# if platform.system() == "Linux":
+#     import pydub
+#     # connect the ffmpeg library to pydub
+#     pydub.AudioSegment.converter = "ffmpeg-linux-x64.gz"
 
 
 from sqlalchemy.orm import selectinload, joinedload
