@@ -617,7 +617,7 @@ people_prompt = """
 """
 
 
-async def generate_featured_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
+async def generate_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
     response = await client.aio.models.generate_content(contents=img_prompt.format(
         podcastTitle=podcast.title,
         people="".join([people_prompt.format(index=index, persona=persona.author, interviewer=("host" if persona.is_host else "guest")) for index, persona in enumerate(podcast.authors, start=1)]),
@@ -762,7 +762,7 @@ async def save_image(image: io.BytesIO, name: str, bucket: str = "podcast-cover-
 
 async def save_podcast_cover(podcast: Podcast) -> None:
 
-    image = await generate_featured_podcast_thumbnail_image(podcast)
+    image = await generate_podcast_thumbnail_image(podcast)
     await save_image(image, f"{podcast.id}.png", "podcast-cover-images")
 
 async def generate_author_image(persona: PodcastAuthorPersona) -> tuple[UUID, io.BytesIO]:
@@ -1141,13 +1141,13 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
         await sess.commit()
 
     buffer = io.BytesIO()
-    combined_audio.export(buffer, format="mp3")
+    combined_audio.export(buffer, format="wav")
     await podcast_gen_task.progress_update(85, "Saving podcast metadata and audio...")
 
     buffer.seek(0)  # Reset the buffer position to the beginning
 
     await podcast_gen_task.progress_update(90, "Saving podcast audio...")
-    await supabase.storage.from_("podcasts").upload(f"{podcast_id}.mp3", buffer.getvalue(), {"content-type": "audio/mpeg", "upsert": "true"})
+    await supabase.storage.from_("podcasts").upload(f"{podcast_id}.wav", buffer.getvalue(), {"content-type": "audio/wav", "upsert": "true"})
     
     await podcast_gen_task.progress_update(100, "Waiting for podcast cover image and author images to complete...")
     await asyncio.gather(*image_gen_tasks)
