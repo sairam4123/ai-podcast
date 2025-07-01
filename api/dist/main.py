@@ -209,8 +209,8 @@ class PodcastAuthorPodcast(SQLModel, table=True):
         back_populates="podcast_author",
         sa_relationship_kwargs={
             "primaryjoin": lambda: and_(
-            Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id),
-            Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id),
+            Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id), # type: ignore # type: ignore
+            Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id), # type: ignore
             ),
             "uselist": True,
         }
@@ -275,8 +275,8 @@ class Conversation(SQLModel, table=True):
         back_populates="conversations",
         sa_relationship_kwargs={
             "primaryjoin":lambda: and_(
-                Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id),
-                Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id),
+                Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id), # type: ignore
+                Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id), # type: ignore
             ),
             "uselist": False,
         },
@@ -961,7 +961,7 @@ def combine_audio_segments(audio_segments: list[pydub.AudioSegment]) -> tuple[li
     return conversation_markers, combined
 
 
-async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None) -> Podcast:
+async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None) -> Podcast:
     task_id = task_id or uuid4()
 
     if not create_podcast.topic:
@@ -1057,7 +1057,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 
         print("Getting new podcast from the database...")
         podcast = (await sess.execute(select(Podcast).where(Podcast.id == podcast.id).options(
-            selectinload(Podcast.authors), selectinload(Podcast.episodes).selectinload(PodcastEpisode.conversations)
+            selectinload(Podcast.authors), selectinload(Podcast.episodes).selectinload(PodcastEpisode.conversations) # type: ignore
         ))).scalar_one_or_none()
         if podcast is None:
             print("Podcast not found in the database. Something went terribly wrong.")
@@ -1130,7 +1130,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 #             progress=0,
 #             supabase=Supabase(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"]),
 #         )
-#         await create_podcast(
+#         await create_podcast_gen(
 #             CreatePodcast(
 #                 topic="php programming language",
 #                 language="en-IN",
@@ -1244,9 +1244,9 @@ images = {}
 # with open("images.json", "r") as f:
 #     images = json.loads(f.read() or "{}")
 
-def remap_os_safe_title(title: str) -> str:
-    # Replace spaces with underscores and remove special characters
-    return "".join(c if c.isalnum() or c in [' ', '_'] else '_' for c in title).strip().replace(" ", "_").lower()
+# def remap_os_safe_title(title: str) -> str:
+#     # Replace spaces with underscores and remove special characters
+#     return "".join(c if c.isalnum() or c in [' ', '_'] else '_' for c in title).strip().replace(" ", "_").lower()
 
 
 class PodcastTopicsSearch(pydantic.BaseModel):
@@ -1445,7 +1445,7 @@ async def generate_pending_podcasts(ctx: Context, step: Step):
         async with session_maker() as sess:
             tasks = (await sess.execute(
                 select(PodcastGenerationTask).where(or_(PodcastGenerationTask.status == "pending"))
-                .order_by(PodcastGenerationTask.created_at)
+                .order_by(PodcastGenerationTask.created_at) # type: ignore
             )).scalars().all()
 
             if not tasks:
@@ -1567,24 +1567,33 @@ async def get_audio(podcast_id: str):
 
 
 @app.get("/images/{podcast_id}/avatar/{person_id}")
-async def get_image_avatar(podcast_id: str, person_id: str):
+async def get_image_avatar(podcast_id: str, person_id: str, v2: bool = True):
     podcast = podcasts.get(podcast_id)
     if not podcast:
         return {"error": "Podcast not found"}, 404
-    print("Fetching avatar for podcast_id:", podcast_id, "and person_id:", person_id)
-    title = podcast['podcast_title']
+    
+    # Check if v2 is enabled
+    # if v2:
+    #     supabase = get_supabase_client(with_service=True)
+    #     avatar = await supabase.storage.from_("podcast-avatar-images").download(f"{podcast
 
-    avatar = f"images/{remap_os_safe_title(title)}_{podcast_id}_{person_id}.png"
-    if not pathlib.Path(avatar).exists():
-        print("Avatar not found for", title, "with person_id", person_id)
-        # Fallback to a generic avatar if specific one is not found
-        avatar = f"images/{remap_os_safe_title(title)}_{person_id}.png"
-        if not pathlib.Path(avatar).exists():
-            return {"error": "Avatar image not found"}, 404
-    if avatar:
-        return FileResponse(avatar)
-    else:
-        return {"error": "Image not found"}, 404
+    if not v2:
+        return {"error": "This endpoint is only available in v2"}, 404
+
+    # print("Fetching avatar for podcast_id:", podcast_id, "and person_id:", person_id)
+    # title = podcast['podcast_title']
+
+    # avatar = f"images/{remap_os_safe_title(title)}_{podcast_id}_{person_id}.png"
+    # if not pathlib.Path(avatar).exists():
+    #     print("Avatar not found for", title, "with person_id", person_id)
+    #     # Fallback to a generic avatar if specific one is not found
+    #     avatar = f"images/{remap_os_safe_title(title)}_{person_id}.png"
+    #     if not pathlib.Path(avatar).exists():
+    #         return {"error": "Avatar image not found"}, 404
+    # if avatar:
+    #     return FileResponse(avatar)
+    # else:
+    #     return {"error": "Image not found"}, 404
 
 
 @app.get("/images/{podcast_id}")
@@ -1605,7 +1614,7 @@ async def get_image(podcast_id: str, v2: bool = True):
 @app.get("/queue")
 async def get_queue(offset: int = 0, limit: int = 10):
     async with session_maker() as sess:
-        tasks = (await sess.execute(select(PodcastGenerationTask).options(joinedload(PodcastGenerationTask.podcast))
+        tasks = (await sess.execute(select(PodcastGenerationTask).options(joinedload(PodcastGenerationTask.podcast)) # type: ignore
                   .order_by(desc(PodcastGenerationTask.created_at))
                   .offset(offset).limit(limit)
                   )).scalars().all()
@@ -1682,11 +1691,10 @@ async def create_podcast_inngest(ctx: Context, step: Step):
 
     supabase = get_supabase_client()
     async def handler():
-        podcast = await gen_create_podcast(
+        podcast = await create_podcast_gen(
             CreatePodcast.model_validate(podcast_data),
             task_id=podcast_data.get("task_id", uuid4()), # type: ignore
             supabase=supabase,
-            step=step
         )
         return podcast.model_dump(mode="json")
     
@@ -1815,7 +1823,7 @@ async def get_podcast_conversations(podcast_id: str):
         conversations = (await sess.execute(
             select(Conversation)
             .where(Conversation.podcast_id == podcast_id)
-            .options(selectinload(Conversation.speaker), selectinload(Conversation.podcast_author))  # Load speaker relationship
+            .options(selectinload(Conversation.speaker), selectinload(Conversation.podcast_author))  # Load speaker relationship # type: ignore
             .order_by(asc(Conversation.start_time))  # Order by start_time
         )).scalars().unique().all()
 
@@ -1858,3 +1866,6 @@ fast_api.serve(app, inngest, functions=[
     update_trend_analytics, 
     generate_pending_podcasts
 ], serve_path="/inngest")
+
+if __name__ == '__main__':
+    pass

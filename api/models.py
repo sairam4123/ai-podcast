@@ -121,8 +121,8 @@ class PodcastAuthorPodcast(SQLModel, table=True):
         back_populates="podcast_author",
         sa_relationship_kwargs={
             "primaryjoin": lambda: and_(
-            Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id),
-            Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id),
+            Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id), # type: ignore # type: ignore
+            Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id), # type: ignore
             ),
             "uselist": True,
         }
@@ -187,8 +187,8 @@ class Conversation(SQLModel, table=True):
         back_populates="conversations",
         sa_relationship_kwargs={
             "primaryjoin":lambda: and_(
-                Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id),
-                Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id),
+                Conversation.podcast_id == foreign(PodcastAuthorPodcast.podcast_id), # type: ignore
+                Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id), # type: ignore
             ),
             "uselist": False,
         },

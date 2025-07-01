@@ -627,7 +627,7 @@ def combine_audio_segments(audio_segments: list[pydub.AudioSegment]) -> tuple[li
     return conversation_markers, combined
 
 
-async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None) -> Podcast:
+async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None) -> Podcast:
     task_id = task_id or uuid4()
 
     if not create_podcast.topic:
@@ -723,7 +723,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 
         print("Getting new podcast from the database...")
         podcast = (await sess.execute(select(Podcast).where(Podcast.id == podcast.id).options(
-            selectinload(Podcast.authors), selectinload(Podcast.episodes).selectinload(PodcastEpisode.conversations)
+            selectinload(Podcast.authors), selectinload(Podcast.episodes).selectinload(PodcastEpisode.conversations) # type: ignore
         ))).scalar_one_or_none()
         if podcast is None:
             print("Podcast not found in the database. Something went terribly wrong.")
@@ -796,7 +796,7 @@ async def create_podcast(create_podcast: CreatePodcast, task_id: UUID | None = N
 #             progress=0,
 #             supabase=Supabase(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"]),
 #         )
-#         await create_podcast(
+#         await create_podcast_gen(
 #             CreatePodcast(
 #                 topic="php programming language",
 #                 language="en-IN",
