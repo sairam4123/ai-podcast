@@ -1,6 +1,6 @@
 import { Podcast } from "../@types/Podcast";
-// import { useGetAvatarImage } from "../api/getAvatarImage";
-// import { cn } from "../lib/cn";
+import { useGetAvatarImage } from "../api/getAvatarImage";
+import { cn } from "../lib/cn";
 import { removeSSMLtags } from "../utils/removeSSMLtags";
 import { Conversation as ConversationType } from "../@types/Conversation";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
@@ -62,7 +62,7 @@ export function Conversation({
 const MessageCard = ({message: conv, person, isCurrent, onClick, currentPosition, isPlaying, id, isHost}: {
     message: ConversationType
     podcastId: Podcast["id"]
-    person: ConversationType["speaker"]
+    person: NonNullable<ConversationType["speaker"]>
     isCurrent: boolean;
     currentPosition: number;
     isPlaying: boolean;
@@ -71,7 +71,7 @@ const MessageCard = ({message: conv, person, isCurrent, onClick, currentPosition
     isHost?: boolean;
 }) => {
 
-    // const {imageUrl, isLoading} = useGetAvatarImage({podcastId, personId: person.id})
+    const {imageUrl, isLoading} = useGetAvatarImage({ personId: person.id})
     // console.log(imageUrl)
     if (isCurrent)
         console.log(((currentPosition - (conv.start_time ?? 0)) / ((conv.end_time ?? 0) - (conv.start_time ?? 0))) * 100, conv.start_time, conv.end_time, currentPosition, isPlaying)
@@ -82,8 +82,8 @@ const MessageCard = ({message: conv, person, isCurrent, onClick, currentPosition
                                         }}
                                         >
                                     <div className="flex flex-row items-start">
-                                        {/* <FaSpinner className={cn("text-4xl text-gray-200", isLoading ? "animate-spin" : "hidden")} />
-                                        <img className={cn("h-5 w-5 md:h-6 md:w-6 mr-2 aspect-square rounded-full", isLoading && "hidden")} src={imageUrl} /> */}
+                                        {/* <FaSpinner className={cn("text-4xl text-gray-200", isLoading ? "animate-spin" : "hidden")} /> */}
+                                        <img className={cn("h-5 w-5 md:h-6 md:w-6 mr-2 aspect-square rounded-full", isLoading && "hidden")} src={imageUrl} />
                                     <div className="">
                                         <p className="text-sm md:text-base text-shadow-md font-bold text-gray-200">{person?.name}</p>
                                         <p className="relative text-xs md:text-sm z-10">{removeSSMLtags(conv.text)}

@@ -269,6 +269,20 @@ async def update_trend_analytics(ctx: Context, step: Step):
     await step.run("commit_trending_scores", handler=handler)
     return {"message": "Trend analytics updated successfully"}
 
+@inngest.create_function(
+    fn_id="create_featured_podcast_covers",
+    name="Create Featured Podcast Covers",
+    trigger=TriggerCron(
+        cron="* */1 * * *",  # Every hour
+    )
+)
+async def create_featured_podcast_covers(ctx: Context, step: Step):
+    async def handler():
+        pass
+
+    await step.run("create_featured_podcast_covers", handler=handler)
+    return {"message": "Featured podcast covers creation task finished"}
+
 
 @inngest.create_function(
         fn_id="generate_pending_podcasts",

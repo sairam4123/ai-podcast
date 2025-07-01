@@ -234,13 +234,31 @@ Use the language as used in the topic.
 The image should be colorful and engaging. 
 The image should be in the format of a podcast cover image. 
 The image should be in the format of a square. 
-The image should be in the format of PNG.
-The image should be in the format of a 3000x3000 pixels. 
+The image should be in the format of PNG. 
 The image should be in the format of a 72 dpi.
 The image should be in the format of a 24 bit color depth.
 Choose the correct image for the speaker and interviewer.
 
 Use abstract art and design elements to create a visually appealing image.
+"""
+
+featured_prompt = """Generate a podcast cover image for the podcast titled "{podcastTitle}".
+Description of the podcast is:
+{podcastDescription}
+
+
+People involved in the podcast are:
+{people}
+Additionally, include images of the people in the podcast.
+
+The image should be colorful and engaging. 
+The image should be in the format of a podcast cover image. 
+The image should be in the format of a rectangle (16:9). 
+The image should be in the format of PNG. 
+Aspect ratio of the image should be 16:9 (wide).
+
+Use abstract art and design elements to create a visually appealing image.
+Keep image simple and clean, with a focus on the podcast title and description.
 """
 
 author_prompt = """
@@ -263,8 +281,30 @@ people_prompt = """
 """
 
 
-async def generate_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
+async def generate_featured_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
     response = await client.aio.models.generate_content(contents=img_prompt.format(
+        podcastTitle=podcast.title,
+        people="".join([people_prompt.format(index=index, persona=persona.author, interviewer=("host" if persona.is_host else "guest")) for index, persona in enumerate(podcast.authors, start=1)]),
+        podcastDescription=podcast.description,
+    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-exp-image-generation")
+    if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
+        raise ValueError("No image found in response")
+    for content in response.candidates[0].content.parts:
+        # print(content)
+        if content.text is not None:
+            continue
+        if content.inline_data is not None:
+            image = content.inline_data.data
+            if image is None:
+                raise ValueError("No image data found in response")
+            image = io.BytesIO(image)
+            break
+    else:
+        raise ValueError("No image found in response")
+    return image
+
+async def generate_featured_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
+    response = await client.aio.models.generate_content(contents=featured_prompt.format(
         podcastTitle=podcast.title,
         people="".join([people_prompt.format(index=index, persona=persona.author, interviewer=("host" if persona.is_host else "guest")) for index, persona in enumerate(podcast.authors, start=1)]),
         podcastDescription=podcast.description,
@@ -386,7 +426,7 @@ async def save_image(image: io.BytesIO, name: str, bucket: str = "podcast-cover-
 
 async def save_podcast_cover(podcast: Podcast) -> None:
 
-    image = await generate_podcast_thumbnail_image(podcast)
+    image = await generate_featured_podcast_thumbnail_image(podcast)
     await save_image(image, f"{podcast.id}.png", "podcast-cover-images")
 
 async def generate_author_image(persona: PodcastAuthorPersona) -> tuple[UUID, io.BytesIO]:
@@ -662,7 +702,9 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
         description=podcast_metadata.podcastDescription,
         language=podcast_metadata.language,
         tags=podcast_metadata.tags,
-        profile_id=profile_id
+        profile_id=profile_id,
+        is_generating=True,
+        is_public=False, 
     )
     
 
@@ -757,7 +799,7 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
         
 
         podcast.duration = len(combined_audio) / 1000.0  # duration in seconds
-
+        podcast.is_generating = False
         sess.add(podcast)
         sess.add_all(turns)
         await sess.commit()
