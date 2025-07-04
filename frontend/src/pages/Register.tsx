@@ -9,6 +9,12 @@ export default function Register() {
   const registerMutation = api.useUserRegister({
     onSuccess: (data) => {
       console.log("Registration successful", data);
+
+      if ("emsg" in data) {
+        toast.error(data.emsg as string);
+        return;
+      }
+
       toast.success("Registration successful!", {
         duration: 8000,
       });

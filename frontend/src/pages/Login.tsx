@@ -10,9 +10,15 @@ export default function Login() {
     const loginMutation = useUserLogin({
         onSuccess: (data) => {
             console.log("Login successful", data);
+
+            if ("emsg" in data) {
+                toast.error(data.emsg as string);
+                return;
+            }
             toast.success("Login successful!", {
                 duration: 5000,
             });
+
             // Handle successful login, e.g., redirect to dashboard
             supabase.auth.setSession(data.session).then(({ error }) => {
                 if (error) {
