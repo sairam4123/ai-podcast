@@ -62,6 +62,26 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
         name="description"
         content={podcast?.podcast_description || "Podcast details"}
         />
+        <meta
+        name="og:title"
+        content={podcast?.podcast_title || "Podcast details"}
+        />
+      <meta
+        name="og:description"
+        content={podcast?.podcast_description || "Podcast details"}
+        />
+      <meta
+        name="og:image"
+        content={imageUrl || "/podcastplaceholdercover.png"}
+        />
+      <meta
+        name="og:type"
+        content="audio"
+        />
+      <meta
+        name="og:url"
+        content={`https://podolli-ai.co.in/podcast/${podcast?.id}`}
+        />
       </>
       <div className="flex flex-col flex-1/5 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
         <img
