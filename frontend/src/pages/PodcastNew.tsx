@@ -55,12 +55,14 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
 
   return (
     <div className="flex flex-col lg:flex-row flex-1 gap-4 pb-32 overflow-hidden">
+      <>
       <title>{podcast?.podcast_title}</title>
+      <link rel="icon" href={`${imageUrl}`} />
       <meta
         name="description"
         content={podcast?.podcast_description || "Podcast details"}
-      />
-      <link rel="icon" href={imageUrl} />
+        />
+      </>
       <div className="flex flex-col flex-1/5 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
         <img
           src={imageUrl ?? "/podcastplaceholdercover.png"}
