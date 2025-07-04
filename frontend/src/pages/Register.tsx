@@ -10,10 +10,16 @@ export default function Register() {
     onSuccess: (data) => {
       console.log("Registration successful", data);
 
-      if ("emsg" in data) {
-        toast.error(data.emsg as string);
-        return;
-      }
+            if (Array.isArray(data)) {
+                if (data.length === 0) {
+                    toast.error("Login failed. Please check your credentials and try again.");
+                    return;
+                }
+                if ("emsg" in data[0]) {
+                    toast.error(data[0].emsg as string);
+                    return;
+                }
+            }
 
       toast.success("Registration successful!", {
         duration: 8000,
