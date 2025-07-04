@@ -57,7 +57,7 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
     <div className="flex flex-col lg:flex-row flex-1 gap-4 pb-32 overflow-hidden">
       <>
       <title>{podcast?.podcast_title}</title>
-      <link rel="icon" href={`${imageUrl}`} />
+      <link rel="icon" href={`${imageUrl}`} precedence="high" />
       <meta
         name="description"
         content={podcast?.podcast_description || "Podcast details"}
