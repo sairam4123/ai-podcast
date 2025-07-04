@@ -1,3 +1,4 @@
+import toast from "react-hot-toast";
 import ActionModal, { ActionModalActionRow } from "../@components/ActionModal";
 import { api } from "../api/api";
 import { PiSpinnerGap } from "react-icons/pi";
@@ -5,22 +6,42 @@ import { PiSpinnerGap } from "react-icons/pi";
 export function CreatePodcastModal({
     isOpen,
     onClose,
-    // onCreate
+    onCreate
 }: {
     isOpen: boolean;
     onClose: () => void;
     onCreate: (data: { topic: string; description: string; style: string; language: string }) => void;
 }) {
 
-    const createPodcastMutation = api.useGeneratePodcast({
+    const createPodcastMutation = api.useAutoFillPodcastForm({
         onSuccess: (data) => {
-            console.log("Podcast created successfully:", data);
+
+            console.log("Auto fill successful:", data);
+                        if (Array.isArray(data)) {
+                if (data.length === 0) {
+                    toast.error("Login failed. Please check your credentials and try again.");
+                    return;
+                }
+                if ("emsg" in data[0]) {
+                    toast.error(data[0].emsg as string);
+                    return;
+                }
+            }
+
+            toast.success("Filled the form successfully. You can now edit the details and create the podcast.");
+            onCreate({
+              topic: data.topic,
+              description: data.description,
+              style: data.style,
+              language: data.language,
+            });
+            // console.log("Podcast created successfully:", data);
         }
     });
 
     return <ActionModal 
-        title="Create Podcast" 
-        description="Fill out the form below to create a new podcast." 
+        title="Auto fill Podcast Form" 
+        description="Filling with AI generated data" 
         isOpen={isOpen} 
         onClose={onClose}
     >
@@ -28,14 +49,7 @@ export function CreatePodcastModal({
             <form className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700">Topic</label>
                 <input type="text" name="topic" className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter podcast topic" />
-                <label className="text-sm font-semibold text-gray-700">Description</label>
-                <textarea name="description" className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter podcast description" rows={4}></textarea>
-                <label className="text-sm font-semibold text-gray-700">Style</label>
-                <input type="text" name="style" className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter podcast style (e.g., interview, solo, etc.)" />
-
-                <label className="text-sm font-semibold text-gray-700">Language</label>
-                <input type="text" name="language" className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter podcast language" />
-
+                
                 <ActionModalActionRow buttons={[
                     <button type="button" onClick={() => {
                         onClose();
@@ -48,10 +62,7 @@ export function CreatePodcastModal({
     const formData = new FormData(form);
     const data = {
       topic: formData.get('topic') as string,
-      description: formData.get('description') as string,
-      style: formData.get('style') as string,
-      language: formData.get('language') as string,
-    };
+    }
     console.log("Creating podcast with data:", data);
     createPodcastMutation.mutate(data);
   }}
@@ -67,7 +78,7 @@ export function CreatePodcastModal({
   >
     <PiSpinnerGap className="animate-spin text-xl" />
   </div>
-  Create Podcast
+  Generate
 </button>
 
                 ]} />

@@ -2,12 +2,13 @@ import { PiSpinnerGap } from "react-icons/pi";
 import { ActionModalActionRow } from "../@components/ActionModal";
 import { NavBar } from "../@components/NavBar";
 import { api } from "../api/api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PodcastGenTask } from "../@types/PodcastGenTask";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router";
 import { ShimmerBlock } from "../@components/Shimmer";
 import toast from "react-hot-toast";
+import { CreatePodcastModal } from "../modals/CreatePodcast";
 
 export default function Create() {
   const { data: queueData, isLoading, error, refetch } = api.useGetQueue();
@@ -19,12 +20,17 @@ export default function Create() {
     "error:",
     error
   );
+
+  const [isAutoFillModalOpen, setIsAutoFillModalOpen] = useState(false);
+
   const createPodcastMutation = api.useGeneratePodcast({
     onSuccess: (data) => {
       console.log("Podcast created successfully:", data);
       refetch(); // Refetch the queue after successful creation
     },
   });
+
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [description, setDescription] = useState("");
 
@@ -36,7 +42,7 @@ export default function Create() {
           <h1 className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
             Create a new podcast
           </h1>
-          <form className="flex flex-col gap-2">
+          <form ref={formRef} className="flex flex-col gap-2">
             <label className="text-sm font-semibold text-gray-50">Topic</label>
             <input
               type="text"
@@ -109,8 +115,36 @@ export default function Create() {
                   className="bg-gray-300 text-gray-800 rounded-lg px-4 py-2 hover:bg-gray-400 transition-colors cursor-pointer"
                 >
                   {" "}
-                  Clear Form
+                  Clear
                 </button>,
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAutoFillModalOpen(true);
+                  }}
+                  className="bg-blue-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition-colors cursor-pointer"
+                  >
+
+                <div
+                    className="transition-all duration-300 overflow-hidden"
+                    style={{
+                      width: createPodcastMutation.isLoading
+                        ? "1.25rem"
+                        : "0px", // 1.25rem = 20px
+                      height: createPodcastMutation.isLoading
+                        ? "1.25rem"
+                        : "0px",
+                      marginRight: createPodcastMutation.isLoading
+                        ? "0.5rem"
+                        : "0px",
+                    }}
+                  >
+                    <PiSpinnerGap className="animate-spin text-xl" />
+                  </div>
+                  Auto-Fill
+                  </button>,
+
                 <button
                   type="submit"
                   onClick={(e) => {
@@ -160,7 +194,7 @@ export default function Create() {
                   >
                     <PiSpinnerGap className="animate-spin text-xl" />
                   </div>
-                  Create Podcast
+                  Create
                 </button>,
               ]}
             />
@@ -190,6 +224,29 @@ export default function Create() {
           </div>
         </div>
       </div>
+      <CreatePodcastModal
+        isOpen={isAutoFillModalOpen}
+        onClose={() => setIsAutoFillModalOpen(false)}
+        onCreate={(data) => {
+          setIsAutoFillModalOpen(false);
+          console.log("Creating podcast with auto-filled data:", data);
+          // get the form 
+          formRef.current?.reset(); // Reset the form fields
+          setDescription(data.description); // Set the description state
+
+          // TODO: Replace the manual input selection with React Hook Form -- Sairam July 2025
+
+          (formRef.current!.elements.namedItem("topic") as HTMLInputElement)!.value =
+            data.topic ?? ""; // Set the topic field
+          
+          (formRef.current!.elements.namedItem("style") as HTMLInputElement)!.value =
+            data.style ?? ""; // Set the style field
+
+          (formRef.current!.elements.namedItem("language") as HTMLInputElement)!.value =
+            data.language ?? ""; // Set the language field
+
+        }}
+        />
     </div>
   );
 }

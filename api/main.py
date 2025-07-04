@@ -23,8 +23,13 @@ from fastapi.responses import FileResponse, StreamingResponse
 
 import pathlib
 
+# ABC -> 400 -> AUTH
+# ABC -> 404 -> PODCAST
+# ABC -> 405 -> TOPIC GENERATION
+# ABC -> 500 -> UNHANDLED (INTERNAL) ERROR
 
 ERROR_CODES = {
+    'auth_unknown_error': 40000,
     'auth_email_not_confirmed': 40001,
     'auth_invalid_credentials': 40002,
     'auth_user_not_found': 40003,
@@ -35,10 +40,10 @@ ERROR_CODES = {
     'auth_email_invalid': 40008,
     'auth_email_already_exists': 40009,
 
-
-    'unknown_error': 50000,
     'podcast_not_found': 40401,
     'podcast_creation_failed': 40402,
+    'podcast_topic_generation_failed': 40500,
+    'unknown_error': 50000,
 }
 
 
@@ -61,6 +66,10 @@ class GeneratePodcast(pydantic.BaseModel):
     style: str | None = None
     language: str | None = None
     description: str | None = None
+
+class AutoFillPodcastForm(pydantic.BaseModel):
+    topic: str | None = None
+    # style: str | None = None
 
 podolli_epoch = 1743465600 # April Fools 00:00:00 2025 UTC
 
@@ -101,6 +110,23 @@ For example, if the topic is "Artificial Intelligence", the search keys could be
 QUERY: {query}
 """
 
+
+generate_form_prompt = """
+You are simulating how a user would fill out a form to generate a podcast using an AI podcast platform.
+Given a topic, generate the input fields required to create the podcast.
+These fields are:
+
+topic: (Rephrased version of the user query, short and clear. Not a clickbait title.)
+
+style: (Podcast format, such as "Interview", "Discussion", "Explainer", etc.)
+
+language: (Detected or defaulted from the query, use (ISO-639-1), e.g., "en-IN", "en-US", "fr-FR", etc.)
+
+description: (A short summary that explains what the topic is about. This is context for generation, not marketing copy.)
+
+Do NOT write the podcast title or full description. Just simulate the user's intent.
+Query: {query}
+"""
 
 client = genai.Client()
 
@@ -279,6 +305,18 @@ async def dislike_button_pressed(podcast_id: str):
         await sess.commit()
         
         return {"message": "Podcast dislike count updated", "dislike_count": podcast_db.dislike_count}    
+
+@app.post("/topic/generate", response_model=GeneratePodcast)
+async def generate_form_data(topic: AutoFillPodcastForm):
+    if not topic:
+        return {"emsg": "Topic is required", "ecode": ERROR_CODES["podcast_topic_generation_failed"]}, 400
+    response = client.models.generate_content(
+        contents=generate_form_prompt.format(query=topic.topic),
+        config={"response_mime_type": "application/json", "response_schema": GeneratePodcast},
+        model="gemini-1.5-flash"
+    )
+    podcast_details = GeneratePodcast.model_validate(response.parsed) # Type: PodcastTopicsSearch
+    return podcast_details
 
 @inngest.create_function(
         fn_id="update_trend_analytics",

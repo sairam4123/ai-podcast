@@ -2,6 +2,7 @@
 // It is used to make requests to the backend server.
 // The URL is set to the backend server's address and port.
 
+import { useAutoFillPodcastForm } from "./autoFillPodcast";
 import { useGeneratePodcast } from "./generatePodcast";
 import { useGetAllPodcast } from "./getAllPodcast";
 import { useGetAudio } from "./getAudio";
@@ -44,4 +45,5 @@ export const api = {
     useGetUserProfile,
     useUserLogin,
     useUserRegister,
+    useAutoFillPodcastForm,
 }
