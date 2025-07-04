@@ -15,6 +15,7 @@ export function PodcastNew() {
   const { data, isLoading, error } = api.useGetPodcast({
     podcastId: podcast_id,
   });
+
   return (
     <main className="flex flex-col lg:h-screen min-h-screen bg-radial from-sky-700 to-blue-900">
       <NavBar />
@@ -44,7 +45,7 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
     { enabled: !!podcast?.id }
   );
 
-  const { play, pause, setSourceUrl, isPlaying } = useMediaPlayerContext();
+  const { play, pause, setSourceUrl, isPlaying } = useMediaPlayerContext({autoPlay: true});
 
   const { imageUrl } = useGetImage({ podcastId: podcast?.id ?? "" });
   const { setCurrentPodcast } = usePodcastContext();
@@ -54,11 +55,17 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
 
   return (
     <div className="flex flex-col lg:flex-row flex-1 gap-4 pb-32 overflow-hidden">
-      <div className="flex flex-col flex-1/5 bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
+      <title>{podcast?.podcast_title}</title>
+      <meta
+        name="description"
+        content={podcast?.podcast_description || "Podcast details"}
+      />
+      <link rel="icon" href={imageUrl} />
+      <div className="flex flex-col flex-1/5 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
         <img
           src={imageUrl ?? "/podcastplaceholdercover.png"}
           alt={podcast?.podcast_title}
-          className="w-48 aspect-square mx-auto h-auto object-cover rounded-lg"
+          className="w-32 aspect-square mx-auto h-auto object-cover rounded-lg"
         />
         <h2 className="text-xl font-bold text-white">
           {podcast?.podcast_title}
