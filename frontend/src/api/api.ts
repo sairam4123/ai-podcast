@@ -15,6 +15,7 @@ import { useGetQueue } from "./getQueue";
 import { useGetTrendingPodcasts } from "./getTrendingPodcasts";
 import useGetUserProfile from "./getUserProfile";
 import { useSearchPodcast } from "./searchPodcasts";
+import { useUpdatePodcastVisibility } from "./updatePodcastVisibility";
 import useUserLogin from "./userLogin";
 import useUserRegister from "./userRegister";
 
@@ -46,4 +47,5 @@ export const api = {
     useUserLogin,
     useUserRegister,
     useAutoFillPodcastForm,
+    useUpdatePodcastVisibility,
 }

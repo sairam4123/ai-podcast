@@ -53,14 +53,16 @@ export default function useMutation<TResult, TBody, TError = unknown>({
   return { result, error, isLoading, status, mutate };
 }
 
-export function useMutationWithAuth<TResult, TBody, TError = unknown>({
+export function useMutationWithAuth<TResult extends object | unknown[], TBody extends object | unknown[], TError = unknown>({
   url,
   method,
   onSuccess,
   onFailure,
+  useQuery = false,
 }: {
   url: string;
-  method: "POST" | "PUT" | "DELETE";
+  method: "POST" | "PUT" | "DELETE" | "PATCH";
+  useQuery?: boolean;
   onSuccess?: (data: TResult) => void;
   onFailure?: (error: TError) => void;
 }) {
@@ -73,9 +75,18 @@ export function useMutationWithAuth<TResult, TBody, TError = unknown>({
   const mutate = async (body: TBody) => {
     setStatus("LOADING");
     console.log(JSON.stringify(body))
+    let newUrl = url;
+    if (url && url.includes("{podcast_id}") && "podcast_id" in body) {
+      newUrl = url.replace("{podcast_id}", body.podcast_id as string);
+    } else {
+      console.warn("URL does not contain {podcast_id} or body does not have podcast_id");
+    }
+    if (useQuery) {
+      newUrl += `?${new URLSearchParams(body as Record<string, string>).toString()}`;
+    }
     try {
-      const token = getToken();
-      const response = await fetch(url, {
+      const token = await getToken();
+      const response = await fetch(newUrl, {
         method,
         headers: {
           "Content-Type": "application/json",

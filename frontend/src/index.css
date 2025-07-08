@@ -129,13 +129,13 @@
 
 ::-webkit-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-sky-600) var(--color-sky-300);
+  scrollbar-color: var(--color-sky-900) var(--color-sky-950);
   height: 8px;
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-sky-300); /* dark track */
+  background: var(--color-sky-850); /* dark track */
   border-radius: 8px;
 }
 
@@ -146,7 +146,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-sky-400); /* on hover */
+  background-color: var(--color-sky-200); /* on hover */
 }
 
 .glass-panel {

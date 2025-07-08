@@ -35,7 +35,7 @@ export default function Create() {
   const [description, setDescription] = useState("");
 
   return (
-    <div className="flex flex-col min-h-screen lg:h-screen select-none bg-radial pb-32 from-sky-700 to-blue-900">
+    <div className="flex flex-col min-h-screen lg:h-screen select-none bg-radial pb-32 from-sky-950 to-black">
       <NavBar />
       <div className="flex flex-col lg:flex-row flex-1 gap-4 p-4 overflow-hidden">
         <div className="flex flex-col flex-1/3 overflow-y-auto bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">

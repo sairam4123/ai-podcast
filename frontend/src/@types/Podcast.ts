@@ -26,6 +26,8 @@ export type Podcast = {
     view_count: number;
     like_count: number;
     dislike_count: number;
+
+    is_public: boolean;
 }
 
 // export type PodcastNew = {

@@ -1,7 +1,7 @@
 import { useParams } from "react-router";
 import { NavBar } from "../@components/NavBar";
 import { api } from "../api/api";
-import { FaPlay, FaSpinner } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaPlay, FaSpinner } from "react-icons/fa";
 import { Podcast } from "../@types/Podcast";
 import { useGetImage } from "../api/getImage";
 import { formatDuration } from "../utils/formatDuration";
@@ -9,15 +9,17 @@ import { Conversation } from "../@components/Conversation";
 import Button from "../@components/Button";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
+import toast from "react-hot-toast";
+import Spinner from "../@components/Spinner";
 
 export function PodcastNew() {
   const { podcast_id } = useParams<{ podcast_id: string }>();
-  const { data, isLoading, error } = api.useGetPodcast({
+  const { data, isLoading, error, refetch } = api.useGetPodcast({
     podcastId: podcast_id,
   });
 
   return (
-    <main className="flex flex-col lg:h-screen min-h-screen bg-radial from-sky-700 to-blue-900">
+    <main className="flex flex-col lg:h-screen min-h-screen bg-radial from-sky-950 to-black">
       <NavBar />
       <div className="flex flex-col flex-grow gap-4 overflow-hidden p-4">
         {isLoading ? (
@@ -27,7 +29,7 @@ export function PodcastNew() {
         ) : (data as unknown as number[])?.[1] === 404 ? (
           <NotFound />
         ) : (
-          <PodcastCard podcast={data?.podcast} />
+          <PodcastCard refetch={refetch} podcast={data?.podcast} />
         )}
         {error && (
           <div className="text-red-500 text-center w-full">
@@ -39,7 +41,7 @@ export function PodcastNew() {
   );
 }
 
-export function PodcastCard({ podcast }: { podcast?: Podcast }) {
+export function PodcastCard({ podcast, refetch }: { podcast?: Podcast; refetch?: () => void }) {
   const { audioUrl, isLoading: audioLoading } = api.useGetAudio(
     { podcast_id: podcast?.id ?? "" },
     { enabled: !!podcast?.id }
@@ -52,6 +54,22 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
   const { data, isLoading, error } = api.useGetConversation({
     podcastId: podcast?.id,
   });
+
+  const {mutate, isLoading: updateVisibilityLoading} = api.useUpdatePodcastVisibility({
+    onSuccess: ({data}) => {
+      if (Array.isArray(data) && data[1] === 404) {
+        toast.error("Podcast not found");
+        return;
+      }
+      if (Array.isArray(data) && data[0].emsg) {
+        toast.error(data[0].emsg);
+        return;
+      }
+      console.log("Podcast visibility updated successfully", data);
+      toast.success("Podcast visibility updated successfully");
+      refetch?.();
+    }
+  })
 
   return (
     <div className="flex flex-col lg:flex-row flex-1 gap-4 pb-32 overflow-hidden">
@@ -106,7 +124,7 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
             </span>
           ))}
         </div>
-        <div className="flex flex-row items-center justify-between mt-2">
+        <div className="flex flex-row gap-2 items-center mt-2">
           <Button
             isLoading={audioLoading}
             onClick={() => {
@@ -121,6 +139,27 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
           >
             <FaPlay className="inline mr-2" />
             Play
+          </Button>
+          <Button onClick={() => {
+            mutate({
+              podcast_id: podcast?.id ?? "",
+              is_public: !podcast?.is_public 
+            })
+          }}>
+            {updateVisibilityLoading ? <>
+            <Spinner className="inline mr-2" />
+
+            </> :podcast?.is_public ? (
+              <>
+              <FaEye className="inline mr-2" />
+              Public
+              </>
+            ) : (
+              <>
+              <FaEyeSlash className="inline mr-2" />
+              Private
+              </>
+            )}
           </Button>
         </div>
       </div>

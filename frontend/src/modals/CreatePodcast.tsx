@@ -45,7 +45,7 @@ export function CreatePodcastModal({
         isOpen={isOpen} 
         onClose={onClose}
     >
-        <div className="flex flex-col min-w-144 gap-4">
+        <div className="flex flex-col sm:min-w-72 md:min-w-144 gap-4">
             <form className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700">Topic</label>
                 <input type="text" name="topic" className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter podcast topic" />

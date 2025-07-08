@@ -20,10 +20,10 @@ export function Home() {
         offset: 0,
     })
 
-    return <main className="flex flex-col min-h-screen bg-radial pb-32 from-sky-700 to-blue-900">
+    return <main className="flex flex-col min-h-screen bg-radial pb-32 from-sky-950 to-black">
     <NavBar />
     <div className="flex flex-col flex-grow gap-4 p-4">
-        <div className="flex flex-col bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
+        <div className="flex flex-col bg-sky-800/20 border border-sky-600/50 space-y-2 p-2 rounded-lg">
             <p className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
                 For you
             </p>

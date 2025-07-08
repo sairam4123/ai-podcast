@@ -8,10 +8,10 @@ export function useGetPodcast({podcastId}: {podcastId?: string}) {
         v2: "true",
     });
 
-    const {data, loading, error} = useFetch<{success: boolean, message: string, podcast: Podcast}>(
+    const {data, loading, error, refetch} = useFetch<{success: boolean, message: string, podcast: Podcast}>(
         API_URL + "/podcasts/" + podcastId + "?" + params.toString(),
         {enabled: !!podcastId}
     );
 
-    return {data, isLoading: loading, error};
+    return {data, isLoading: loading, error, refetch};
 }
