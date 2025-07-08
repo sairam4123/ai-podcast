@@ -1249,7 +1249,9 @@ ERROR_CODES = {
 
     'podcast_not_found': 40401,
     'podcast_creation_failed': 40402,
+    'podcast_access_denied': 40403,
     'podcast_topic_generation_failed': 40500,
+    # 'podcast_generation_failed': 40501,
     'unknown_error': 50000,
 }
 
@@ -1392,6 +1394,7 @@ async def get_my_podcasts(offset: int = 0, limit: int = 10, user: UserProfile = 
 
         return {"results": new_podcasts[offset:offset + limit]}
 
+
 @app.get("/podcasts/trending")
 async def get_trending_podcasts(offset: int = 0, limit: int = 10):
     async with session_maker() as sess:
@@ -1475,6 +1478,18 @@ async def search_podcasts(query: str, v2: bool = False):
     if results:
         return {"results": results}
     return {"results": []}
+
+@app.patch("/podcasts/{podcast_id}/visibility")
+async def update_podcast_visibility(podcast_id: str, is_public: bool, user: UserProfile = fastapi.Depends(get_current_user)):
+    async with session_maker() as sess:
+        podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
+        if not podcast_db:
+            return {"error": "Podcast not found or you do not have permission to update it"}, 404
+        
+        podcast_db.is_public = is_public
+        await sess.commit()
+        
+        return {"message": "Podcast visibility updated", "is_public": podcast_db.is_public}
 
 @app.post("/analytics/podcasts/play")
 async def play_button_pressed(podcast_id: str):
@@ -1669,7 +1684,9 @@ async def get_podcast(podcast_id: str, v2: bool = False):
                 "updated_at": podcast_db.updated_at.isoformat() if podcast_db.updated_at else None,
                 "view_count": podcast_db.view_count,
                 "like_count": podcast_db.like_count,
+                "dislike_count": podcast_db.dislike_count,
                 "duration": podcast_db.duration,
+                "is_public": podcast_db.is_public,
                 "tags": podcast_db.tags,
             }
             return {"podcast": podcast, "success": True, "message": "Podcast found"}
