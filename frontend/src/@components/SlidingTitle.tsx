@@ -1,4 +1,4 @@
-import React, {
+import {
   useEffect,
   useRef,
   useState,
@@ -44,7 +44,9 @@ export default function SlidingTitle({
     measure();
 
     const ro = new ResizeObserver(measure);
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     containerRef.current && ro.observe(containerRef.current);
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     contentRef.current && ro.observe(contentRef.current);
 
     return () => ro.disconnect();
