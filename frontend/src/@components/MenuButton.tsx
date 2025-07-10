@@ -14,8 +14,8 @@ type MenuOption = {
 //   { label: "Settings", value: "settings" },
 //   { label: "Logout", value: "logout" },
 // ];
-
 export default function MenuButton({
+
     // onSelect,
     options,
     children,
@@ -103,7 +103,7 @@ export default function MenuButton({
         tabIndex={0}
         aria-expanded={open}
         aria-controls="dropdown-menu"
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="bg-sky-800 text-white px-4 py-2 rounded hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-900"
       >
         {children}
       </button>

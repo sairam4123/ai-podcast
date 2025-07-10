@@ -30,7 +30,7 @@ export const ProfileAvatarIcon = ({imageUrl, id}: {
     }
 
     return (
-        <div className="w-10 h-10 rounded-full border-sky-950 border-2 overflow-hidden">
+        <div className="w-10 h-10 rounded-full border-sky-50 border-2 overflow-hidden">
             <img
                 src={imageUrl ?? `/avatars/${hashedId}.png`}
                 alt="Avatar"

@@ -120,7 +120,7 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
                 play();
               }
             }}
-            className="text-6xl text-gray-200 opacity-75 active:scale-75 hover:text-white ease-in-out duration-75 transition-opacity"
+            className="text-6xl text-gray-200 opacity-75 active:scale-75 hover:opacity-100 hover:text-white ease-in-out duration-75 transition-all"
             style={{
               display:
                 (audioLoading || isPlaying) && isCurrentPodcast

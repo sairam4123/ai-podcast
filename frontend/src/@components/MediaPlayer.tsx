@@ -5,6 +5,7 @@ import { usePodcastContext } from "../contexts/podcast.context";
 import { formatDuration } from "../utils/formatDuration";
 import { useNavigate } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
+import SlidingTitle from "./SlidingTitle";
 
 export function MediaPlayer() {
     const {currentPosition, isPlaying, pause, play} = useMediaPlayerContext();
@@ -38,7 +39,8 @@ export function MediaPlayer() {
             <div className="flex flex-row flex-grow items-center gap-2 justify-between">
                 <img className="lg:h-26 h-22 w-auto rounded-lg aspect-square mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%" src={imageUrl ?? "/podcastplaceholdercover.png"}></img>
                 <div className="flex flex-col flex-grow">
-                    <div>
+                    <div className="">
+                        <SlidingTitle>
                         <p className="text-lg cursor-pointer font-bold text-gray-100">
                             <a onClick={
                                 (e) => {
@@ -49,6 +51,7 @@ export function MediaPlayer() {
                             {currentPodcast?.podcast_title ?? "Podcast Title.."}
                             </a>
                         </p>
+                        </SlidingTitle>
                         <p className="lg:text-sm text-xs line-clamp-2 text-gray-300">{currentPodcast?.podcast_description ?? "Description..."}</p>
                         {/* <p className="text-xs text-gray-400">{formatDuration(currentPodcast?.duration)}</p> */}
                     </div>

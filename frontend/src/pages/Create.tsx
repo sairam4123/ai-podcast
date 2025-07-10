@@ -9,6 +9,7 @@ import { useNavigate } from "react-router";
 import { ShimmerBlock } from "../@components/Shimmer";
 import toast from "react-hot-toast";
 import { CreatePodcastModal } from "../modals/CreatePodcast";
+import { FaPlus } from "react-icons/fa";
 
 export default function Create() {
   const { data: queueData, isLoading, error, refetch } = api.useGetQueue();
@@ -48,7 +49,7 @@ export default function Create() {
               type="text"
               name="topic"
               required
-              className="border bg-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border text-white bg-black/50 placeholder:text-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
               placeholder="e.g., AI in Healthcare, Space Exploration, etc."
             />
             <label className="text-sm font-semibold text-gray-50">
@@ -62,7 +63,7 @@ export default function Create() {
               }}
               required={true}
               value={description}
-              className="border bg-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border text-white bg-black/50 placeholder:text-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
               placeholder="provide more details about the topic, target audience, etc."
               rows={3}
             ></textarea>
@@ -71,7 +72,7 @@ export default function Create() {
               type="text"
               name="style"
               required
-              className="border bg-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border text-white bg-black/50 placeholder:text-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
               placeholder="e.g., interview, solo, etc."
             />
 
@@ -82,7 +83,7 @@ export default function Create() {
               type="text"
               name="language"
               required
-              className="border bg-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border text-white bg-black/50 placeholder:text-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
               placeholder="e.g., en-US, en-IN, ta-IN, etc."
             />
             <input
@@ -123,7 +124,7 @@ export default function Create() {
                   onClick={() => {
                     setIsAutoFillModalOpen(true);
                   }}
-                  className="bg-blue-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition-colors cursor-pointer"
+                  className="bg-sky-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-sky-600 transition-colors cursor-pointer"
                   >
 
                 <div
@@ -176,25 +177,28 @@ export default function Create() {
                     console.log("Creating podcast with data:", data);
                     createPodcastMutation.mutate(data);
                   }}
-                  className="bg-blue-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition-colors cursor-pointer"
+                  className="bg-sky-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-sky-600 transition-colors cursor-pointer"
                 >
+                  <div className="flex flex-row items-center justify-center gap-2">
                   <div
                     className="transition-all duration-300 overflow-hidden"
                     style={{
                       width: createPodcastMutation.isLoading
-                        ? "1.25rem"
-                        : "0px", // 1.25rem = 20px
+                      ? "1.25rem"
+                      : "0px", // 1.25rem = 20px
                       height: createPodcastMutation.isLoading
-                        ? "1.25rem"
-                        : "0px",
+                      ? "1.25rem"
+                      : "0px",
                       marginRight: createPodcastMutation.isLoading
-                        ? "0.5rem"
-                        : "0px",
+                      ? "0.5rem"
+                      : "0px",
                     }}
-                  >
+                    >
                     <PiSpinnerGap className="animate-spin text-xl" />
                   </div>
+                  <FaPlus className="text-lg" />
                   Create
+                  </div>
                 </button>,
               ]}
             />
@@ -338,7 +342,7 @@ function HorizontalPodcastCard({ task }: { task?: PodcastGenTask }) {
   });
   return (
     <div
-      className="lg:h-32 h-38 w-full bg-linear-60 from-25% from-sky-700 to-sky-500 shadow-2xl border-sky-700 border shadow-black/30 hover:shadow-black/40 gap-2 rounded-lg hover:scale-102 transition-all ease-in-out hover:brightness-110 flex flex-row"
+      className="lg:h-32 h-38 w-full bg-linear-45 -from-30% from-sky-950 to-black to-130% via-50% via-sky-900/25 shadow-2xl border-sky-700 border shadow-black/30 hover:shadow-black/40 gap-2 rounded-lg hover:scale-102 transition-all ease-in-out hover:brightness-110 flex flex-row"
       tabIndex={0}
     >
       <div className="p-1">
