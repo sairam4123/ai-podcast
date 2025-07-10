@@ -17,6 +17,7 @@ import { PodcastNew } from './pages/PodcastNew'
 import Login from './pages/Login'
 import Create from './pages/Create'
 import Register from "./pages/Register";
+import UserProfile from "./pages/UserProfile";
 
 
 // export function AppNew() {
@@ -95,6 +96,9 @@ export function App() {
         <Route path="/" element={<Home />} />
         <Route path="/create" element={<Create />} />
         <Route path="/podcast/:podcast_id" element={<PodcastNew />} />
+        <Route path="/user/:user_id" element={
+          <UserProfile />
+        } />
         <Route path="/login" element={
           <Login />
         } />
