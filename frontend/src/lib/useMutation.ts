@@ -3,7 +3,11 @@ import { getToken } from "./supabase";
 
 type Status = "IDLE" | "LOADING" | "SUCCESS" | "FAILURE";
 
-export default function useMutation<TResult, TBody, TError = unknown>({
+export default function useMutation<
+  TResult,
+  TBody extends object,
+  TError = unknown
+>({
   url,
   method,
   onSuccess,

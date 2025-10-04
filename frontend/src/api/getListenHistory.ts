@@ -1,5 +1,5 @@
 import { Podcast } from "../@types/Podcast";
-import useFetch, { useFetchWithAuth } from "../lib/useFetch";
+import { useFetchWithAuth } from "../lib/useFetch";
 import { API_URL } from "./api";
 
 export function useGetListenHistory({

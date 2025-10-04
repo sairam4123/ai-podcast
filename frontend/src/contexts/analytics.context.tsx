@@ -1,5 +1,3 @@
-import { Podcast } from "../@types/Podcast";
-
 type AnalyticsContextType = {
   lastAnalyticsUpdate: number;
   setLastAnalyticsUpdate: (timestamp: number) => void;

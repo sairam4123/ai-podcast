@@ -1,6 +1,4 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { usePlayPressed } from "../api/analytics/playPressed";
-import { usePodcastContext } from "./podcast.context";
 
 type MediaPlayerContextType = {
   isPlaying: boolean;

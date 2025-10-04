@@ -1,4 +1,4 @@
-import useMutation, { useMutationWithAuth } from "../../lib/useMutation";
+import { useMutationWithAuth } from "../../lib/useMutation";
 import { API_URL } from "../api";
 
 export function useCurrentPositionChanged() {
