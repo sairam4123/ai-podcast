@@ -1671,7 +1671,7 @@ async def generate_form_data(topic: AutoFillPodcastForm):
         fn_id="update_trend_analytics",
         name="Update Trend Analytics",
         trigger=TriggerCron(
-            cron="*/5 * * * *",  # Every five minutes
+            cron="*/30 * * * *",  # Every 30 minutes
         )
 )
 async def update_trend_analytics(ctx: Context, step: Step):
@@ -1737,7 +1737,7 @@ async def update_trend_analytics(ctx: Context, step: Step):
     fn_id="for_you_recommendations",
     name="For You Recommendations",
     trigger=TriggerCron(
-        cron="*/5 * * * *",  # Every 5 minutes
+        cron="*/30 * * * *",  # Every 30 minutes
     )
 )
 async def for_you_recommendations(ctx: Context, step: Step):    
