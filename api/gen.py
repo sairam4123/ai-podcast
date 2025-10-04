@@ -371,7 +371,7 @@ async def generate_featured_podcast_thumbnail_image(podcast: Podcast) -> io.Byte
 #     # tts.save(filename)
 
 def detect_topic_language(topic: str) -> str:
-    response = client.models.generate_content(contents=f"Detect the language given in the topic: {topic}. The language must be in the form of en-US, en-IN, etc. Also, if the user requests for a specific language, eg: (in tamil, in hindi), return that language instead in the format as specified earlier. (ISO-639-1)", config={"response_mime_type": "application/json", "response_schema": DetectedLanguageAI}, model="gemini-1.5-flash")
+    response = client.models.generate_content(contents=f"Detect the language given in the topic: {topic}. The language must be in the form of en-US, en-IN, etc. Also, if the user requests for a specific language, eg: (in tamil, in hindi), return that language instead in the format as specified earlier. (ISO-639-1)", config={"response_mime_type": "application/json", "response_schema": DetectedLanguageAI}, model="gemini-2.0-flash")
     data = DetectedLanguageAI.model_validate(response.parsed)
     return data.lang
 

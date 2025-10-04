@@ -1,7 +1,7 @@
 import datetime
 import functools
 from typing import Optional
-from sqlmodel import DateTime, SQLModel, Field, Relationship, Column, String, func, JSON
+from sqlmodel import DateTime, Float, SQLModel, Field, Relationship, Column, String, func, JSON
 from sqlalchemy.dialects.postgresql import ARRAY
 from uuid import uuid4, UUID
 from sqlalchemy.sql import and_
@@ -29,7 +29,49 @@ class UserProfile(SQLModel, table=True):
     username: str = Field(unique=True)
 
     podcasts: list["Podcast"] = Relationship(back_populates="profile")
+    play_history: list["UserPlayHistory"] = Relationship(back_populates="user")
+    recommendations: list["PodcastRecommendation"] = Relationship(back_populates="user")
+    like_history: list["UserLikeHistory"] = Relationship(back_populates="user")
 
+class UserPlayHistory(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="userprofile.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id")
+    last_played_at: datetime.datetime = Field(
+        default_factory=utcnow,
+        sa_column=Column(DateTime, server_default=func.now(), nullable=False)
+    )
+
+    last_known_position: float = Field(default=0.0, sa_column=Column(Float, server_default="0.0", nullable=False))  # in seconds
+
+    user: UserProfile = Relationship(back_populates="play_history")
+    podcast: "Podcast" = Relationship()
+
+class UserLikeHistory(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="userprofile.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id")
+    liked_at: datetime.datetime = Field(
+        default_factory=utcnow,
+        sa_column=Column(DateTime, server_default=func.now(), nullable=False)
+    )
+    is_like: bool = Field(default=True)  # True for like
+    is_dislike: bool = Field(default=False)  # True for dislike
+
+    user: UserProfile = Relationship(back_populates="like_history")
+    podcast: "Podcast" = Relationship(back_populates="liked_by_users")
+
+class PodcastRecommendation(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="userprofile.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id")
+    recommended_at: datetime.datetime = Field(
+        default_factory=utcnow,
+        sa_column=Column(DateTime, server_default=func.now(), nullable=False)
+    )
+
+    user: UserProfile = Relationship(back_populates="recommendations")
+    podcast: "Podcast" = Relationship(back_populates="recommendations")
 
 class Podcast(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -75,6 +117,11 @@ class Podcast(SQLModel, table=True):
     conversations: list["Conversation"] = Relationship(
         back_populates="podcast",
     )
+
+    played_by_users: list["UserPlayHistory"] = Relationship(back_populates="podcast")
+    liked_by_users: list["UserLikeHistory"] = Relationship(back_populates="podcast")
+
+    recommendations: list["PodcastRecommendation"] = Relationship(back_populates="podcast")
 
 class PodcastAuthorPersona(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)

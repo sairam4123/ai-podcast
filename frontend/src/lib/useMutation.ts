@@ -8,21 +8,36 @@ export default function useMutation<TResult, TBody, TError = unknown>({
   method,
   onSuccess,
   onFailure,
+  useQuery = false,
 }: {
   url: string;
   method: "POST" | "PUT" | "DELETE";
   onSuccess?: (data: TResult) => void;
   onFailure?: (error: TError) => void;
+  useQuery?: boolean;
 }) {
-  const [result, setResult] = useState< TResult | null >(null);
+  const [result, setResult] = useState<TResult | null>(null);
   const [error, setError] = useState<TError | null>(null);
   const [status, setStatus] = useState<Status>("IDLE");
   const isLoading = status === "LOADING";
   const mutate = async (body: TBody) => {
     setStatus("LOADING");
-    console.log(JSON.stringify(body))
+    console.log(JSON.stringify(body));
+    let newUrl = url;
+    if (url && url.includes("{podcast_id}") && "podcast_id" in body) {
+      newUrl = url.replace("{podcast_id}", body.podcast_id as string);
+    } else {
+      console.warn(
+        "URL does not contain {podcast_id} or body does not have podcast_id"
+      );
+    }
+    if (useQuery) {
+      newUrl += `?${new URLSearchParams(
+        body as Record<string, string>
+      ).toString()}`;
+    }
     try {
-      const response = await fetch(url, {
+      const response = await fetch(newUrl, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -34,7 +49,7 @@ export default function useMutation<TResult, TBody, TError = unknown>({
       console.log("Data set: ", data, "response OK?", response.ok);
       if (response.ok) {
         if ("success" in data && !data.success) {
-          throw new Error(data.message)
+          throw new Error(data.message);
         }
         setStatus("SUCCESS");
         onSuccess?.(data);
@@ -53,7 +68,11 @@ export default function useMutation<TResult, TBody, TError = unknown>({
   return { result, error, isLoading, status, mutate };
 }
 
-export function useMutationWithAuth<TResult extends object | unknown[], TBody extends object | unknown[], TError = unknown>({
+export function useMutationWithAuth<
+  TResult extends object | unknown[],
+  TBody extends object | unknown[],
+  TError = unknown
+>({
   url,
   method,
   onSuccess,
@@ -66,23 +85,25 @@ export function useMutationWithAuth<TResult extends object | unknown[], TBody ex
   onSuccess?: (data: TResult) => void;
   onFailure?: (error: TError) => void;
 }) {
-  
-
-  const [result, setResult] = useState< TResult | null >(null);
+  const [result, setResult] = useState<TResult | null>(null);
   const [error, setError] = useState<TError | null>(null);
   const [status, setStatus] = useState<Status>("IDLE");
   const isLoading = status === "LOADING";
   const mutate = async (body: TBody) => {
     setStatus("LOADING");
-    console.log(JSON.stringify(body))
+    console.log(JSON.stringify(body));
     let newUrl = url;
     if (url && url.includes("{podcast_id}") && "podcast_id" in body) {
       newUrl = url.replace("{podcast_id}", body.podcast_id as string);
     } else {
-      console.warn("URL does not contain {podcast_id} or body does not have podcast_id");
+      console.warn(
+        "URL does not contain {podcast_id} or body does not have podcast_id"
+      );
     }
     if (useQuery) {
-      newUrl += `?${new URLSearchParams(body as Record<string, string>).toString()}`;
+      newUrl += `?${new URLSearchParams(
+        body as Record<string, string>
+      ).toString()}`;
     }
     try {
       const token = await getToken();
@@ -90,7 +111,7 @@ export function useMutationWithAuth<TResult extends object | unknown[], TBody ex
         method,
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`, // Assuming token is stored in localStorage
+          Authorization: `Bearer ${token}`, // Assuming token is stored in localStorage
         },
         body: JSON.stringify(body),
       });
@@ -99,7 +120,7 @@ export function useMutationWithAuth<TResult extends object | unknown[], TBody ex
       console.log("Data set: ", data, "response OK?", response.ok);
       if (response.ok) {
         if ("success" in data && !data.success) {
-          throw new Error(data.message)
+          throw new Error(data.message);
         }
         setStatus("SUCCESS");
         onSuccess?.(data);
@@ -116,5 +137,4 @@ export function useMutationWithAuth<TResult extends object | unknown[], TBody ex
     }
   };
   return { result, error, isLoading, status, mutate };
-
 }

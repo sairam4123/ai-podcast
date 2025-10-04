@@ -1,14 +1,21 @@
+from datetime import datetime
+import heapq
 import io
+import math
+import time
 import fastapi
+# from fastapi import 
 from inngest import Context, Inngest, Step, fast_api, TriggerEvent, Event, TriggerCron
 import pydantic
 import pydub
-from sqlmodel import and_, asc, desc, or_, select, any_
+from sqlmodel import ARRAY, String, and_, asc, cast, desc, func, or_, select, any_
 from sqlalchemy.orm import selectinload, joinedload
+
+from supabase_auth import Optional
 # from sqlalchemy import select
-from api.utils import get_current_user, get_supabase_client
+from api.utils import get_current_user, get_supabase_client, optional_user
 from api.db import session_maker
-from api.models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask, UserProfile
+from api.models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask, PodcastRecommendation, UserLikeHistory, UserPlayHistory, UserProfile
 from api.gen import CreatePodcast, create_podcast_gen
 from uuid import UUID, uuid4
 import json
@@ -233,7 +240,7 @@ async def search_podcasts(query: str, v2: bool = False):
     else:
         new_podcasts = {podcast_id: {"id": podcast_id, **podcast} for podcast_id, podcast in podcasts.items()}
     
-    response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-1.5-flash")
+    response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-2.0-flash")
     podcast_search_keys = PodcastTopicsSearch.model_validate(response.parsed) # Type: PodcastTopicsSearch
     print(podcast_search_keys)
     results = []
@@ -284,39 +291,90 @@ async def update_podcast_visibility(podcast_id: str, is_public: bool, user: User
         
         return {"message": "Podcast visibility updated", "is_public": podcast_db.is_public}
 
-@app.post("/analytics/podcasts/play")
-async def play_button_pressed(podcast_id: str):
+@app.post("/analytics/podcasts/play/{podcast_id}")
+async def play_button_pressed(podcast_id: str, user: Optional[UserProfile] = fastapi.Depends(optional_user)):
     async with session_maker() as sess:
         podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
         if not podcast_db:
             return {"error": "Podcast not found"}, 404
-        
+        print("Play button pressed for podcast:", podcast_db.title, "by user:", user.id if user else "Anonymous")
+        if user:
+            play_history = UserPlayHistory(
+
+                user_id=user.id,
+                podcast_id=podcast_db.id,
+            )
+            sess.add(play_history)
+
         podcast_db.view_count += 1
+        sess.add(podcast_db)
         await sess.commit()
         
         return {"message": "Podcast play count updated", "view_count": podcast_db.view_count}
 
+@app.post("/analytics/podcasts/position/{podcast_id}")
+async def update_play_position(podcast_id: str, position: float, user: Optional[UserProfile] = fastapi.Depends(optional_user)):
+    async with session_maker() as sess:
+        podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar()
+        if not podcast_db:
+            return {"error": "Podcast not found"}, 404
+
+        if user:
+            play_history = (await sess.execute(select(UserPlayHistory).where(
+                UserPlayHistory.user_id == user.id,
+                UserPlayHistory.podcast_id == podcast_db.id,
+            ).order_by(desc(UserPlayHistory.last_played_at), desc(UserPlayHistory.last_known_position)).limit(1))).scalar_one_or_none()
+
+            if play_history:
+                play_history.last_known_position = position
+            else:
+                play_history = UserPlayHistory(
+                    user_id=user.id,
+                    podcast_id=podcast_db.id,
+                    last_known_position=position
+                )
+                sess.add(play_history)
+
+        await sess.commit()
+        return {"message": "Podcast play position updated"}
 
 @app.post("/podcasts/{podcast_id}/like")
-async def like_button_pressed(podcast_id: str):
+async def like_button_pressed(podcast_id: str, user: Optional[UserProfile] = fastapi.Depends(optional_user)):
     async with session_maker() as sess:
         podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
         if not podcast_db:
             return {"error": "Podcast not found"}, 404
-        
+
+        if user:
+            like_history = UserLikeHistory(
+                user_id=user.id,
+                podcast_id=podcast_db.id,
+                is_like=True
+            )
+            sess.add(like_history)
         podcast_db.like_count += 1
+        sess.add(podcast_db)
         await sess.commit()
         
         return {"message": "Podcast like count updated", "like_count": podcast_db.like_count}
 
 @app.post("/podcasts/{podcast_id}/dislike")
-async def dislike_button_pressed(podcast_id: str):
+async def dislike_button_pressed(podcast_id: str, user: Optional[UserProfile] = fastapi.Depends(optional_user)):
     async with session_maker() as sess:
         podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
         if not podcast_db:
             return {"error": "Podcast not found"}, 404
+
+        if user:
+            like_history = UserLikeHistory(
+                user_id=user.id,
+                podcast_id=podcast_db.id,
+                is_dislike=True
+            )
+            sess.add(like_history)
         
         podcast_db.dislike_count += 1
+        sess.add(podcast_db)
         await sess.commit()
         
         return {"message": "Podcast dislike count updated", "dislike_count": podcast_db.dislike_count}    
@@ -325,10 +383,14 @@ async def dislike_button_pressed(podcast_id: str):
 async def generate_form_data(topic: AutoFillPodcastForm):
     if not topic:
         return {"emsg": "Topic is required", "ecode": ERROR_CODES["podcast_topic_generation_failed"]}, 400
+    
+    # Search the topic
+    
+
     response = client.models.generate_content(
         contents=generate_form_prompt.format(query=topic.topic),
         config={"response_mime_type": "application/json", "response_schema": GeneratePodcast},
-        model="gemini-1.5-flash"
+        model="gemini-2.0-flash"
     )
     podcast_details = GeneratePodcast.model_validate(response.parsed) # Type: PodcastTopicsSearch
     return podcast_details
@@ -341,6 +403,43 @@ async def generate_form_data(topic: AutoFillPodcastForm):
         )
 )
 async def update_trend_analytics(ctx: Context, step: Step):
+
+    def trending_score(podcast, now=None, half_life_hours=360.0):
+        """
+        half_life_hours: after this many hours, score halves (with same engagement).
+        """
+
+        # Halfs every 15 days -> 360 hours (half a month)
+
+        now = now or time.time()
+
+        # 1) Age in hours (no int truncation)
+        age_hours = (now - podcast.created_at.timestamp()) / 3600.0
+        if age_hours < 0:
+            age_hours = 0.0  # guard bad clocks
+
+        # 2) Engagement (stable scaling)
+        # tweak weights to taste
+        views_term = 1.35 * math.log1p(max(0, podcast.view_count))
+        likes_term = 3.0 * max(0, podcast.like_count)
+        dislikes_term = 4.0 * max(0, podcast.dislike_count)
+
+        raw_engagement = views_term + likes_term - dislikes_term
+
+        # Optional: quality multiplier based on like ratio (keeps hate-watches down)
+        likes = max(0, podcast.like_count)
+        dislikes = max(0, podcast.dislike_count)
+        total_votes = likes + dislikes
+        like_ratio = (likes + 1) / (total_votes + 2)  # Laplace smoothing
+        quality = 0.5 + 0.5 * like_ratio              # maps ~[0,1] to [0.5,1.0]
+
+        engagement = max(0.0, raw_engagement) * quality
+
+        # 3) Exponential time decay: score halves every half_life_hours
+        decay = 2 ** (-age_hours / half_life_hours)
+
+        return engagement * decay
+
     async def handler():
         # Fetch the latest podcasts
         async with session_maker() as sess:
@@ -349,8 +448,9 @@ async def update_trend_analytics(ctx: Context, step: Step):
                 return {"message": "No podcasts found"}
             
             print("Calculating trending scores for podcasts...")
+            current_time = ctx.event.ts / 1000
             for podcast in podcasts_db:
-                podcast.trending_score = podcast.view_count + (podcast.like_count * 1.5) - (podcast.dislike_count) + ((podcast.created_at.timestamp() - podolli_epoch) / 45000)
+                podcast.trending_score = trending_score(podcast, now=current_time)
                 print("Calculating trending score for podcast:", podcast.title, "Score:", podcast.trending_score)
 
             sess.add_all(podcasts_db)
@@ -360,6 +460,83 @@ async def update_trend_analytics(ctx: Context, step: Step):
         
     await step.run("commit_trending_scores", handler=handler)
     return {"message": "Trend analytics updated successfully"}
+
+@inngest.create_function(
+    fn_id="for_you_recommendations",
+    name="For You Recommendations",
+    trigger=TriggerCron(
+        cron="*/5 * * * *",  # Every 5 minutes
+    )
+)
+async def for_you_recommendations(ctx: Context, step: Step):    
+    async def handler():
+        async with session_maker() as sess:
+            play_history_db = (await sess.execute(select(UserPlayHistory).options(joinedload(UserPlayHistory.podcast)).order_by(desc(UserPlayHistory.last_played_at), desc(UserPlayHistory.last_known_position)))).scalars().all()  # type: ignore
+
+            deduplicated_play_history = {}
+            for ph in play_history_db:
+                deduplicated_play_history[(ph.user_id, ph.podcast_id)] = ph
+
+            # for every user, get the podcasts they have played
+            user_played_podcasts: dict[UUID, list[UserPlayHistory]] = {}
+            for play_history in deduplicated_play_history.values():
+                print("User:", play_history.user_id, "played podcast:", play_history.podcast.title)
+                user_played_podcasts.setdefault(play_history.user_id, []).append(play_history)
+            
+            # for every user, get the top 5 podcasts they have played
+            user_top_podcasts: dict[UUID, list[UserPlayHistory]] = {}
+            for user_id, podcasts in user_played_podcasts.items():
+                print("User:", user_id, "has played", len(podcasts), "podcasts")
+                user_top_podcasts[user_id] = sorted(podcasts, key=lambda p: p.last_played_at, reverse=True)[:5]
+            
+            # find similar podcasts to the top 5 podcasts for each user
+            user_recommendations = {}
+            for user_id, top_podcasts in user_top_podcasts.items():
+                recommended_podcasts = set()
+                heap_podcasts = []
+                for podcast in top_podcasts:
+                    podcast = podcast.podcast
+                    similar_podcasts = (await sess.execute(
+                        select(Podcast, func.cardinality(
+                            func.array(select(func.unnest(cast(Podcast.tags, ARRAY(String)))).intersect(select(func.unnest(cast(podcast.tags, ARRAY(String))))))
+                        ).label("similarity")
+                        ).where(
+                            and_(
+                                Podcast.id != podcast.id,
+                                Podcast.tags.op("&&")(podcast.tags), # type: ignore 
+                            )
+                        ).order_by(desc("similarity"), desc(Podcast.trending_score)).limit(5)
+                    )).all()
+                    print("Similar", similar_podcasts)
+                    # print("Similar podcasts for", podcast.title, ":", [(p, sim) for p, *sim in similar_podcasts])
+                    # recommended_podcasts.update(p.id for p, *_ in similar_podcasts)
+                    for p, sim in similar_podcasts:
+                        if p.id not in recommended_podcasts:
+                            recommended_podcasts.add(p.id)
+                            heapq.heappush(heap_podcasts, (sim, p.id))
+
+                    print("User:", user_id, "top podcast:", podcast.title, "recommended similar podcasts:", [p.title for p, *sim in similar_podcasts])
+                user_recommendations[user_id] = [p for sim, p in heapq.nlargest(10, heap_podcasts)]  # Limit to top 10 recommendations
+
+            # save the recommendations to a db
+            for user_id, recommendations in user_recommendations.items():
+                # First, delete existing recommendations for the user
+                prev_recommends = await sess.execute(select(PodcastRecommendation).where(PodcastRecommendation.user_id == user_id))
+                prev_recommends = prev_recommends.scalars().all()
+                for rec in prev_recommends:
+                    await sess.delete(rec)
+                # Now, add new recommendations
+                for podcast_id in recommendations:
+                    recommendation = PodcastRecommendation(user_id=user_id, podcast_id=podcast_id)
+                    sess.add(recommendation)
+                
+
+            await sess.commit()
+        print("For you recommendations updated successfully")
+
+    await step.run("update_for_you_recommendations", handler=handler)
+    return {"message": "For you recommendations updated successfully"}
+    
 
 @inngest.create_function(
     fn_id="create_featured_podcast_covers",
@@ -584,7 +761,106 @@ async def get_queue(offset: int = 0, limit: int = 10):
         for task in tasks
     ]
 }
+    
+@app.get("/recommendations/@me")
+async def get_user_recommendations(user = fastapi.Depends(get_current_user)):
+    async with session_maker() as sess:
+        recommendations_db = (await sess.execute(
+            select(PodcastRecommendation).options(joinedload(PodcastRecommendation.podcast)
+        ).where(PodcastRecommendation.user_id == user.id))).scalars().all()
+        if not recommendations_db:
+            return {"recommendations": []}
+        recommendations = []
+        for rec in recommendations_db:
+            podcast = rec.podcast
+            if podcast:
+                recommendations.append({
+                    "id": str(podcast.id),
+                    "podcast_title": podcast.title,
+                    "podcast_description": podcast.description,
+                    "language": podcast.language,
+                    "created_at": podcast.created_at.isoformat() if podcast.created_at else None,
+                    "updated_at": podcast.updated_at.isoformat() if podcast.updated_at else None,
+                    "view_count": podcast.view_count,
+                    "like_count": podcast.like_count,
+                    "dislike_count": podcast.dislike_count,
+                    "duration": podcast.duration,
+                })
+        return recommendations
 
+from sqlalchemy import select, func, desc
+from sqlalchemy.sql import over
+from sqlalchemy.orm import aliased
+
+@app.get("/podcasts/history/@me")
+async def get_user_history(
+    user = fastapi.Depends(get_current_user),
+    offset: int = 0,
+    limit: int = 10,
+):
+    async with session_maker() as sess:
+        # Window function: rank rows per (user, podcast) by last_played_at desc
+        rn = func.row_number().over(
+            partition_by=(UserPlayHistory.user_id, UserPlayHistory.podcast_id),
+            order_by=desc(UserPlayHistory.last_played_at),
+        ).label("rn")
+
+        latest = (
+            select(
+                UserPlayHistory.user_id.label("user_id"),
+                UserPlayHistory.podcast_id.label("podcast_id"),
+                UserPlayHistory.last_played_at.label("last_played_at"),
+                UserPlayHistory.last_known_position.label("last_known_position"),
+            )
+            .where(UserPlayHistory.user_id == user.id)
+            .add_columns(rn)
+            .subquery()
+        )
+
+        # Filter to the top row per podcast (rn = 1), then join Podcast
+        q = (
+            select(
+                Podcast.id,
+                Podcast.title,
+                Podcast.description,
+                Podcast.language,
+                Podcast.created_at,
+                Podcast.updated_at,
+                Podcast.view_count,
+                Podcast.like_count,
+                Podcast.dislike_count,
+                Podcast.duration,
+                latest.c.last_played_at,
+                latest.c.last_known_position,
+            )
+            .join(Podcast, Podcast.id == latest.c.podcast_id)
+            .where(latest.c.rn == 1)
+            .order_by(desc(latest.c.last_played_at), desc(latest.c.last_known_position))
+            .offset(offset)
+            .limit(limit)
+        )
+
+        rows = (await sess.execute(q)).all()
+
+        # Shape the response
+        history = [
+            {
+                "id": str(r.id),
+                "podcast_title": r.title,
+                "podcast_description": r.description,
+                "language": r.language,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+                "view_count": r.view_count,
+                "like_count": r.like_count,
+                "dislike_count": r.dislike_count,
+                "duration": r.duration,
+                "last_played_at": r.last_played_at.isoformat() if r.last_played_at else None,
+                "last_known_position": r.last_known_position,
+            }
+            for r in rows
+        ]
+        return history
 
 @app.post("/podcasts")
 async def create_podcast(podcast: GeneratePodcast | None = None):
@@ -819,7 +1095,8 @@ async def get_podcast_episodes(podcast_id: str):
 fast_api.serve(app, inngest, functions=[
     create_podcast_inngest, 
     update_trend_analytics, 
-    generate_pending_podcasts
+    generate_pending_podcasts,
+    for_you_recommendations,
 ], serve_path="/inngest")
 
 if __name__ == '__main__':

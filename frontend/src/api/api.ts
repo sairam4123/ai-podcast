@@ -16,36 +16,50 @@ import { useGetTrendingPodcasts } from "./getTrendingPodcasts";
 import useGetUserProfile from "./getUserProfile";
 import { useSearchPodcast } from "./searchPodcasts";
 import { useUpdatePodcastVisibility } from "./updatePodcastVisibility";
+import { useGetListenHistory } from "./getListenHistory";
+import { useGetRecommendations } from "./getRecommendations";
+
 import useUserLogin from "./userLogin";
 import useUserRegister from "./userRegister";
 
 // check if the environment is hosted on localhost or local network
 // ?
-const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-const isLocalNetwork = window.location.hostname.startsWith("192.168.") || window.location.hostname.startsWith("10.") || window.location.hostname.startsWith("172.");
+const isLocalhost =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
+const isLocalNetwork =
+  window.location.hostname.startsWith("192.168.") ||
+  window.location.hostname.startsWith("10.") ||
+  window.location.hostname.startsWith("172.");
 // console.log("isLocalhost", isLocalhost);
 // console.log("isLocalNetwork", isLocalNetwork);
 // console.log("window.location.hostname", window.location.hostname);
 
-const VITE_API_URL = import.meta.env.VITE_APP_API_URL 
+const VITE_API_URL = import.meta.env.VITE_APP_API_URL;
 
-export const API_URL = VITE_API_URL ? VITE_API_URL : `http${isLocalhost || isLocalNetwork ? '' : 's'}://${window.location.hostname}:8000/api`;
+export const API_URL = VITE_API_URL
+  ? VITE_API_URL
+  : `http${isLocalhost || isLocalNetwork ? "" : "s"}://${
+      window.location.hostname
+    }:8000/api`;
 
 export const api = {
-    useSearchPodcast,
-    useGetAllPodcast,
-    useGeneratePodcast,
-    useGetAudio,
-    useGetAvatarImage,
-    useGetImage,
-    useGetPodcast,
-    useGetQueue,
-    useGetConversation,
-    useGetFeaturedPodcasts,
-    useGetTrendingPodcasts,
-    useGetUserProfile,
-    useUserLogin,
-    useUserRegister,
-    useAutoFillPodcastForm,
-    useUpdatePodcastVisibility,
-}
+  useSearchPodcast,
+  useGetListenHistory,
+  useGetRecommendations,
+  useGetAllPodcast,
+  useGeneratePodcast,
+  useGetAudio,
+  useGetAvatarImage,
+  useGetImage,
+  useGetPodcast,
+  useGetQueue,
+  useGetConversation,
+  useGetFeaturedPodcasts,
+  useGetTrendingPodcasts,
+  useGetUserProfile,
+  useUserLogin,
+  useUserRegister,
+  useAutoFillPodcastForm,
+  useUpdatePodcastVisibility,
+};

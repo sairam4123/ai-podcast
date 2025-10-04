@@ -1,7 +1,8 @@
 import functools
-from fastapi import HTTPException, Request
+from fastapi import Depends, HTTPException, Request
 from supabase import AClient as SupabaseClient
 
+from fastapi.security import APIKeyHeader
 SUPABASE_AUTH_HEADER = "Authorization"
 
 async def update_podcast_generation_task(podcast_id: str, status: str, progress: int = 0, progress_message: str = "", supabase: SupabaseClient | None = None):
@@ -72,8 +73,18 @@ def get_supabase_client(with_service=True):
         return SupabaseClient(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ANON_KEY"])
     return SupabaseClient(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
 
-async def get_current_user(request: Request):
-    auth_header = request.headers.get("Authorization")
+security = APIKeyHeader(name=SUPABASE_AUTH_HEADER, auto_error=False)
+
+async def get_current_user(api_key = Depends(security)):
+    auth_header = api_key
+
+    if not isinstance(auth_header, str):
+        req = auth_header
+        auth_header = req.headers.get(SUPABASE_AUTH_HEADER)
+        
+
+
+    print("Auth Header:", auth_header)
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid token")
 
@@ -84,3 +95,10 @@ async def get_current_user(request: Request):
         raise HTTPException(status_code=401, detail="Invalid token")
 
     return user_info.user
+
+async def optional_user(request: Request):
+    try:
+        user = await get_current_user(request)
+        return user
+    except HTTPException:
+        return None

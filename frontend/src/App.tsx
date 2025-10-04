@@ -7,18 +7,18 @@
 // import { useGeneratePodcast } from "./api/generatePodcast";
 // import { FaWandMagicSparkles } from "react-icons/fa6";
 import { Home } from "./pages/Home";
-import { Toaster } from 'react-hot-toast'
+import { Toaster } from "react-hot-toast";
 
-import { BrowserRouter, Route, Routes } from 'react-router'
-import { MediaPlayerProvider } from './contexts/mediaPlayer.context'
-import { MediaPlayer } from './@components/MediaPlayer'
-import { PodcastProvider } from './contexts/podcast.context'
-import { PodcastNew } from './pages/PodcastNew'
-import Login from './pages/Login'
-import Create from './pages/Create'
+import { BrowserRouter, Route, Routes } from "react-router";
+import { MediaPlayerProvider } from "./contexts/mediaPlayer.context";
+import { MediaPlayer } from "./@components/MediaPlayer";
+import { PodcastProvider } from "./contexts/podcast.context";
+import { PodcastNew } from "./pages/PodcastNew";
+import Login from "./pages/Login";
+import Create from "./pages/Create";
 import Register from "./pages/Register";
 import UserProfile from "./pages/UserProfile";
-
+import { AnalyticsProvider } from "./contexts/analytics.context";
 
 // export function AppNew() {
 //   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -34,7 +34,6 @@ import UserProfile from "./pages/UserProfile";
 //       console.error("Error generating podcast", error);
 //     }
 //   });
-  
 
 //   return (
 //     <div className="flex flex-col py-8 items-center justify-center min-h-screen bg-gradient-to-tr from-sky-200 to-[130%] to-blue-700">
@@ -88,26 +87,23 @@ import UserProfile from "./pages/UserProfile";
 
 export function App() {
   return (
-  
     <PodcastProvider>
-    <MediaPlayerProvider>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/create" element={<Create />} />
-        <Route path="/podcast/:podcast_id" element={<PodcastNew />} />
-        <Route path="/user/:user_id" element={
-          <UserProfile />
-        } />
-        <Route path="/login" element={
-          <Login />
-        } />
-        <Route path="/register" element={<Register />} />
-      </Routes>
-    <MediaPlayer />
-        <Toaster />
-    </BrowserRouter>
-    </MediaPlayerProvider>
+      <MediaPlayerProvider>
+        <AnalyticsProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/create" element={<Create />} />
+              <Route path="/podcast/:podcast_id" element={<PodcastNew />} />
+              <Route path="/user/:user_id" element={<UserProfile />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Routes>
+            <MediaPlayer />
+            <Toaster />
+          </BrowserRouter>
+        </AnalyticsProvider>
+      </MediaPlayerProvider>
     </PodcastProvider>
   );
 }
