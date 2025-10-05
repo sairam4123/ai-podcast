@@ -5,6 +5,11 @@ type PodcastContextType = {
   setCurrentPodcast: (podcast: Podcast) => void;
   isPodcastPlaying: boolean;
   setIsPodcastPlaying: (isPlaying: boolean) => void;
+
+  isCurrentPodcastLiked: boolean;
+  isCurrentPodcastDisliked: boolean;
+  setIsCurrentPodcastLiked: (liked: boolean) => void;
+  setIsCurrentPodcastDisliked: (disliked: boolean) => void;
 };
 
 import { createContext, useContext, useEffect, useState } from "react";
@@ -23,6 +28,10 @@ export function usePodcastContext() {
 export function PodcastProvider({ children }: { children: React.ReactNode }) {
   const [currentPodcast, setCurrentPodcast] = useState<Podcast>({} as Podcast);
   const [isPodcastPlaying, setIsPodcastPlaying] = useState(false);
+
+  const [isCurrentPodcastLiked, setIsCurrentPodcastLiked] = useState(false);
+  const [isCurrentPodcastDisliked, setIsCurrentPodcastDisliked] =
+    useState(false);
 
   const { mutate } = usePlayPressed();
 
@@ -45,6 +54,10 @@ export function PodcastProvider({ children }: { children: React.ReactNode }) {
         setCurrentPodcast,
         isPodcastPlaying,
         setIsPodcastPlaying,
+        isCurrentPodcastLiked,
+        isCurrentPodcastDisliked,
+        setIsCurrentPodcastLiked,
+        setIsCurrentPodcastDisliked,
       }}
     >
       {children}

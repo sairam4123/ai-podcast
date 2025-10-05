@@ -1,3 +1,5 @@
+import api.env
+
 import heapq
 import io
 import math
@@ -338,41 +340,64 @@ async def update_play_position(podcast_id: str, position: float, user: Optional[
         return {"message": "Podcast play position updated"}
 
 @app.post("/podcasts/{podcast_id}/like")
-async def like_button_pressed(podcast_id: str, user: Optional[UserProfile] = fastapi.Depends(optional_user)):
+async def like_button_pressed(podcast_id: str, liked: bool, user: Optional[UserProfile] = fastapi.Depends(optional_user)):
     async with session_maker() as sess:
         podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
         if not podcast_db:
             return {"error": "Podcast not found"}, 404
 
+
         if user:
-            like_history = UserLikeHistory(
-                user_id=user.id,
-                podcast_id=podcast_db.id,
-                is_like=True
-            )
-            sess.add(like_history)
-        podcast_db.like_count += 1
+
+            like_history_db = (await sess.execute(select(UserLikeHistory).where(
+                UserLikeHistory.user_id == user.id,
+                UserLikeHistory.podcast_id == podcast_db.id,
+            ))).scalar_one_or_none()
+            if like_history_db:
+                like_history_db.is_like = liked
+                like_history_db.is_dislike = False if liked else like_history_db.is_dislike # if liked is True, set is_dislike to False (undo dislike)
+                sess.add(like_history_db)
+            else: 
+                like_history = UserLikeHistory(
+                    user_id=user.id,
+                    podcast_id=podcast_db.id,
+                    is_like=liked
+                )
+                
+                sess.add(like_history)
+
+
+        podcast_db.like_count += 1 if liked else -1
         sess.add(podcast_db)
         await sess.commit()
         
         return {"message": "Podcast like count updated", "like_count": podcast_db.like_count}
 
 @app.post("/podcasts/{podcast_id}/dislike")
-async def dislike_button_pressed(podcast_id: str, user: Optional[UserProfile] = fastapi.Depends(optional_user)):
+async def dislike_button_pressed(podcast_id: str, disliked: bool, user: Optional[UserProfile] = fastapi.Depends(optional_user)):
     async with session_maker() as sess:
         podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
         if not podcast_db:
             return {"error": "Podcast not found"}, 404
 
         if user:
-            like_history = UserLikeHistory(
-                user_id=user.id,
-                podcast_id=podcast_db.id,
-                is_dislike=True
-            )
-            sess.add(like_history)
+            like_history_db = (await sess.execute(select(UserLikeHistory).where(
+                UserLikeHistory.user_id == user.id,
+                UserLikeHistory.podcast_id == podcast_db.id,
+            ))).scalar_one_or_none()
+            if like_history_db:
+                like_history_db.is_dislike = disliked
+                like_history_db.is_like = False if disliked else like_history_db.is_like # if disliked is True, set is_like to False (undo like)
+                sess.add(like_history_db)
+            else:
+                like_history = UserLikeHistory(
+                    user_id=user.id,
+                    podcast_id=podcast_db.id,
+                    is_dislike=disliked
+                )
+                sess.add(like_history)
         
-        podcast_db.dislike_count += 1
+        podcast_db.dislike_count += 1 if disliked else -1
         sess.add(podcast_db)
         await sess.commit()
         
@@ -637,38 +662,35 @@ async def get_featured_podcasts(offset: int = 0, limit: int = 10):
 
 
 @app.get("/podcasts/{podcast_id}")
-async def get_podcast(podcast_id: str, v2: bool = False):
-
-    if v2:
-        async with session_maker() as sess:
-            podcast_db = (await sess.execute(select(Podcast).where(Podcast.id == podcast_id))).scalar_one_or_none()
-            if not podcast_db:
-                return {"error": "Podcast not found"}, 404
-            podcast = {
-                "id": str(podcast_db.id),
-                "podcast_title": podcast_db.title,
-                "podcast_description": podcast_db.description,
-                "language": podcast_db.language,
-                "created_at": podcast_db.created_at.isoformat() if podcast_db.created_at else None,
-                "updated_at": podcast_db.updated_at.isoformat() if podcast_db.updated_at else None,
-                "view_count": podcast_db.view_count,
-                "like_count": podcast_db.like_count,
-                "dislike_count": podcast_db.dislike_count,
-                "duration": podcast_db.duration,
-                "is_public": podcast_db.is_public,
-                "tags": podcast_db.tags,
-            }
-            return {"podcast": podcast, "success": True, "message": "Podcast found"}
-
-    podcast = podcasts.get(podcast_id)
-    if not podcast:
-        return {"error": "Podcast not found"}, 404
-    if "duration" not in podcast: # just in case we don't have it yet
-        podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
-    if podcast:
+async def get_podcast(podcast_id: str, v2: bool = False, user = fastapi.Depends(optional_user)):
+    if not v2:
+        raise NotImplementedError("This endpoint is no longer available in v1")
+    
+    async with session_maker() as sess:
+        podcast_db = (await sess.execute(select(Podcast).options(selectinload(Podcast.liked_by_users)).where(and_(Podcast.id == podcast_id)))).scalar_one_or_none()
+        if not podcast_db:
+            return {"error": "Podcast not found"}, 404
+        print("Liked by Users", podcast_db.liked_by_users)
+        print("Current User", user.id if user else "Anonymous")
+        print("Liked", any(user.id == u.id and u.is_like for u in podcast_db.liked_by_users) if user else False)
+        print("Test", list((user.id, u.id, user.id == str(u.id), str(u.id), u.is_like, user.id == str(u.id) and u.is_like) for u in podcast_db.liked_by_users) if user else [])
+        podcast = {
+            "id": str(podcast_db.id),
+            "podcast_title": podcast_db.title,
+            "podcast_description": podcast_db.description,
+            "language": podcast_db.language,
+            "created_at": podcast_db.created_at.isoformat() if podcast_db.created_at else None,
+            "updated_at": podcast_db.updated_at.isoformat() if podcast_db.updated_at else None,
+            "view_count": podcast_db.view_count,
+            "like_count": podcast_db.like_count,
+            "dislike_count": podcast_db.dislike_count,
+            "duration": podcast_db.duration,
+            "is_public": podcast_db.is_public,
+            "tags": podcast_db.tags,
+            "liked_by_user": any(user.id == str(u.user_id) and u.is_like for u in podcast_db.liked_by_users) if user else False,
+            "disliked_by_user": any(user.id == str(u.user_id) and u.is_dislike for u in podcast_db.liked_by_users) if user else False,
+        }
         return {"podcast": podcast, "success": True, "message": "Podcast found"}
-    else:
-        return {"error": "Podcast not found"}, 404
 
 
 @app.get("/user/{user_id}/podcasts", dependencies=[fastapi.Depends(get_current_user)])

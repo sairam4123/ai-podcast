@@ -1,7 +1,7 @@
 // PodcastCardSkeleton.tsx
 import { motion } from "framer-motion";
 import clsx from "clsx";
-import { FaPlay, FaPause, FaSpinner, FaCircle } from "react-icons/fa";
+import { FaPlay, FaPause, FaSpinner, FaCircle, FaThumbsUp } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import { Podcast } from "../@types/Podcast";
 import { api } from "../api/api";
@@ -171,6 +171,11 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
           <span className="flex-row flex items-center gap-1">
             <FaPlay className="text-gray-200 text-[10px]" />{" "}
             {formatNumber(podcast?.view_count ?? 0)}
+          </span>
+          <FaCircle className="text-gray-200 text-[5px]" />
+          <span className="flex-row flex items-center gap-1">
+            <FaThumbsUp className="text-gray-200 text-[10px]" />{" "}
+            {formatNumber(podcast?.like_count ?? 0)}
           </span>
           <FaCircle className="text-gray-200 text-[5px]" />
           <span>

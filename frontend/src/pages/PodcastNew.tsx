@@ -1,7 +1,17 @@
 import { useParams } from "react-router";
 import { NavBar } from "../@components/NavBar";
 import { api } from "../api/api";
-import { FaEye, FaEyeSlash, FaPlay, FaSpinner } from "react-icons/fa";
+import {
+  FaEye,
+  FaEyeSlash,
+  FaPlay,
+  FaRegThumbsDown,
+  FaRegThumbsUp,
+  FaShare,
+  FaSpinner,
+  FaThumbsDown,
+  FaThumbsUp,
+} from "react-icons/fa";
 import { Podcast } from "../@types/Podcast";
 import { useGetImage } from "../api/getImage";
 import { formatDuration } from "../utils/formatDuration";
@@ -41,13 +51,21 @@ export function PodcastNew() {
   );
 }
 
-export function PodcastCard({ podcast, refetch }: { podcast?: Podcast; refetch?: () => void }) {
+export function PodcastCard({
+  podcast,
+  refetch,
+}: {
+  podcast?: Podcast;
+  refetch?: () => void;
+}) {
   const { audioUrl, isLoading: audioLoading } = api.useGetAudio(
     { podcast_id: podcast?.id ?? "" },
     { enabled: !!podcast?.id }
   );
 
-  const { play, pause, setSourceUrl, isPlaying } = useMediaPlayerContext({autoPlay: true});
+  const { play, pause, setSourceUrl, isPlaying } = useMediaPlayerContext({
+    autoPlay: true,
+  });
 
   const { imageUrl } = useGetImage({ podcastId: podcast?.id ?? "" });
   const { setCurrentPodcast } = usePodcastContext();
@@ -55,50 +73,63 @@ export function PodcastCard({ podcast, refetch }: { podcast?: Podcast; refetch?:
     podcastId: podcast?.id,
   });
 
-  const {mutate, isLoading: updateVisibilityLoading} = api.useUpdatePodcastVisibility({
-    onSuccess: ({data}) => {
-      if (Array.isArray(data) && data[1] === 404) {
-        toast.error("Podcast not found");
-        return;
-      }
-      if (Array.isArray(data) && data[0].emsg) {
-        toast.error(data[0].emsg);
-        return;
-      }
-      console.log("Podcast visibility updated successfully", data);
-      toast.success("Podcast visibility updated successfully");
+  const { mutate: likePodcast, isLoading: likeLoading } = api.useLikePodcast({
+    onSuccess: () => {
+      toast.success("Podcast liked successfully");
       refetch?.();
-    }
-  })
+    },
+  });
+
+  const { mutate: dislikePodcast, isLoading: dislikeLoading } =
+    api.useDislikePodcast({
+      onSuccess: () => {
+        toast.success("Podcast disliked successfully");
+        refetch?.();
+      },
+    });
+
+  const { mutate, isLoading: updateVisibilityLoading } =
+    api.useUpdatePodcastVisibility({
+      onSuccess: ({ data }) => {
+        if (Array.isArray(data) && data[1] === 404) {
+          toast.error("Podcast not found");
+          return;
+        }
+        if (Array.isArray(data) && data[0].emsg) {
+          toast.error(data[0].emsg);
+          return;
+        }
+        console.log("Podcast visibility updated successfully", data);
+        toast.success("Podcast visibility updated successfully");
+        refetch?.();
+      },
+    });
 
   return (
     <div className="flex flex-col lg:flex-row flex-1 gap-4 pb-32 overflow-hidden">
       <>
-      <title>{podcast?.podcast_title}</title>
-      <link rel="icon" href={`${imageUrl}`} precedence="high" />
-      <meta
-        name="description"
-        content={podcast?.podcast_description || "Podcast details"}
+        <title>{podcast?.podcast_title}</title>
+        <link rel="icon" href={`${imageUrl}`} precedence="high" />
+        <meta
+          name="description"
+          content={podcast?.podcast_description || "Podcast details"}
         />
         <meta
-        name="og:title"
-        content={podcast?.podcast_title || "Podcast details"}
+          name="og:title"
+          content={podcast?.podcast_title || "Podcast details"}
         />
-      <meta
-        name="og:description"
-        content={podcast?.podcast_description || "Podcast details"}
+        <meta
+          name="og:description"
+          content={podcast?.podcast_description || "Podcast details"}
         />
-      <meta
-        name="og:image"
-        content={imageUrl || "/podcastplaceholdercover.png"}
+        <meta
+          name="og:image"
+          content={imageUrl || "/podcastplaceholdercover.png"}
         />
-      <meta
-        name="og:type"
-        content="audio"
-        />
-      <meta
-        name="og:url"
-        content={`https://podolli-ai.co.in/podcast/${podcast?.id}`}
+        <meta name="og:type" content="audio" />
+        <meta
+          name="og:url"
+          content={`https://podolli-ai.co.in/podcast/${podcast?.id}`}
         />
       </>
       <div className="flex flex-col flex-1/5 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
@@ -124,8 +155,9 @@ export function PodcastCard({ podcast, refetch }: { podcast?: Podcast; refetch?:
             </span>
           ))}
         </div>
-        <div className="flex flex-row gap-2 items-center mt-2">
+        <div className="flex flex-row gap-2 items-center mt-2 flex-wrap">
           <Button
+            className="py-3 px-4"
             isLoading={audioLoading}
             onClick={() => {
               if (isPlaying) {
@@ -137,29 +169,76 @@ export function PodcastCard({ podcast, refetch }: { podcast?: Podcast; refetch?:
               }
             }}
           >
-            <FaPlay className="inline mr-2" />
-            Play
+            <FaPlay className="inline" />
           </Button>
-          <Button onClick={() => {
-            mutate({
-              podcast_id: podcast?.id ?? "",
-              is_public: !podcast?.is_public 
-            })
-          }}>
-            {updateVisibilityLoading ? <>
-            <Spinner className="inline mr-2" />
-
-            </> :podcast?.is_public ? (
+          <Button
+            onClick={() => {
+              mutate({
+                podcast_id: podcast?.id ?? "",
+                is_public: !podcast?.is_public,
+              });
+            }}
+          >
+            {updateVisibilityLoading ? (
               <>
-              <FaEye className="inline mr-2" />
-              Public
+                <Spinner className="inline mr-2" />
+              </>
+            ) : podcast?.is_public ? (
+              <>
+                <FaEye className="inline mr-2" />
+                Public
               </>
             ) : (
               <>
-              <FaEyeSlash className="inline mr-2" />
-              Private
+                <FaEyeSlash className="inline mr-2" />
+                Private
               </>
             )}
+          </Button>
+
+          <Button
+          isLoading={likeLoading}
+            onClick={() => {
+              likePodcast({
+                podcast_id: podcast?.id ?? "",
+                liked: !(podcast?.liked_by_user ?? false),
+              });
+            }}
+            className="py-3 px-4"
+          >
+            {/* {<FaThumbsUp className="inline mr-2" />} */}
+            {podcast?.liked_by_user ? (
+              <FaThumbsUp className="inline" />
+            ) : (
+              <FaRegThumbsUp className="inline" />
+            )}
+          </Button>
+          <Button
+            isLoading={dislikeLoading}
+            onClick={() => {
+              dislikePodcast({
+                podcast_id: podcast?.id ?? "",
+                disliked: !(podcast?.disliked_by_user ?? false),
+              });
+            }}
+            className="py-3 px-4"
+          >
+            {podcast?.disliked_by_user ? (
+              <FaThumbsDown className="inline" />
+            ) : (
+              <FaRegThumbsDown className="inline" />
+            )}
+          </Button>
+          <Button
+            className="py-3 px-4"
+            onClick={() => {
+              const podcastUrl = `${window.location.origin}/podcast/${podcast?.id}`;
+              navigator.clipboard.writeText(podcastUrl).then(() => {
+                toast.success("Podcast link copied to clipboard");
+              });
+            }}
+          >
+            {<FaShare className="inline" />}
           </Button>
         </div>
       </div>

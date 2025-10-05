@@ -13,14 +13,16 @@ import { useGetImage } from "./getImage";
 import { useGetPodcast } from "./getPodcast";
 import { useGetQueue } from "./getQueue";
 import { useGetTrendingPodcasts } from "./getTrendingPodcasts";
-import useGetUserProfile from "./getUserProfile";
 import { useSearchPodcast } from "./searchPodcasts";
 import { useUpdatePodcastVisibility } from "./updatePodcastVisibility";
 import { useGetListenHistory } from "./getListenHistory";
 import { useGetRecommendations } from "./getRecommendations";
+import { useLikePodcast } from "./likePodcast";
+import { useDislikePodcast } from "./dislikePodcast";
 
 import useUserLogin from "./userLogin";
 import useUserRegister from "./userRegister";
+import useGetUserProfile from "./getUserProfile";
 
 // check if the environment is hosted on localhost or local network
 // ?
@@ -62,4 +64,6 @@ export const api = {
   useUserRegister,
   useAutoFillPodcastForm,
   useUpdatePodcastVisibility,
+  useLikePodcast,
+  useDislikePodcast,
 };

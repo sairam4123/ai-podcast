@@ -125,26 +125,9 @@ export default function Create() {
                     setIsAutoFillModalOpen(true);
                   }}
                   className="bg-sky-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-sky-600 transition-colors cursor-pointer"
-                  >
-
-                <div
-                    className="transition-all duration-300 overflow-hidden"
-                    style={{
-                      width: createPodcastMutation.isLoading
-                        ? "1.25rem"
-                        : "0px", // 1.25rem = 20px
-                      height: createPodcastMutation.isLoading
-                        ? "1.25rem"
-                        : "0px",
-                      marginRight: createPodcastMutation.isLoading
-                        ? "0.5rem"
-                        : "0px",
-                    }}
-                  >
-                    <PiSpinnerGap className="animate-spin text-xl" />
-                  </div>
+                >
                   Auto-Fill
-                  </button>,
+                </button>,
 
                 <button
                   type="submit"
@@ -180,24 +163,24 @@ export default function Create() {
                   className="bg-sky-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-sky-600 transition-colors cursor-pointer"
                 >
                   <div className="flex flex-row items-center justify-center gap-2">
-                  <div
-                    className="transition-all duration-300 overflow-hidden"
-                    style={{
-                      width: createPodcastMutation.isLoading
-                      ? "1.25rem"
-                      : "0px", // 1.25rem = 20px
-                      height: createPodcastMutation.isLoading
-                      ? "1.25rem"
-                      : "0px",
-                      marginRight: createPodcastMutation.isLoading
-                      ? "0.5rem"
-                      : "0px",
-                    }}
+                    <div
+                      className="transition-all duration-300 overflow-hidden"
+                      style={{
+                        width: createPodcastMutation.isLoading
+                          ? "1.25rem"
+                          : "0px", // 1.25rem = 20px
+                        height: createPodcastMutation.isLoading
+                          ? "1.25rem"
+                          : "0px",
+                        marginRight: createPodcastMutation.isLoading
+                          ? "0.5rem"
+                          : "0px",
+                      }}
                     >
-                    <PiSpinnerGap className="animate-spin text-xl" />
-                  </div>
-                  <FaPlus className="text-lg" />
-                  Create
+                      <PiSpinnerGap className="animate-spin text-xl" />
+                    </div>
+                    <FaPlus className="text-lg" />
+                    Create
                   </div>
                 </button>,
               ]}
@@ -234,23 +217,25 @@ export default function Create() {
         onCreate={(data) => {
           setIsAutoFillModalOpen(false);
           console.log("Creating podcast with auto-filled data:", data);
-          // get the form 
+          // get the form
           formRef.current?.reset(); // Reset the form fields
           setDescription(data.description); // Set the description state
 
           // TODO: Replace the manual input selection with React Hook Form -- Sairam July 2025
 
-          (formRef.current!.elements.namedItem("topic") as HTMLInputElement)!.value =
-            data.topic ?? ""; // Set the topic field
-          
-          (formRef.current!.elements.namedItem("style") as HTMLInputElement)!.value =
-            data.style ?? ""; // Set the style field
+          (formRef.current!.elements.namedItem(
+            "topic"
+          ) as HTMLInputElement)!.value = data.topic ?? ""; // Set the topic field
 
-          (formRef.current!.elements.namedItem("language") as HTMLInputElement)!.value =
-            data.language ?? ""; // Set the language field
+          (formRef.current!.elements.namedItem(
+            "style"
+          ) as HTMLInputElement)!.value = data.style ?? ""; // Set the style field
 
+          (formRef.current!.elements.namedItem(
+            "language"
+          ) as HTMLInputElement)!.value = data.language ?? ""; // Set the language field
         }}
-        />
+      />
     </div>
   );
 }
@@ -410,9 +395,9 @@ function HorizontalPodcastCard({ task }: { task?: PodcastGenTask }) {
             </p> */}
           {trackedTask?.status === "pending" ? (
             <ShimmerBlock className="bg-transparent rounded-full">
-            <p className="text-xs lg:text-sm w-fit h-fit rounded-full bg-amber-700 px-2 py-1 text-gray-200">
-              Pending
-            </p>
+              <p className="text-xs lg:text-sm w-fit h-fit rounded-full bg-amber-700 px-2 py-1 text-gray-200">
+                Pending
+              </p>
             </ShimmerBlock>
           ) : trackedTask?.status === "in_progress" ? (
             <p className="text-xs lg:text-sm rounded-full bg-blue-700 px-2 py-1 text-gray-200">
