@@ -1,4 +1,3 @@
-import React from "react";
 import { Podcast } from "../@types/Podcast";
 import { formatDuration } from "../utils/formatDuration";
 import { FaCircle, FaPlay, FaThumbsDown, FaThumbsUp } from "react-icons/fa";

@@ -29,7 +29,7 @@ export function SearchBox({
   const [debouncedSearchTerm] = useDebounce(intialSearchTerm, 500);
 
   // console.log(showSearchResults, debouncedSearchTerm);
-  const { data, resetData, isLoading, error } = api.useSearchPodcast({
+  const { data, isLoading, error } = api.useSearchPodcast({
     searchTerm: debouncedSearchTerm,
   });
 
