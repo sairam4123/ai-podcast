@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaCross, FaPlus, FaSearch } from "react-icons/fa";
+import {  FaPlus, FaSearch } from "react-icons/fa";
 import { CreatePodcastModal } from "../modals/CreatePodcast";
 import { SearchBox } from "./SearchBox";
 import { getUser, isSignedIn, supabase } from "../lib/supabase";
@@ -9,7 +9,6 @@ import Spinner from "./Spinner";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import { ProfileAvatarIcon } from "./AvatarIcon";
-import Button from "./Button";
 import { FaX } from "react-icons/fa6";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -19,7 +18,7 @@ export function NavBar() {
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [signedIn, setIsSignedIn] = useState(false);
-  const [searchFlyoutIsOpen, setSearchFlyoutIsOpen] = useState(true);
+  const [searchFlyoutIsOpen, setSearchFlyoutIsOpen] = useState(false);
 
   const { isLoading, error, data } = api.useGetUserProfile({
     userId: user?.id ?? "",

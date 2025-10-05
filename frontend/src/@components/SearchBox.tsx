@@ -16,7 +16,7 @@ const variants = {
 export function SearchBox({
   searchTerm,
   contentClassName,
-  onClose,
+  // onClose,
   // setSearchTerm,
   variant = "md",
 }: {
