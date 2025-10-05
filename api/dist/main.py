@@ -1502,9 +1502,13 @@ async def get_trending_podcasts(offset: int = 0, limit: int = 10):
 @app.get("/podcasts/search")
 async def search_podcasts(query: str, v2: bool = True):
 
+    if not query or len(query) < 3:
+        return {"results": []}
+    
     if v2:
         async with session_maker() as sess:
-            podcasts_db = (await sess.execute(select(Podcast).order_by(desc(Podcast.created_at), desc(Podcast.trending_score)))).scalars().all()
+            podcasts_db = (await sess.execute(
+                select(Podcast).order_by(desc(Podcast.created_at), desc(Podcast.trending_score)))).scalars().all()
             new_podcasts = {p.id: {
                 "id": str(p.id),
                 "podcast_title": p.title,
