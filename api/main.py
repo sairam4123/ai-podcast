@@ -245,9 +245,6 @@ async def search_podcasts(query: str, v2: bool = True):
                 "duration": p.duration,
                 "language": p.language,
             } for p in podcasts_db}
-
-    else:
-        new_podcasts = {podcast_id: {"id": podcast_id, **podcast} for podcast_id, podcast in podcasts.items()}
     
     response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-2.0-flash")
     podcast_search_keys = PodcastTopicsSearch.model_validate(response.parsed) # Type: PodcastTopicsSearch
@@ -760,18 +757,21 @@ async def get_image_avatar(podcast_id: str, person_id: str, v2: bool = True):
 
 @app.get("/images/{podcast_id}")
 async def get_image(podcast_id: str, v2: bool = True):
+    if not v2:
+        return {"error": "This endpoint is only available in v2"}, 403
 
-    if v2:
-        supabase = get_supabase_client(with_service=True)
-        image = await supabase.storage.from_("podcast-cover-images").download(f"{podcast_id}.png")
-        if image:
-            return StreamingResponse(io.BytesIO(image), media_type="image/png")
-        # supabase_image = await supabase.storage.from_("podcast_images").download(f"{podcast_id}.png")
-    image = images.get(podcast_id)
+    supabase = get_supabase_client(with_service=True)
+    image = await supabase.storage.from_("podcast-cover-images").download(f"{podcast_id}.png")
     if image:
-        return FileResponse(image)
+        return StreamingResponse(io.BytesIO(image), media_type="image/png")
     else:
         return {"error": "Image not found"}, 404
+        # supabase_image = await supabase.storage.from_("podcast_images").download(f"{podcast_id}.png")
+    # image = images.get(podcast_id)
+    # if image:
+    #     return FileResponse(image)
+    # else:
+    #     return {"error": "Image not found"}, 404
 
 @app.get("/queue")
 async def get_queue(offset: int = 0, limit: int = 10):
@@ -818,9 +818,6 @@ async def get_user_recommendations(user = fastapi.Depends(get_current_user)):
                 })
         return recommendations
 
-from sqlalchemy import select, func, desc
-from sqlalchemy.sql import over
-from sqlalchemy.orm import aliased
 
 @app.get("/podcasts/history/@me")
 async def get_user_history(

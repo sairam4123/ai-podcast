@@ -15,11 +15,15 @@ const variants = {
 
 export function SearchBox({
   searchTerm,
+  contentClassName,
+  onClose,
   // setSearchTerm,
   variant = "md",
 }: {
   searchTerm?: string;
   setSearchTerm?: (term: string) => void;
+  contentClassName?: string;
+  onClose?: () => void;
   variant?: keyof typeof variants;
 }) {
   const [intialSearchTerm, setInitialSearchTerm] = useState(searchTerm || "");
@@ -66,15 +70,18 @@ export function SearchBox({
         value={intialSearchTerm}
         className="flex grow z-10 selection:bg-black/25 ring-0 outline-none focus:placeholder:text-black/70 text-black placeholder:text-black/50"
       />
+      
 
       <div className="hover:block z-10 inset-0">
         <AnimatePresence>
-          {(intialSearchTerm && showSearchResults) && (
+          {intialSearchTerm && showSearchResults && (
             <motion.div
               animate={{ opacity: 1, y: 0 }}
               initial={{ opacity: 0, y: -10 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute translate-y-14 h-48 rounded-lg overflow-hidden z-10 inset-0 bg-white"
+              className={cn(
+                `absolute translate-y-14 h-48 items-center justify-center rounded-lg overflow-hidden z-10 inset-0 bg-white ${contentClassName}`
+              )}
             >
               {isLoading && (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
