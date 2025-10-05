@@ -10,7 +10,7 @@ import re
 import sys
 
 # The names of the files to be merged
-files = ["api/utils.py", "api/models.py", "api/db.py", "api/gen.py", "api/main.py",]
+files = ["api/env.py", "api/utils.py", "api/models.py", "api/db.py", "api/gen.py", "api/main.py",]
 
 # The name of the output file
 output = "api/dist/main.py"

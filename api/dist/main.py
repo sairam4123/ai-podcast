@@ -1,3 +1,7 @@
+# Merging api/env.py
+from dotenv import load_dotenv
+load_dotenv()
+
 # Merging api/utils.py
 import functools
 from fastapi import Depends, HTTPException, Request
@@ -403,8 +407,6 @@ import asyncio
 import time
 from typing import Literal
 from uuid import UUID, uuid4
-from dotenv import load_dotenv
-load_dotenv()
 
 import pydantic
 from sqlmodel import select
