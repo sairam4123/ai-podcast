@@ -1500,15 +1500,19 @@ async def get_trending_podcasts(offset: int = 0, limit: int = 10):
         return {"results": new_podcasts}
 
 @app.get("/podcasts/search")
-async def search_podcasts(query: str, v2: bool = False):
+async def search_podcasts(query: str, v2: bool = True):
 
     if v2:
         async with session_maker() as sess:
-            podcasts_db = (await sess.execute(select(Podcast))).scalars().all()
+            podcasts_db = (await sess.execute(select(Podcast).order_by(desc(Podcast.created_at), desc(Podcast.trending_score)))).scalars().all()
             new_podcasts = {p.id: {
                 "id": str(p.id),
                 "podcast_title": p.title,
                 "podcast_description": p.description,
+                "views_count": p.view_count,
+                "like_count": p.like_count,
+                "dislike_count": p.dislike_count,
+                "duration": p.duration,
                 "language": p.language,
             } for p in podcasts_db}
 
@@ -1550,6 +1554,7 @@ async def search_podcasts(query: str, v2: bool = False):
         #     podcast["duration"] = len(pydub.AudioSegment.from_file(audios[podcast_id])) / 1000
         results.append({"id": podcast_id, **podcast, "search_match": search_match})
     results = sorted(results, key=lambda x: x["search_match"], reverse=True)
+    print("Final sorted results:", [(r["podcast_title"], r["search_match"]) for r in results])
     if results:
         return {"results": results}
     return {"results": []}
