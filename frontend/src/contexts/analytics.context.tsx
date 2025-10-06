@@ -25,6 +25,7 @@ export function useAnalyticsContext() {
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const [lastAnalyticsUpdate, setLastAnalyticsUpdate] = useState(0);
+  const [lastKnownPosition, setLastKnownPosition] = useState(0);
 
   const { currentPodcast } = usePodcastContext();
   const { isPlaying, currentPosition } = useMediaPlayerContext();
@@ -49,9 +50,10 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     if (!isPlaying) return;
     // console.log(currentPosition % 10 <= 0.5, currentPosition > 0);
     if (
-      currentPosition > 0 &&
-      currentPosition % 30 <= 0.5 &&
-      Date.now() - lastAnalyticsUpdate > 9500 // at least 9.5 seconds since last update
+      (currentPosition > 0 &&
+        currentPosition % 30 <= 0.5 &&
+        Date.now() - lastAnalyticsUpdate > 9500) || // at least 9.5 seconds since last update
+      Math.abs(currentPosition - lastKnownPosition) > 15 // or user seeked more than 15 seconds
     ) {
       console.log(
         "Current position is at a 30 second mark, sending analytics for podcast:",
@@ -63,6 +65,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
           position: currentPosition,
         });
         setLastAnalyticsUpdate(Date.now());
+        setLastKnownPosition(currentPosition);
       } catch (error) {
         console.error("Error while mutating playPressed:", error);
       }
