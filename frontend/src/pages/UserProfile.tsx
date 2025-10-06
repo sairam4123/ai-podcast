@@ -3,7 +3,6 @@ import { NavBar } from "../@components/NavBar";
 import { api } from "../api/api";
 import { ProfileAvatarIcon } from "../@components/AvatarIcon";
 import { HorizontalPodcastCard } from "../@components/PodcastCard";
-import Spinner from "../@components/Spinner";
 import { FaSpinner } from "react-icons/fa";
 
 export default function UserProfile() {
@@ -60,11 +59,13 @@ export default function UserProfile() {
                     {listenHistory.length === 1 ? "podcast" : "podcasts"})
                   </p>
                   <div className="flex flex-col space-y-2 mt-4 overflow-x-visible mb-4 overflow-y-visible">
-
-                  {listenHistory?.map((podcast) => (
-                      <HorizontalPodcastCard key={podcast.id} podcast={podcast} />
+                    {listenHistory?.map((podcast) => (
+                      <HorizontalPodcastCard
+                        key={podcast.id}
+                        podcast={podcast}
+                      />
                     ))}
-                </div>
+                  </div>
                 </div>
               )}
           </div>
