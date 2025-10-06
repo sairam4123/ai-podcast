@@ -2073,7 +2073,7 @@ async def get_user_recommendations(user = fastapi.Depends(get_current_user)):
             select(PodcastRecommendation).options(joinedload(PodcastRecommendation.podcast)
         ).where(PodcastRecommendation.user_id == user.id))).scalars().all()
         if not recommendations_db:
-            return {"recommendations": []}
+            return []
         recommendations = []
         for rec in recommendations_db:
             podcast = rec.podcast
@@ -2328,6 +2328,8 @@ async def register(user_register: UserRegister):
         await sess.commit()
 
     print("User registered:", user.model_dump())
+
+    
     
     return {"user": user, "success": True, "message": "User registered successfully"}
 
