@@ -20,7 +20,8 @@ import toast from "react-hot-toast";
 import Spinner from "./Spinner";
 
 export function MediaPlayer() {
-  const { currentPosition, isPlaying, pause, play } = useMediaPlayerContext();
+  const { currentPosition, isPlaying, pause, play, seek } =
+    useMediaPlayerContext();
   const {
     currentPodcast,
     isCurrentPodcastLiked,
@@ -44,18 +45,17 @@ export function MediaPlayer() {
     api.useDislikePodcast({
       onSuccess: () => {
         toast.success("Podcast disliked successfully");
-
       },
     });
 
-    const onShare = () => {
-      if (!currentPodcast?.id) return;
-      const podcastUrl = `${window.location.origin}/podcast/${currentPodcast.id}`;
+  const onShare = () => {
+    if (!currentPodcast?.id) return;
+    const podcastUrl = `${window.location.origin}/podcast/${currentPodcast.id}`;
 
-      navigator.clipboard.writeText(podcastUrl).then(() => {
-        toast.success("Podcast link copied to clipboard");
-      });
-    };
+    navigator.clipboard.writeText(podcastUrl).then(() => {
+      toast.success("Podcast link copied to clipboard");
+    });
+  };
 
   // console.log("Current Podcast in MediaPlayer", currentPodcast);
   if (!currentPodcast?.id) {
@@ -116,8 +116,14 @@ export function MediaPlayer() {
                     {formatDuration(currentPosition)}
                   </p>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-6">
-                  <FaBackward className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out" />
+                <div className="flex flex-row items-center justify-center gap-4 md:gap-6">
+                  <FaBackward
+                    onClick={() => {
+                      console.log("Backward clicked");
+                      seek(Math.max(currentPosition - 15, 0));
+                    }}
+                    className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
+                  />
                   <FaPlay
                     className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
                     onClick={() => {
@@ -141,12 +147,23 @@ export function MediaPlayer() {
                       display: isPlaying ? "flex" : "none",
                     }}
                   />
-                  <FaForward className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out" />
+                  <FaForward
+                    onClick={() => {
+                      console.log("Forward clicked");
+                      seek(
+                        Math.min(currentPosition + 15, currentPodcast.duration)
+                      );
+                    }}
+                    className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
+                  />
                 </div>
 
                 <div className="flex flex-row gap-4  items-end justify-center">
                   <div className="flex flex-row items-end justify-center gap-4">
-                    {likeLoading || dislikeLoading && <Spinner className="ml-2 text-sky-300" size="sm" />}
+                    {likeLoading ||
+                      (dislikeLoading && (
+                        <Spinner className="ml-2 text-sky-300" size="sm" />
+                      ))}
                     {currentPodcast.liked_by_user || isCurrentPodcastLiked ? (
                       <FaThumbsUp
                         onClick={() => {
@@ -159,7 +176,7 @@ export function MediaPlayer() {
                             liked: false,
                           });
                         }}
-                        className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
+                        className="text-xl hidden md:block text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
                       />
                     ) : (
                       <FaRegThumbsUp
@@ -171,10 +188,11 @@ export function MediaPlayer() {
                             liked: true,
                           });
                         }}
-                        className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
+                        className="text-xl hidden md:block text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
                       />
                     )}
-                    {currentPodcast.disliked_by_user || isCurrentPodcastDisliked ? (
+                    {currentPodcast.disliked_by_user ||
+                    isCurrentPodcastDisliked ? (
                       <FaThumbsDown
                         onClick={() => {
                           dislikePodcast({
@@ -186,7 +204,7 @@ export function MediaPlayer() {
                             currentPodcast?.liked_by_user ?? false
                           );
                         }}
-                        className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
+                        className="text-xl hidden md:block text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
                       />
                     ) : (
                       <FaRegThumbsDown
@@ -198,10 +216,13 @@ export function MediaPlayer() {
                           setIsCurrentPodcastDisliked(true);
                           setIsCurrentPodcastLiked(false);
                         }}
-                        className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
+                        className="text-xl hidden md:block text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
                       />
                     )}
-                    <FaShare onClick={onShare} className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out" />
+                    <FaShare
+                      onClick={onShare}
+                      className="text-xl text-sky-300 cursor-pointer hover:text-sky-400 transition-all duration-150 ease-in-out"
+                    />
                   </div>
                   <p className="text-sm font-semibold text-gray-400">
                     {formatDuration(currentPodcast?.duration)}

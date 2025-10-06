@@ -3,6 +3,8 @@ import { NavBar } from "../@components/NavBar";
 import { api } from "../api/api";
 import { ProfileAvatarIcon } from "../@components/AvatarIcon";
 import { HorizontalPodcastCard } from "../@components/PodcastCard";
+import Spinner from "../@components/Spinner";
+import { FaSpinner } from "react-icons/fa";
 
 export default function UserProfile() {
   const { user_id } = useParams<{ user_id: string }>();
@@ -43,16 +45,21 @@ export default function UserProfile() {
             <p className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
               Listen History
             </p>
+            {isListenHistoryLoading && (
+              <div className="flex flex-col items-center justify-center h-96">
+                <FaSpinner className="animate-spin text-4xl text-gray-200" />
+              </div>
+            )}
 
             {!isListenHistoryLoading &&
               listenHistory &&
               listenHistory.length > 0 && (
-                <div className="flex flex-col flex-1">
+                <div className="flex flex-col w-full p-4 overflow-hidden flex-1">
                   <p className="text-md ml-4 mt-2 font-semibold text-shadow-md text-gray-300">
                     ({listenHistory.length}{" "}
                     {listenHistory.length === 1 ? "podcast" : "podcasts"})
                   </p>
-                  <div className="flex flex-col space-y-2 mt-4 mb-4 overflow-y-auto">
+                  <div className="flex flex-col space-y-2 mt-4 overflow-x-visible mb-4 overflow-y-visible">
 
                   {listenHistory?.map((podcast) => (
                       <HorizontalPodcastCard key={podcast.id} podcast={podcast} />

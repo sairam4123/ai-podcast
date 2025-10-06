@@ -1044,8 +1044,8 @@ async def register(user_register: UserRegister):
         return {"error": "User registration failed"}, 400
     
     user = UserProfile(
-        username=user_register.user_name,
-        display_name=user_register.full_name,
+        username=user_register.user_name.strip(),
+        display_name=user_register.full_name.strip(),
         id=UUID(supabase_user.user.id),
     )
 

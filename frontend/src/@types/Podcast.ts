@@ -31,6 +31,8 @@ export type Podcast = {
 
   liked_by_user?: boolean;
   disliked_by_user?: boolean;
+
+  last_known_position?: number;
 };
 
 // export type PodcastNew = {

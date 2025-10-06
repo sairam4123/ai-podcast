@@ -1,7 +1,13 @@
 // PodcastCardSkeleton.tsx
 import { motion } from "framer-motion";
 import clsx from "clsx";
-import { FaPlay, FaPause, FaSpinner, FaCircle, FaThumbsUp } from "react-icons/fa";
+import {
+  FaPlay,
+  FaPause,
+  FaSpinner,
+  FaCircle,
+  FaThumbsUp,
+} from "react-icons/fa";
 import { useNavigate } from "react-router";
 import { Podcast } from "../@types/Podcast";
 import { api } from "../api/api";
@@ -245,9 +251,14 @@ export function HorizontalPodcastCard({ podcast }: { podcast: Podcast }) {
             <p className="cursor-default text-xs line-clamp-2 text-gray-300">
               {podcast?.podcast_description}
             </p>
+            <div className="flex flex-row justify-between items-center">
+              <p className="text-xs text-gray-400">
+                {formatDuration(podcast?.last_known_position ?? 0)}
+              </p>
             <p className="text-xs text-gray-400">
               {formatDuration(podcast?.duration)}
             </p>
+            </div>
           </div>
         </div>
       </div>
