@@ -36,7 +36,7 @@ class UserProfile(SQLModel, table=True):
 class UserPlayHistory(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="userprofile.id")
-    podcast_id: UUID = Field(foreign_key="podcast.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
     last_played_at: datetime.datetime = Field(
         default_factory=utcnow,
         sa_column=Column(DateTime, server_default=func.now(), nullable=False)
@@ -50,7 +50,7 @@ class UserPlayHistory(SQLModel, table=True):
 class UserLikeHistory(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="userprofile.id")
-    podcast_id: UUID = Field(foreign_key="podcast.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
     liked_at: datetime.datetime = Field(
         default_factory=utcnow,
         sa_column=Column(DateTime, server_default=func.now(), nullable=False)
@@ -63,8 +63,8 @@ class UserLikeHistory(SQLModel, table=True):
 
 class PodcastRecommendation(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    user_id: UUID = Field(foreign_key="userprofile.id")
-    podcast_id: UUID = Field(foreign_key="podcast.id")
+    user_id: UUID = Field(foreign_key="userprofile.id", ondelete="CASCADE")
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
     recommended_at: datetime.datetime = Field(
         default_factory=utcnow,
         sa_column=Column(DateTime, server_default=func.now(), nullable=False)
@@ -80,7 +80,7 @@ class Podcast(SQLModel, table=True):
     duration: float | None = None  # Duration in seconds
     cover: str | None = None
 
-    profile_id: UUID | None = Field(foreign_key="userprofile.id")
+    profile_id: UUID | None = Field(foreign_key="userprofile.id", ondelete="SET NULL")
     profile: UserProfile = Relationship(back_populates="podcasts")
 
     language: str | None = None
@@ -111,7 +111,7 @@ class Podcast(SQLModel, table=True):
             server_default=func.now(),
             onupdate=func.now(),
             nullable=False,
-        )
+        ),
     )
 
     conversations: list["Conversation"] = Relationship(
@@ -158,7 +158,7 @@ class PodcastAuthorPersona(SQLModel, table=True):
 
 
 class PodcastAuthorPodcast(SQLModel, table=True):
-    podcast_id: UUID = Field(foreign_key="podcast.id", primary_key=True)
+    podcast_id: UUID = Field(foreign_key="podcast.id", primary_key=True, ondelete="CASCADE")
     author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True)
 
     podcast: Podcast = Relationship(back_populates="authors")
@@ -174,13 +174,13 @@ class PodcastAuthorPodcast(SQLModel, table=True):
             Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id), # type: ignore
             ),
             "uselist": True,
-        }
+        },
     )
 
 
 class PodcastAuthorDynamics(SQLModel, table=True):
-    author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True)
-    other_author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True)
+    author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True, ondelete="CASCADE")
+    other_author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True, ondelete="CASCADE")
 
     author: PodcastAuthorPersona = Relationship(back_populates="outgoing_relationships", sa_relationship_kwargs={
         "foreign_keys": "[PodcastAuthorDynamics.author_id]"
@@ -204,7 +204,7 @@ class PodcastEpisode(SQLModel, table=True):
     cover: str | None = None
     audio_file: str | None = None  # Path to the audio file
 
-    podcast_id: UUID = Field(foreign_key="podcast.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
     podcast: Podcast = Relationship(back_populates="episodes")
 
     conversations: list["Conversation"] = Relationship(back_populates="episode")
@@ -226,10 +226,10 @@ class Conversation(SQLModel, table=True):
     speaker_id: UUID = Field(foreign_key="podcastauthorpersona.id")
     speaker: PodcastAuthorPersona = Relationship()
 
-    podcast_id: UUID | None = Field(foreign_key="podcast.id")
+    podcast_id: UUID | None = Field(foreign_key="podcast.id", ondelete="CASCADE")
     podcast: Podcast | None = Relationship(back_populates="conversations")
 
-    episode_id: UUID = Field(foreign_key="podcastepisode.id")
+    episode_id: UUID = Field(foreign_key="podcastepisode.id", ondelete="CASCADE")
     episode: PodcastEpisode = Relationship(back_populates="conversations")
 
     podcast_author: "PodcastAuthorPodcast" = Relationship(
@@ -251,7 +251,7 @@ class PodcastGenerationTask(SQLModel, table=True):
     progress_message: str | None = None
     error_message: str | None = None
 
-    podcast_id: UUID | None = Field(foreign_key="podcast.id")
+    podcast_id: UUID | None = Field(foreign_key="podcast.id", ondelete="SET NULL")
     podcast: Optional[Podcast] = Relationship(back_populates="task")
 
     generation_data: dict | None = Field(
@@ -264,3 +264,18 @@ class PodcastGenerationTask(SQLModel, table=True):
     updated_at: datetime.datetime | None = Field(
         default_factory=utcnow,sa_column=Column(
         DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))
+
+class Quota(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    quota_key: str = Field()
+    max_value: int = Field()
+
+class QuotaPlanOverride(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    plan_id: UUID = Field(foreign_key="subscriptionplan.id", ondelete="CASCADE")
+    value: int = Field()
+
+class SubscriptionPlan(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    plan_key: str = Field()
+

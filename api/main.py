@@ -130,7 +130,7 @@ topic: (Rephrased version of the user query, short and clear. Not a clickbait ti
 
 style: (Podcast format, such as "Interview", "Discussion", "Explainer", etc.)
 
-language: (Detected or defaulted from the query, use (ISO-639-1), e.g., "en-IN", "en-US", "fr-FR", etc.)
+language: (Detected or defaulted from the query, use (ISO-639-1), e.g., "en-IN", "en-US", "fr-FR", etc.) Default to en-IN if not specified.
 
 description: (A short summary that explains what the topic is about. This is context for generation, not marketing copy.)
 
@@ -711,8 +711,17 @@ async def get_podcasts_created_by(user_id: str):
 async def get_user_profile(user_id: str):
     async with session_maker() as sess:
         user = (await sess.execute(select(UserProfile).where(UserProfile.id == user_id))).scalar_one_or_none()
+        # calculate the total views 
         if not user:
             return {"error": "User not found"}, 404
+        
+
+        rows = (await sess.execute(select(func.sum(Podcast.view_count), func.sum(Podcast.like_count), func.count(Podcast.id), func.sum(Podcast.dislike_count)).where(Podcast.profile_id == user_id))).scalars().all()
+        if rows:
+            total_views, total_likes, total_count, total_dislikes = rows[0]
+        
+            net_likes = total_likes - total_dislikes
+            return {"user": user, "total_views": total_views or 0, "total_likes": total_likes or 0, "total_dislikes": total_dislikes or 0, "net_likes": net_likes or 0, "total_podcasts": total_count or 0}
         return {"user": user}
 
 

@@ -1,3 +1,5 @@
+import re
+import markdown
 import asyncio
 import time
 from typing import Literal
@@ -15,12 +17,14 @@ import os
 import json
 import base64
 
+import ddgs
 import gtts
 import pydub
 from pydub import AudioSegment
 import google.genai as genai
 import google.cloud.texttospeech as tts
 import io
+from bs4 import BeautifulSoup
 
 # import platform
 # if platform.system() == "Linux":
@@ -49,7 +53,7 @@ def get_speech_client():
 speech_client = get_speech_client()
 
 
-VOICE_MODEL = "Chirp3" # "Standard" | "Wavenet" | "Chirp3"
+VOICE_MODEL = "Standard" # "Standard" | "Wavenet" | "Chirp3"
 
 # TTS_FOLDER = "tts"
 # FINAL_FOLDER = "finals" # Folder to save the final podcast
@@ -91,7 +95,6 @@ Podcast should match the style requested.
 Explain the topic intuitively, breaking down complex concepts into simple terms unless explicitly requested otherwise.
 
 * The format should be a friendly and engaging chat between an interviewer and one or more speakers.
-* Do not use "*" or "**" for bold / emphasis text, just use normal text. (Don't use markdown formatting in the text, just plain text.)
 * If more than one speaker is requested, adjust the number of interviewers and speakers accordingly (e.g., 5 speakers = 2 interviewers + 3 speakers).
 * Use simple, casual language with natural-sounding phrases (add a few "uh", "umm", etc. for realism).
 * Spice in a few arguments or disagreements to make it lively, but keep it friendly and respectful. (Between guests and interviewer too.) (HEATED DISCUSSIONS) (Only if requested by the user)
@@ -108,8 +111,8 @@ Explain the topic intuitively, breaking down complex concepts into simple terms 
 * More debates and arguments in between guests to spice it up (HEATED DISCUSSIONS).
 * Makes sure that the topic is included in the description or episode title of the podcast.
 * If list or steps are generated, make sure to keep the same person speaking throughout the list or steps. (Don't change the speaker in between the list or steps).
-* == DO NOT USE MARKDOWN FORMATTING IN THE TEXT, JUST PLAIN TEXT. ==
 * Keep the conversation in the requested language, but use English for technical terms if needed.
+* Use Markdown to Emphasize important points (bold or italics). 
 
 **Key points:**
 
@@ -215,6 +218,16 @@ class PodcastAI(pydantic.BaseModel):
 class DetectedLanguageAI(pydantic.BaseModel):
     lang: str = pydantic.Field(..., description="Language code in the format of 'en-US' or 'en-GB' (ISO-639-1)")
     confidence: float = pydantic.Field(..., description="Confidence score of the detected language")
+
+def strip_md(txt: str) -> str:
+    html = markdown.markdown(txt)
+
+    html = re.sub('<pre>(.*?)</pre>', '', html, flags=re.DOTALL)  # Remove <pre> tags and their content
+    html = re.sub('<code>(.*?)</code>', '', html, flags=re.DOTALL)  # Remove <code> tags and their content
+
+    soup = BeautifulSoup(html, "html.parser")
+    return soup.get_text()
+
 
 img_prompt = """
 Generate a podcast cover image for the podcast titled "{podcastTitle}".
@@ -587,7 +600,16 @@ class CreatePodcast(pydantic.BaseModel):
 
 
 async def generate_podcast_content(create_podcast: CreatePodcast):
-    response = await client.aio.models.generate_content(contents=podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
+
+    search_results = ddgs.DDGS().text(f"{create_podcast.topic} wikipedia", max_results=5)
+    contents = ["Here are some relevant search results to help you create the podcast:\n"]
+    for result in search_results:
+        contents.append(f"# {result['title']}\n{result['body']}\n{result['href']}\n")
+    contents.append("\nPODCAST PROMPT:\n")
+    content = "\n".join(contents)
+    print("Search results fetched. Generating podcast content..., content: ", content)
+
+    response = await client.aio.models.generate_content(contents=content+podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
     return PodcastAI.model_validate(response.parsed) 
 
 
@@ -599,7 +621,7 @@ async def generate_audio(turn: ConversationAI, voice: tts.Voice, country: str) -
     # filename = os.path.join(TTS_FOLDER, filename)
     request = tts.SynthesizeSpeechRequest(
         
-        input=tts.SynthesisInput(text=turn.text,
+        input=tts.SynthesisInput(text=strip_md(turn.text),
                 # custom_pronunciations=tts.CustomPronunciations(
                 #     pronunciations=[
                 #     tts.CustomPronunciationParams(
@@ -690,9 +712,10 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     
 
     print(f"Creating podcast for topic: {create_podcast.topic} with ID: {task_id}")
+    await podcast_gen_task.progress_update(10, "Searching for relevant information...")
     # Generate the podcast content (metadata and conversation)
     podcast_metadata: PodcastAI = await generate_podcast_content(create_podcast)
-    await podcast_gen_task.progress_update(10, "Generating podcast content...")
+    await podcast_gen_task.progress_update(15, "Generating podcast content...")
     podcast_conversation = podcast_metadata.conversation
 
     podcast = Podcast(
@@ -738,7 +761,7 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
         await sess.commit() # update the task with the podcast ID at the earliest possible moment
 
 
-    await podcast_gen_task.progress_update(15, "Saving podcast metadata and episode...")
+    await podcast_gen_task.progress_update(20, "Saving podcast metadata and episode...")
 
     async with session_maker() as sess:
 
@@ -774,7 +797,7 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
         await sess.flush()
         
         # Generate the audio for the podcast
-        await podcast_gen_task.progress_update(20, "Selecting voices for the podcast...")
+        await podcast_gen_task.progress_update(25, "Selecting voices for the podcast...")
 
         # Currently, voices are selected automatically based on the people in the podcast and the language.
         print("Selecting voices for the podcast...")
@@ -814,7 +837,7 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     await podcast_gen_task.progress_update(100, "Waiting for podcast cover image and author images to complete...")
     await asyncio.gather(*image_gen_tasks)
 
-    await podcast_gen_task.progress_update(100, "Podcast generation completed successfully.")
+    await podcast_gen_task.progress_update(100, "Completed")
     await podcast_gen_task.complete()
 
     return podcast

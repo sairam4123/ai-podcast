@@ -3,7 +3,15 @@ import { NavBar } from "../@components/NavBar";
 import { api } from "../api/api";
 import { ProfileAvatarIcon } from "../@components/AvatarIcon";
 import { HorizontalPodcastCard } from "../@components/PodcastCard";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaWeight } from "react-icons/fa";
+import {
+  FaEye,
+  FaPodcast,
+  FaScaleBalanced,
+  FaSlash,
+  FaThumbsDown,
+  FaThumbsUp,
+} from "react-icons/fa6";
 
 export default function UserProfile() {
   const { user_id } = useParams<{ user_id: string }>();
@@ -20,7 +28,7 @@ export default function UserProfile() {
     <main className="flex flex-col lg:h-screen min-h-screen bg-radial from-sky-950 to-black">
       <NavBar />
       <div className="flex flex-col lg:flex-row flex-1 p-4 gap-4 pb-32 overflow-hidden">
-        <div className="flex flex-col flex-2/5 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
+        <div className="flex flex-col flex-2/7 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
           {/* <img
                         src={"/podcastplaceholdercover.png"}
                         alt={userData?.user.display_name}
@@ -34,12 +42,23 @@ export default function UserProfile() {
           <h2 className="text-xl text-center font-bold text-white">
             {userData?.user?.display_name}
           </h2>
-          {/* <p className="text-gray-200">{}</p> */}
-          {/* <p className="text-gray-400 text-sm">
-                          {podcast?.duration ? formatDuration(podcast?.duration) : "N/A"}
-                        </p> */}
+
+          <div className="grid grid-cols-2 place-items-center gap-2 text-gray-100">
+            <div className="rounded-md h-36 w-36 border-1 px-2 py-1 flex flex-row items-center justify-center gap-2">
+              <FaPodcast className="text-4xl" />
+              <p className="text-3xl">20</p>
+            </div>
+            <div className="rounded-md h-36 w-36 border-1 px-2 py-1 flex flex-row items-center justify-center gap-2">
+              <FaEye className="text-4xl" />
+              <p className="text-3xl">25K</p>
+            </div>
+            <div className="rounded-md h-36 w-36 border-1 px-2 py-1 flex flex-row items-center justify-center gap-2">
+              <FaScaleBalanced className="text-4xl" />
+              <p className="text-3xl">20K</p>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col flex-3/5 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
+        <div className="flex flex-col flex-5/7 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
           <div className="flex flex-col items-center justify-center">
             <p className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
               Listen History
