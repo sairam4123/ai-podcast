@@ -649,13 +649,13 @@ def combine_audio_segments(audio_segments: list[pydub.AudioSegment]) -> tuple[li
     return conversation_markers, combined
 
 
-async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None) -> Podcast:
+async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None, should_upload: bool = True, should_generate_images: bool = True, raise_errors: bool = True) -> Podcast:
     task_id = task_id or uuid4()
 
     if not create_podcast.topic:
         raise ValueError("Topic is required to create a podcast.")
 
-    if not supabase:
+    if (not supabase) and should_upload:
         raise ValueError("Supabase client is required to create a podcast.")
 
 
@@ -706,7 +706,7 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     image_gen_tasks = [
         asyncio.create_task(save_podcast_cover(podcast,)),
         asyncio.create_task(generate_author_images([author.author for author in podcast.authors]))
-    ]
+    ] if should_generate_images else []
 
     async with session_maker() as sess:
         sess.add(podcast)
@@ -716,11 +716,13 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     async with session_maker() as sess:
         task = (await sess.execute(select(PodcastGenerationTask).where(PodcastGenerationTask.id == task_id))).scalar_one_or_none()
         if task is None:
-            raise ValueError(f"Podcast generation task with ID {task_id} not found. Something went terribly wrong.")
-        task.podcast_id = podcast.id
+            if raise_errors:
+                raise ValueError(f"Podcast generation task with ID {task_id} not found. Something went terribly wrong.")
+        else:
+            task.podcast_id = podcast.id
 
-        sess.add(task)
-        await sess.commit() # update the task with the podcast ID at the earliest possible moment
+            sess.add(task)
+            await sess.commit() # update the task with the podcast ID at the earliest possible moment
 
 
     await podcast_gen_task.progress_update(20, "Saving podcast metadata and episode...")
@@ -794,7 +796,8 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     buffer.seek(0)  # Reset the buffer position to the beginning
 
     await podcast_gen_task.progress_update(90, "Saving podcast audio...")
-    await supabase.storage.from_("podcasts").upload(f"{podcast_id}.wav", buffer.getvalue(), {"content-type": "audio/wav", "upsert": "true"})
+    if should_upload and supabase:
+        await supabase.storage.from_("podcasts").upload(f"{podcast_id}.wav", buffer.getvalue(), {"content-type": "audio/wav", "upsert": "true"})
     
     await podcast_gen_task.progress_update(100, "Waiting for podcast cover image and author images to complete...")
     await asyncio.gather(*image_gen_tasks)
