@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {  FaPlus, FaSearch } from "react-icons/fa";
+import { FaPlus, FaSearch } from "react-icons/fa";
 import { CreatePodcastModal } from "../modals/CreatePodcast";
 import { SearchBox } from "./SearchBox";
 import { getUser, isSignedIn, supabase } from "../lib/supabase";
@@ -133,7 +133,7 @@ export function NavBar() {
                 <ProfileAvatarIcon id={user?.id} />
                 <p className="hidden lg:flex text-sm md:text-base text-shadow-md font-semibold text-gray-50">
                   {data ? (
-                    data.user.display_name
+                    data.user?.display_name ?? "N/A"
                   ) : error ? (
                     error.message
                   ) : (

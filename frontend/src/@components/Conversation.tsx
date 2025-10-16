@@ -6,57 +6,151 @@ import { Conversation as ConversationType } from "../@types/Conversation";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
 import ReactMarkdown from "react-markdown";
+import { FaMicrophone, FaPaperPlane, FaSpinner } from "react-icons/fa";
+import { useState } from "react";
+import useSendLiveQuestion from "../api/sendLiveQuestion";
+import { ProfileAvatarIcon } from "./AvatarIcon";
 
 export function Conversation({
   podcastId,
   conversation,
+  questions,
+  refreshQuestions,
 }: {
   podcastId: Podcast["id"];
   conversation: ConversationType[];
+  questions: {
+    id: string;
+    question: string;
+    answer?: string;
+    user?: { id: string; name: string };
+    persona?: { id: string; name: string };
+  }[];
+  refreshQuestions?: () => void;
 }) {
   const { isPlaying, currentPosition, play, seek } = useMediaPlayerContext();
   const { currentPodcast } = usePodcastContext();
 
+  const [currentQuestion, setCurrentQuestion] = useState("");
+
   const isCurrentPodcast = currentPodcast?.id === podcastId;
+  console.log({ questions });
 
   return (
-    <div className="flex flex-col items-start justify-start w-full p-2 px-4 overflow-y-scroll mt-4 space-y-4">
-      {conversation?.map((conv, index) => {
-        const currentSpeaker = conv.speaker;
-        const isCurrent =
-          currentPosition > (conv.start_time ?? 0) &&
-          currentPosition < (conv.end_time ?? 0) &&
-          isPlaying &&
-          isCurrentPodcast;
-        if (isCurrent) {
-          // focus the element (good idea?)
-          setTimeout(() => {
-            const element = document.getElementById(`conversation-${index}`);
-            if (element) {
-              element.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }, 0);
-        }
-        return (
-          <MessageCard
-            onClick={() => {
-              if (isCurrentPodcast) {
-                seek(conv.start_time);
-                play(); // just in case it's paused
+    <div className="flex flex-col items-start justify-start w-full p-2 overflow-hidden">
+      <div className="flex flex-col items-start justify-start w-full p-2 px-4 overflow-y-scroll mt-4 space-y-4">
+        {conversation?.map((conv, index) => {
+          const currentSpeaker = conv.speaker;
+          const isCurrent =
+            currentPosition > (conv.start_time ?? 0) &&
+            currentPosition < (conv.end_time ?? 0) &&
+            isPlaying &&
+            isCurrentPodcast;
+          if (isCurrent) {
+            // focus the element (good idea?)
+            setTimeout(() => {
+              const element = document.getElementById(`conversation-${index}`);
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
               }
-            }}
-            key={index}
-            podcastId={podcastId}
-            person={currentSpeaker}
-            message={conv}
-            isCurrent={isCurrent}
-            currentPosition={currentPosition}
-            isPlaying={isPlaying}
-            isHost={conv.podcast_author?.is_host}
-            id={`conversation-${index}`}
-          />
-        );
-      })}
+            }, 0);
+          }
+          return (
+            <MessageCard
+              onClick={() => {
+                if (isCurrentPodcast) {
+                  seek(conv.start_time);
+                  play(); // just in case it's paused
+                }
+              }}
+              key={index}
+              podcastId={podcastId}
+              person={currentSpeaker}
+              message={conv}
+              isCurrent={isCurrent}
+              currentPosition={currentPosition}
+              isPlaying={isPlaying}
+              isHost={conv.podcast_author?.is_host}
+              id={`conversation-${index}`}
+            />
+          );
+        })}
+
+        {questions?.map((q) => (
+          <>
+            <MessageCard
+              id={`question-${q.id}`}
+              currentPosition={0}
+              isPlaying={false}
+              onClick={() => {}}
+              key={`question-${q.id}`}
+              podcastId={podcastId}
+              person={{
+                id: q.user?.id ?? "user-" + q.id,
+                name: q.user?.name || "User",
+              }}
+              message={{
+                id: q.id,
+                text: q.question,
+                episode_id: podcastId,
+                start_time: 0,
+                end_time: 0,
+                speaker_id: "",
+                speaker: {
+                  id: q.id,
+                  name: q.user?.name || "User",
+                },
+                podcast_author: {
+                  is_host: true,
+                  podcast_id: podcastId,
+                  author_id: "user-" + q.id,
+                },
+              }}
+              isCurrent={false}
+              isHost={true}
+            />
+
+            {q.answer && (
+              <MessageCard
+                id={`response-${q.id}`}
+                currentPosition={0}
+                isPlaying={false}
+                onClick={() => {}}
+                key={`response-${q.id}`}
+                podcastId={podcastId}
+                person={{
+                  id: q.persona?.id ?? "host-" + q.id,
+                  name: q.persona?.name || "Host",
+                }}
+                message={{
+                  id: q.id,
+                  text: q.answer,
+                  episode_id: podcastId,
+                  start_time: 0,
+                  end_time: 0,
+                  speaker_id: "",
+                  speaker: {
+                    id: "host-" + q.id,
+                    name: q.persona?.name || "Host",
+                  },
+                  podcast_author: {
+                    is_host: true,
+                    podcast_id: podcastId,
+                    author_id: "host-" + q.id,
+                  },
+                }}
+                isCurrent={false}
+              />
+            )}
+          </>
+        ))}
+      </div>
+      <QuestionBox
+        question={currentQuestion}
+        onChange={setCurrentQuestion}
+        podcastId={podcastId}
+        refreshQuestions={refreshQuestions}
+      />
     </div>
   );
 }
@@ -115,21 +209,28 @@ const MessageCard = ({
     >
       <div className="flex flex-row items-start">
         {/* <FaSpinner className={cn("text-4xl text-gray-200", isLoading ? "animate-spin" : "hidden")} /> */}
-        <img
-          className={cn(
-            "h-5 w-5 md:h-6 md:w-6 mr-2 aspect-square rounded-full",
-            isLoading && "hidden"
-          )}
-          src={imageUrl}
-        />
+        {imageUrl ? (
+          <img
+            className={cn(
+              "h-5 w-5 md:h-6 md:w-6 mr-2 aspect-square rounded-full",
+              isLoading && "hidden"
+            )}
+            src={imageUrl}
+          />
+        ) : (
+          <ProfileAvatarIcon
+            imageUrl={imageUrl}
+            id={person.id}
+            imageClassName="h-5 w-5 md:w-6 mr-2 aspect-square rounded-full"
+            className="h-5 w-5 md:h-6 md:w-6 mr-2 rounded-full"
+          />
+        )}
         <div className="">
           <p className="text-sm md:text-base text-shadow-md font-bold text-gray-200">
             {person?.name}
           </p>
           <p className="relative text-xs md:text-sm z-10">
-            <ReactMarkdown>
-            {removeSSMLtags(conv.text)}
-            </ReactMarkdown>
+            <ReactMarkdown>{removeSSMLtags(conv.text)}</ReactMarkdown>
 
             {isCurrent && (
               <div
@@ -145,6 +246,65 @@ const MessageCard = ({
             )}
           </p>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const QuestionBox = ({
+  question = "",
+  onChange,
+  podcastId,
+  refreshQuestions,
+}: {
+  question?: string;
+  onChange?: (value: string) => void;
+  podcastId: string;
+  refreshQuestions?: () => void;
+}) => {
+  const { mutate: sendLiveQuestion, isLoading: isMutationLoading } =
+    useSendLiveQuestion({
+      onSuccess(data) {
+        console.log("Question sent successfully:", data);
+        onChange?.("");
+        refreshQuestions?.();
+      },
+      onError(error) {
+        console.error("Error sending question:", error);
+      },
+    });
+
+  return (
+    <div className="w-full flex flex-row justify-center items-center p-2 mt-4 text-center text-gray-200 border-2 border-dashed rounded-lg border-gray-600">
+      <input
+        value={question}
+        onChange={(e) => onChange?.(e.target.value)}
+        type="text"
+        className="flex grow p-2 bg-transparent border-none outline-none"
+        placeholder="Ask a question..."
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            if (!question || question.trim() === "") return;
+            sendLiveQuestion({ question: question, podcast_id: podcastId });
+          }
+        }}
+      />
+      <div className="text-xl gap-2 flex flex-row">
+        <FaMicrophone className="text-xl cursor-pointer pr-2 hover:text-gray-100 text-gray-400" />
+        {isMutationLoading ? (
+          <div className="pr-2">
+            <FaSpinner className="text-xl cursor-pointer animate-spin object-center origin-center text-gray-400" />
+          </div>
+        ) : (
+          <FaPaperPlane
+            onClick={() => {
+              if (!question || question.trim() === "") return;
+              sendLiveQuestion({ question: question, podcast_id: podcastId });
+            }}
+            className="text-xl cursor-pointer pr-2 hover:text-gray-100 text-gray-400"
+          />
+        )}
       </div>
     </div>
   );

@@ -14,13 +14,14 @@ import {
 } from "react-icons/fa";
 import { Podcast } from "../@types/Podcast";
 import { useGetImage } from "../api/getImage";
-import { formatDuration } from "../utils/formatDuration";
+// import { formatDuration } from "../utils/formatDuration";
 import { Conversation } from "../@components/Conversation";
 import Button from "../@components/Button";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
 import toast from "react-hot-toast";
 import Spinner from "../@components/Spinner";
+import { useGetAvatarImage } from "../api/getAvatarImage";
 
 export function PodcastNew() {
   const { podcast_id } = useParams<{ podcast_id: string }>();
@@ -73,6 +74,14 @@ export function PodcastCard({
     podcastId: podcast?.id,
   });
 
+  const { data: liveQuestions, refetch: refreshQuestions } =
+    api.useGetPodcastQuestions(
+      { podcast_id: podcast?.id ?? "" },
+      { enabled: !!podcast?.id }
+    );
+
+  console.log({ liveQuestions });
+
   const { mutate: likePodcast, isLoading: likeLoading } = api.useLikePodcast({
     onSuccess: () => {
       toast.success("Podcast liked successfully");
@@ -104,6 +113,11 @@ export function PodcastCard({
         refetch?.();
       },
     });
+
+  const people =
+    data?.conversations
+      ?.map((c) => c.speaker)
+      .filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i) || [];
 
   return (
     <div className="flex flex-col lg:flex-row flex-1 gap-4 pb-32 overflow-hidden">
@@ -142,9 +156,9 @@ export function PodcastCard({
           {podcast?.podcast_title}
         </h2>
         <p className="text-gray-200">{podcast?.podcast_description}</p>
-        <p className="text-gray-400 text-sm">
+        {/* <p className="text-gray-400 text-sm">
           {podcast?.duration ? formatDuration(podcast?.duration) : "N/A"}
-        </p>
+        </p> */}
         <div className="flex flex-row items-center flex-wrap justify-start gap-2">
           {podcast?.tags?.map((tag, index) => (
             <span
@@ -197,7 +211,7 @@ export function PodcastCard({
           </Button>
 
           <Button
-          isLoading={likeLoading}
+            isLoading={likeLoading}
             onClick={() => {
               likePodcast({
                 podcast_id: podcast?.id ?? "",
@@ -241,6 +255,14 @@ export function PodcastCard({
             {<FaShare className="inline" />}
           </Button>
         </div>
+        <div className="flex flex-col">
+          <p className="text-gray-200">People</p>
+          <div className="flex flex-row mt-2">
+            {people?.map((person, index) => (
+              <PersonAvatarImage key={index} personId={person.id} />
+            ))}
+          </div>
+        </div>
       </div>
       <div className="flex flex-col flex-2/3 max-h-[32rem] lg:max-h-full bg-sky-500/20 border overflow-hidden border-sky-300/50 space-y-2 p-2 rounded-lg">
         <h2 className="text-xl font-bold text-white">Transcript</h2>
@@ -264,6 +286,10 @@ export function PodcastCard({
           <Conversation
             podcastId={podcast?.id ?? ""}
             conversation={data?.conversations ?? []}
+            questions={liveQuestions?.questions || []}
+            refreshQuestions={() => {
+              refreshQuestions?.();
+            }}
           />
         )}
       </div>
@@ -306,5 +332,26 @@ export function NotFound() {
         not exist or has been removed.
       </p>
     </div>
+  );
+}
+
+function PersonAvatarImage({
+  personId,
+  first,
+}: {
+  personId: string;
+  first?: boolean;
+}) {
+  const { imageUrl, isLoading } = useGetAvatarImage({ personId });
+  return (
+    <img
+      className={`h-10 w-10 ${
+        first ? "" : "mr-2"
+      } aspect-square rounded-full border-2 border-sky-500 ${
+        isLoading ? "hidden" : ""
+      }`}
+      src={imageUrl || "/userplaceholder.png"}
+      alt="Person Avatar"
+    />
   );
 }

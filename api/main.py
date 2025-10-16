@@ -16,8 +16,8 @@ from supabase_auth import Optional
 # from sqlalchemy import select
 from api.utils import get_current_user, get_supabase_client, optional_user
 from api.db import session_maker
-from api.models import Conversation, Podcast, PodcastEpisode, PodcastGenerationTask, PodcastRecommendation, UserLikeHistory, UserPlayHistory, UserProfile
-from api.gen import CreatePodcast, create_podcast_gen
+from api.models import Conversation, Podcast, PodcastAuthorPersona, PodcastAuthorPodcast, PodcastEpisode, PodcastGenerationTask, PodcastQuestion, PodcastRecommendation, UserLikeHistory, UserPlayHistory, UserProfile
+from api.gen import CreatePodcast, create_podcast_gen, generate_interactive_podcast_content
 from uuid import UUID, uuid4
 import json
 from fuzzywuzzy import fuzz, process
@@ -184,6 +184,7 @@ async def get_my_podcasts(offset: int = 0, limit: int = 10, user: UserProfile = 
             "id": str(p.id),
             "podcast_title": p.title,
             "podcast_description": p.description,
+            "type": p.type,
             "language": p.language,
             "created_at": p.created_at.isoformat() if p.created_at else None,
             "updated_at": p.updated_at.isoformat() if p.updated_at else None,
@@ -213,6 +214,7 @@ async def get_trending_podcasts(offset: int = 0, limit: int = 10):
                 "id": str(p.id),
                 "podcast_title": p.title,
                 "podcast_description": p.description,
+                "type": p.type,
                 "language": p.language,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
                 "updated_at": p.updated_at.isoformat() if p.updated_at else None,
@@ -239,6 +241,7 @@ async def search_podcasts(query: str, v2: bool = True):
                 "id": str(p.id),
                 "podcast_title": p.title,
                 "podcast_description": p.description,
+                "type": p.type,
                 "views_count": p.view_count,
                 "like_count": p.like_count,
                 "dislike_count": p.dislike_count,
@@ -653,6 +656,7 @@ async def get_featured_podcasts(offset: int = 0, limit: int = 10):
                 "id": str(p.id),
                 "podcast_title": p.title,
                 "podcast_description": p.description,
+                "type": p.type,
                 "language": p.language,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
                 "updated_at": p.updated_at.isoformat() if p.updated_at else None,
@@ -684,6 +688,7 @@ async def get_podcast(podcast_id: str, v2: bool = False, user = fastapi.Depends(
             "id": str(podcast_db.id),
             "podcast_title": podcast_db.title,
             "podcast_description": podcast_db.description,
+            "type": podcast_db.type,
             "language": podcast_db.language,
             "created_at": podcast_db.created_at.isoformat() if podcast_db.created_at else None,
             "updated_at": podcast_db.updated_at.isoformat() if podcast_db.updated_at else None,
@@ -714,15 +719,41 @@ async def get_user_profile(user_id: str):
         # calculate the total views 
         if not user:
             return {"error": "User not found"}, 404
-        
-
-        rows = (await sess.execute(select(func.sum(Podcast.view_count), func.sum(Podcast.like_count), func.count(Podcast.id), func.sum(Podcast.dislike_count)).where(Podcast.profile_id == user_id))).scalars().all()
+        rows = (await sess.execute(
+            select(func.sum(Podcast.view_count).label("views"), func.sum(Podcast.like_count).label("likes"), func.count(Podcast.id).label("count"), func.sum(Podcast.dislike_count).label("dislikes")
+                   ).select_from(Podcast).where(Podcast.profile_id == user_id))).one().tuple()
+        print(rows)
         if rows:
+            total_views, total_likes, total_count, total_dislikes = rows
+        
+            net_likes = total_likes - total_dislikes
+            return {"user": user,"total_views": total_views or 0, "total_likes": total_likes or 0, "total_dislikes": total_dislikes or 0, "net_likes": net_likes or 0, "total_podcasts": total_count or 0}
+        return {
+            "user": user,
+            "total_views": 0,
+            "total_likes": 0,
+            "total_dislikes": 0,
+            "net_likes": 0,
+            "total_podcasts": 0,
+        }
+    
+@app.get("/user/{user_id}/stats")
+async def get_user_stats(user_id: str):
+    async with session_maker() as sess:
+        rows = (await sess.execute(select(func.sum(Podcast.view_count), func.sum(Podcast.like_count), func.count(Podcast.id), func.sum(Podcast.dislike_count)).where(Podcast.profile_id == user_id))).scalars().all()
+        print(rows)
+        if rows and rows[0]:
             total_views, total_likes, total_count, total_dislikes = rows[0]
         
             net_likes = total_likes - total_dislikes
-            return {"user": user, "total_views": total_views or 0, "total_likes": total_likes or 0, "total_dislikes": total_dislikes or 0, "net_likes": net_likes or 0, "total_podcasts": total_count or 0}
-        return {"user": user}
+            return {"total_views": total_views or 0, "total_likes": total_likes or 0, "total_dislikes": total_dislikes or 0, "net_likes": net_likes or 0, "total_podcasts": total_count or 0}
+        return {
+            "total_views": 0,
+            "total_likes": 0,
+            "total_dislikes": 0,
+            "net_likes": 0,
+            "total_podcasts": 0,
+        }
 
 
 @app.get("/audios/{podcast_id}")
@@ -800,7 +831,52 @@ async def get_queue(offset: int = 0, limit: int = 10):
         for task in tasks
     ]
 }
-    
+
+class LiveQuestionCreate(pydantic.BaseModel):
+    question: str
+
+@app.post('/live/questions/{podcast_id}')
+async def submit_live_question(podcast_id: str, question: LiveQuestionCreate, user: UserProfile = fastapi.Depends(get_current_user)):
+    async with session_maker() as sess:
+        # Check if the podcast exists
+        podcast = await sess.get(Podcast, podcast_id)
+        if not podcast:
+            return {"error": "Podcast not found"}, 404
+
+        res = await generate_interactive_podcast_content(podcast=podcast, question=question.question, user_id=user.id, supabase=get_supabase_client(with_service=True))
+
+        return {"message": "Question submitted successfully", "response": res}
+
+@app.get("/live/questions/{podcast_id}")
+async def get_live_questions(podcast_id: str, user: UserProfile = fastapi.Depends(get_current_user)):
+    async with session_maker() as sess:
+        # Check if the podcast exists
+        podcast = await sess.get(Podcast, podcast_id)
+        print("Podcast:", podcast)
+        if not podcast:
+            return {"error": "Podcast not found"}, 404
+
+        questions = (await sess.execute(select(PodcastQuestion).options(joinedload(PodcastQuestion.persona), joinedload(PodcastQuestion.user)).where(PodcastQuestion.podcast_id == podcast_id).order_by(asc(PodcastQuestion.created_at)))).scalars().all()
+        questions = [
+            {
+                "id": str(q.id),
+                "question": q.question,
+                "answer": q.answer,
+                "created_at": q.created_at.isoformat() if q.created_at else None,
+                "persona": {
+                    "id": str(q.persona.id),
+                    "name": q.persona.name,
+                } if q.persona else None,
+                "user": {
+                    "id": str(q.user.id),
+                    "name": q.user.display_name,
+                } if q.user else None,
+            } for q in questions
+        ]
+
+
+        return {"questions": [q for q in questions]}
+
 @app.get("/recommendations/@me")
 async def get_user_recommendations(user = fastapi.Depends(get_current_user)):
     async with session_maker() as sess:
@@ -817,6 +893,7 @@ async def get_user_recommendations(user = fastapi.Depends(get_current_user)):
                     "id": str(podcast.id),
                     "podcast_title": podcast.title,
                     "podcast_description": podcast.description,
+                    "type": podcast.type,
                     "language": podcast.language,
                     "created_at": podcast.created_at.isoformat() if podcast.created_at else None,
                     "updated_at": podcast.updated_at.isoformat() if podcast.updated_at else None,
@@ -859,6 +936,7 @@ async def get_user_history(
                 Podcast.id,
                 Podcast.title,
                 Podcast.description,
+                Podcast.type,
                 Podcast.language,
                 Podcast.created_at,
                 Podcast.updated_at,

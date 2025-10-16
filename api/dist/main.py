@@ -142,11 +142,12 @@ class UserProfile(SQLModel, table=True):
     play_history: list["UserPlayHistory"] = Relationship(back_populates="user")
     recommendations: list["PodcastRecommendation"] = Relationship(back_populates="user")
     like_history: list["UserLikeHistory"] = Relationship(back_populates="user")
+    questions: list["PodcastQuestion"] = Relationship(back_populates="user")
 
 class UserPlayHistory(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="userprofile.id")
-    podcast_id: UUID = Field(foreign_key="podcast.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
     last_played_at: datetime.datetime = Field(
         default_factory=utcnow,
         sa_column=Column(DateTime, server_default=func.now(), nullable=False)
@@ -160,7 +161,7 @@ class UserPlayHistory(SQLModel, table=True):
 class UserLikeHistory(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="userprofile.id")
-    podcast_id: UUID = Field(foreign_key="podcast.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
     liked_at: datetime.datetime = Field(
         default_factory=utcnow,
         sa_column=Column(DateTime, server_default=func.now(), nullable=False)
@@ -173,8 +174,8 @@ class UserLikeHistory(SQLModel, table=True):
 
 class PodcastRecommendation(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    user_id: UUID = Field(foreign_key="userprofile.id")
-    podcast_id: UUID = Field(foreign_key="podcast.id")
+    user_id: UUID = Field(foreign_key="userprofile.id", ondelete="CASCADE")
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
     recommended_at: datetime.datetime = Field(
         default_factory=utcnow,
         sa_column=Column(DateTime, server_default=func.now(), nullable=False)
@@ -190,7 +191,7 @@ class Podcast(SQLModel, table=True):
     duration: float | None = None  # Duration in seconds
     cover: str | None = None
 
-    profile_id: UUID | None = Field(foreign_key="userprofile.id")
+    profile_id: UUID | None = Field(foreign_key="userprofile.id", ondelete="SET NULL")
     profile: UserProfile = Relationship(back_populates="podcasts")
 
     language: str | None = None
@@ -204,6 +205,7 @@ class Podcast(SQLModel, table=True):
     is_generating: bool = Field(default=False, nullable=True)
     is_public: bool = Field(default=True, nullable=True)
 
+    type: str = Field(default="generated") # generated, interactive
     authors: list["PodcastAuthorPodcast"] = Relationship(back_populates="podcast")
     episodes: list["PodcastEpisode"] = Relationship(back_populates="podcast")
 
@@ -221,7 +223,7 @@ class Podcast(SQLModel, table=True):
             server_default=func.now(),
             onupdate=func.now(),
             nullable=False,
-        )
+        ),
     )
 
     conversations: list["Conversation"] = Relationship(
@@ -239,6 +241,7 @@ class PodcastAuthorPersona(SQLModel, table=True):
     bio: str | None = None
     background: str | None = None
     profile_image: str | None = None
+    voice: str | None = None  # Voice identifier for TTS
 
     gender: str | None = None
     country: str | None = None
@@ -258,6 +261,8 @@ class PodcastAuthorPersona(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[PodcastAuthorDynamics.author_id]"}
     )
 
+    answers: list["PodcastQuestion"] = Relationship(back_populates="persona")
+
     created_at: datetime.datetime | None = Field(
         default_factory=utcnow,sa_column=Column(
         DateTime, server_default=func.now(), nullable=False))
@@ -268,7 +273,7 @@ class PodcastAuthorPersona(SQLModel, table=True):
 
 
 class PodcastAuthorPodcast(SQLModel, table=True):
-    podcast_id: UUID = Field(foreign_key="podcast.id", primary_key=True)
+    podcast_id: UUID = Field(foreign_key="podcast.id", primary_key=True, ondelete="CASCADE")
     author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True)
 
     podcast: Podcast = Relationship(back_populates="authors")
@@ -284,13 +289,13 @@ class PodcastAuthorPodcast(SQLModel, table=True):
             Conversation.speaker_id == foreign(PodcastAuthorPodcast.author_id), # type: ignore
             ),
             "uselist": True,
-        }
+        },
     )
 
 
 class PodcastAuthorDynamics(SQLModel, table=True):
-    author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True)
-    other_author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True)
+    author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True, ondelete="CASCADE")
+    other_author_id: UUID = Field(foreign_key="podcastauthorpersona.id", primary_key=True, ondelete="CASCADE")
 
     author: PodcastAuthorPersona = Relationship(back_populates="outgoing_relationships", sa_relationship_kwargs={
         "foreign_keys": "[PodcastAuthorDynamics.author_id]"
@@ -314,7 +319,7 @@ class PodcastEpisode(SQLModel, table=True):
     cover: str | None = None
     audio_file: str | None = None  # Path to the audio file
 
-    podcast_id: UUID = Field(foreign_key="podcast.id")
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
     podcast: Podcast = Relationship(back_populates="episodes")
 
     conversations: list["Conversation"] = Relationship(back_populates="episode")
@@ -336,10 +341,10 @@ class Conversation(SQLModel, table=True):
     speaker_id: UUID = Field(foreign_key="podcastauthorpersona.id")
     speaker: PodcastAuthorPersona = Relationship()
 
-    podcast_id: UUID | None = Field(foreign_key="podcast.id")
+    podcast_id: UUID | None = Field(foreign_key="podcast.id", ondelete="CASCADE")
     podcast: Podcast | None = Relationship(back_populates="conversations")
 
-    episode_id: UUID = Field(foreign_key="podcastepisode.id")
+    episode_id: UUID = Field(foreign_key="podcastepisode.id", ondelete="CASCADE")
     episode: PodcastEpisode = Relationship(back_populates="conversations")
 
     podcast_author: "PodcastAuthorPodcast" = Relationship(
@@ -361,7 +366,7 @@ class PodcastGenerationTask(SQLModel, table=True):
     progress_message: str | None = None
     error_message: str | None = None
 
-    podcast_id: UUID | None = Field(foreign_key="podcast.id")
+    podcast_id: UUID | None = Field(foreign_key="podcast.id", ondelete="SET NULL")
     podcast: Optional[Podcast] = Relationship(back_populates="task")
 
     generation_data: dict | None = Field(
@@ -374,6 +379,39 @@ class PodcastGenerationTask(SQLModel, table=True):
     updated_at: datetime.datetime | None = Field(
         default_factory=utcnow,sa_column=Column(
         DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))
+
+class PodcastQuestion(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
+    question: str
+    answer: str | None = None
+    persona_id: UUID | None = Field(foreign_key="podcastauthorpersona.id")  # The persona who answered the question
+    user_id: UUID | None = Field(foreign_key="userprofile.id")  # The user who asked the question
+    persona: PodcastAuthorPersona | None = Relationship()
+    user: UserProfile | None = Relationship(back_populates="questions")
+
+    created_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), nullable=False))
+    updated_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))
+
+class Quota(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    quota_key: str = Field()
+    max_value: int = Field()
+
+class QuotaPlanOverride(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    plan_id: UUID = Field(foreign_key="subscriptionplan.id", ondelete="CASCADE")
+    value: int = Field()
+
+class SubscriptionPlan(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    plan_key: str = Field()
+
+
 # Merging api/db.py
 import contextlib
 from sqlalchemy import NullPool
@@ -403,13 +441,15 @@ async def get_session():
     async with session_maker() as session:
         yield session
 # Merging api/gen.py
+import re
+import markdown
 import asyncio
-import time
 from typing import Literal
 from uuid import UUID, uuid4
 
 import pydantic
 from sqlmodel import select
+import supabase
 
 
 
@@ -420,24 +460,20 @@ import os
 import json
 import base64
 
+import ddgs
 import gtts
 import pydub
 from pydub import AudioSegment
 import google.genai as genai
 import google.cloud.texttospeech as tts
 import io
+from bs4 import BeautifulSoup
 
-# import platform
-# if platform.system() == "Linux":
-#     import pydub
-#     # connect the ffmpeg library to pydub
-#     pydub.AudioSegment.converter = "ffmpeg-linux-x64.gz"
 
 
 from sqlalchemy.orm import selectinload, joinedload
 
 
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from supabase import AClient as Supabase
 
 def get_service_account_info() -> dict:
@@ -449,12 +485,13 @@ def get_service_account_info() -> dict:
 def get_speech_client():
     tts_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_service_account_info(
     get_service_account_info())
+
     return tts_client
 
 speech_client = get_speech_client()
 
 
-VOICE_MODEL = "Chirp3" # "Standard" | "Wavenet" | "Chirp3"
+VOICE_MODEL = "Standard" # "Standard" | "Wavenet" | "Chirp3"
 
 # TTS_FOLDER = "tts"
 # FINAL_FOLDER = "finals" # Folder to save the final podcast
@@ -496,7 +533,6 @@ Podcast should match the style requested.
 Explain the topic intuitively, breaking down complex concepts into simple terms unless explicitly requested otherwise.
 
 * The format should be a friendly and engaging chat between an interviewer and one or more speakers.
-* Do not use "*" or "**" for bold / emphasis text, just use normal text. (Don't use markdown formatting in the text, just plain text.)
 * If more than one speaker is requested, adjust the number of interviewers and speakers accordingly (e.g., 5 speakers = 2 interviewers + 3 speakers).
 * Use simple, casual language with natural-sounding phrases (add a few "uh", "umm", etc. for realism).
 * Spice in a few arguments or disagreements to make it lively, but keep it friendly and respectful. (Between guests and interviewer too.) (HEATED DISCUSSIONS) (Only if requested by the user)
@@ -513,8 +549,8 @@ Explain the topic intuitively, breaking down complex concepts into simple terms 
 * More debates and arguments in between guests to spice it up (HEATED DISCUSSIONS).
 * Makes sure that the topic is included in the description or episode title of the podcast.
 * If list or steps are generated, make sure to keep the same person speaking throughout the list or steps. (Don't change the speaker in between the list or steps).
-* == DO NOT USE MARKDOWN FORMATTING IN THE TEXT, JUST PLAIN TEXT. ==
 * Keep the conversation in the requested language, but use English for technical terms if needed.
+* Use Markdown to Emphasize important points (bold or italics). 
 
 **Key points:**
 
@@ -584,12 +620,85 @@ podcast_schema = """
 }
 """
 
+interactive_podcast_prompt = """
+You are an expert in the field of **{topic}**.
+You are creating a podcast episode for **{topic}**.
+The podcast follows the {style} style. Match the style of the conversation to the style requested.
+Any background information or description of the topic is given:
+{description}
+The podcast is in **{language}**.
+
+**Prompt:**
+
+Create a podcast-style conversation on the topic **{topic}**, in **{language}**, targeting 20-year-old engineering students.
+The conversation should be engaging, informative, and easy to understand.
+Podcast should match the style requested.
+Explain the topic intuitively, breaking down complex concepts into simple terms unless explicitly requested otherwise.
+
+* The format should be a friendly and engaging chat between an interviewer and one or more speakers.
+* If more than one speaker is requested, adjust the number of interviewers and speakers accordingly (e.g., 5 speakers = 2 interviewers + 3 speakers).
+* Use simple, casual language with natural-sounding phrases (add a few "uh", "umm", etc. for realism).
+* Spice in a few arguments or disagreements to make it lively, but keep it friendly and respectful. (Between guests and interviewer too.) (HEATED DISCUSSIONS) (Only if requested by the user)
+* The conversation should be about 12 minutes long and include **around 50 questions and answers**.
+
+* You may include "[pause long]" in the conversation to indicate a longer pause, but keep it natural.
+* Keep it light, easy to understand, and relatable.
+* Speakers should be named (e.g., Dr. Ravi, Ms. Anu). Use first names in the conversation.
+* No need for complex words or SSML tags. Avoid using backquotes for code—just write it out.
+* Use a friendly, simple tone. Avoid being too formal or technical.
+* Use English for technical terms and local language for casual phrases.
+* Use the appropriate script for the language (e.g. Devanagari for Hindi, Tamil script for Tamil).
+* Guests can also talk with each other not just with interviewer.
+* More debates and arguments in between guests to spice it up (HEATED DISCUSSIONS).
+* Makes sure that the topic is included in the description or episode title of the podcast.
+* If list or steps are generated, make sure to keep the same person speaking throughout the list or steps. (Don't change the speaker in between the list or steps).
+* Keep the conversation in the requested language, but use English for technical terms if needed.
+* Use Markdown to Emphasize important points (bold or italics). 
+
+**Key points:**
+
+* Friendly, simple tone (match the style requested)
+* Casual back-and-forth discussion
+* Add some arguments or disagreements. (HEATED DISCUSSIONS) (Only if explicity requested by the user)
+* Break long explanations into short answers
+* Keep technical terms in English if needed
+* Same language for everyone in the podcast
+
+
+PODCAST SCHEMA:
+"""
+
+interactive_podcast_schema = """
+{
+    "podcastTitle": "Podcast Title",
+    "podcastDescription": "Podcast Description",
+    "episodeTitle": "Episode Title",
+    "tags": [
+        "tag1",
+        "tag2",
+        "tag3",
+        ... (any number of tags, each tag is a string)
+    ],
+    "language": "Language Code in the format of 'en-US' or 'en-GB'",
+}
+"""
+
 class PersonAI(pydantic.BaseModel):
     name: str
     country: str
     gender: str
     interviewer: bool = pydantic.Field(..., description="true if the person is the interviewer, false if the person is the speaker")
     id: str = pydantic.Field(..., description="a unique id for the person to identify the person in the conversation")
+
+class PersonaAI(pydantic.BaseModel):
+    name: str = pydantic.Field(..., description="The name of the persona.")
+    bio: str = pydantic.Field(..., description="A brief biography of the persona, including their expertise and experience.")
+    background: str | None = pydantic.Field(default=None, description="A brief background of the persona, including their country or region if relevant.")
+
+    country: str = pydantic.Field(..., description="The country of the persona.")
+    gender: str = pydantic.Field(..., description="The gender of the persona MALE | FEMALE | NEUTRAL")
+    id: str = pydantic.Field(..., description="a unique id for the person to identify the person in the conversation")
+
 
 class PronounciationAI(pydantic.BaseModel):
     word: str = pydantic.Field(..., description="The word to be pronounced")
@@ -617,9 +726,26 @@ class PodcastAI(pydantic.BaseModel):
     episodeNumber: str = pydantic.Field(..., description="Episode number in the format of '1', '2', '3'")
     conversation: list[ConversationAI]
 
+class InteractivePodcastAI(pydantic.BaseModel):
+    podcastTitle: str
+    podcastDescription: str
+    episodeTitle: str
+    tags: list[str]
+    language: str
+
 class DetectedLanguageAI(pydantic.BaseModel):
     lang: str = pydantic.Field(..., description="Language code in the format of 'en-US' or 'en-GB' (ISO-639-1)")
     confidence: float = pydantic.Field(..., description="Confidence score of the detected language")
+
+def strip_md(txt: str) -> str:
+    html = markdown.markdown(txt)
+
+    html = re.sub('<pre>(.*?)</pre>', '', html, flags=re.DOTALL)  # Remove <pre> tags and their content
+    html = re.sub('<code>(.*?)</code>', '', html, flags=re.DOTALL)  # Remove <code> tags and their content
+
+    soup = BeautifulSoup(html, "html.parser")
+    return soup.get_text()
+
 
 img_prompt = """
 Generate a podcast cover image for the podcast titled "{podcastTitle}".
@@ -728,51 +854,6 @@ async def generate_featured_podcast_thumbnail_image(podcast: Podcast) -> io.Byte
         raise ValueError("No image found in response")
     return image
 
-# def synth_turn(text, lang="en-IN", voice="en-IN-Standard-A", pronounciations: list[PronounciationAI] | None = None):
-#     pronounciations = pronounciations or []
-#     print([pron for pron in pronounciations])
-#     # filename = os.path.join(TTS_FOLDER, filename)
-#     speech = speech_client.synthesize_speech(
-#         input=tts.SynthesisInput(text=text,
-#                 custom_pronunciations=tts.CustomPronunciations(
-#                     pronunciations=[
-#                     tts.CustomPronunciationParams(
-#                         phrase=pronounciation.word,
-#                         pronounciation=pronounciation.ipa,
-#                         phonetic_encoding="PHONETIC_ENCODING_IPA"
-#                     ) for pronounciation in (pronounciations or [])
-#                 ]
-#                 )
-#             ),        
-#         # input=tts.SynthesisInput(ssml=f"<speak>{text}</speak>"),
-#         voice=tts.VoiceSelectionParams(
-#             language_code=lang,
-#             name=voice,
-#         ),
-#         audio_config=tts.AudioConfig(
-#             audio_encoding=tts.AudioEncoding.LINEAR16,
-#             # speaking_rate=1.05,
-#             pitch=0.0,
-            
-#         ),
-#     )
-
-#     if speech.audio_content is None:
-#         # TODO: retry after exponential backoff
-#         pass
-
-#     return io.BytesIO(speech.audio_content)
-#     # # Save the audio to a file
-#     # with open(filename, "wb") as out:
-#     #     out.write(speech.audio_content)
-    
-
-# def save_podcast(text, filename, tld="com"):
-#     filename = os.path.join(TTS_FOLDER, filename)
-#     tts = speech_model.generate_content(text, generation_config={"max_output_tokens": 4000})
-#     print(tts.text)
-#     # tts.save(filename)
-
 def detect_topic_language(topic: str) -> str:
     response = client.models.generate_content(contents=f"Detect the language given in the topic: {topic}. The language must be in the form of en-US, en-IN, etc. Also, if the user requests for a specific language, eg: (in tamil, in hindi), return that language instead in the format as specified earlier. (ISO-639-1)", config={"response_mime_type": "application/json", "response_schema": DetectedLanguageAI}, model="gemini-2.0-flash")
     data = DetectedLanguageAI.model_validate(response.parsed)
@@ -803,7 +884,7 @@ async def select_voice_people(people: list[PersonAI], lang: str) -> dict[str, tt
         if gender in gender_voices:
             gender_voices[gender] += [voice]
     
-
+    random.seed(42)  # For reproducibility
     for person in people:
         if person.id not in voices:
             person_gender = person.gender.lower()
@@ -868,115 +949,6 @@ async def generate_author_images(authors: list[PodcastAuthorPersona]) -> None:
     
     await asyncio.gather(*tasks)
 
-    # executor = ThreadPoolExecutor()
-    # futures = []
-    # for author in authors:
-    #     future = executor.submit(generate_author_image, author)
-    #     futures.append((author.id, future))
-    # executor.shutdown(wait=True)
-    # print("All author images generated. Saving images...")
-    # for (pid, future) in futures:
-    #     response = future.result()
-    #     await save_image(response, f"{title}_{pid}")
-
-
-def main_test(topic: str, podcast_id: str | None = None):
-    pass
-    # podcast_id = podcast_id or str(uuid4())
-    # print(f"Generating podcast for topic: {topic} with ID: {podcast_id}")
-    # lang = detect_topic_language(topic)
-    # print(f"Detected language: {lang}")
-    # podcast = generate_podcast(topic, lang)
-    # # print(podcast.model_dump_json(indent=4))
-    # podcast_title = podcast.podcastTitle
-    # podcast_description = podcast.podcastDescription
-    # episode_title = podcast.episodeTitle
-    # conversation = [conversation.model_dump() for conversation in podcast.conversation]
-    # os_safe_title = remap_os_safe_title(podcast_title) + "_" + podcast_id
-    
-    # # country_interviewer = interviewer["country"]
-    # # country_speaker = speaker["country"]
-    # # gender_interviewer = interviewer["gender"]
-    # # gender_speaker = speaker["gender"]
-    # language = podcast.language
-    # episode_number = podcast.episodeNumber
-
-    # start_time = time.time()
-    # voices = select_voice_people(podcast.people, podcast.language)
-    # end_time = time.time()
-    # print(f"Time taken to select voices: {end_time - start_time} seconds")
-
-    # executor = ProcessPoolExecutor()
-    
-    #     # return image
-    
-    # image_file = os.path.join(IMAGES_FOLDER, f"{os_safe_title}.png")
-    # res = executor.submit(save_podcast_cover, podcast, topic, os_safe_title)
-
-    # print(f"Selected voices: {"".join([f"{name} - {voice.name}\n" for name, voice in voices.items()])}")
-    # print("Generating podcast...")
-    # print(f"Podcast Title: {podcast_title}")
-    # # title_audio = save_podcast(podcast_title, language, gen_voice_ann.name)
-    # # desc_audio = save_podcast(podcast_description, language, gen_voice_ann.name)
-    # # ep_audio = save_podcast(f"{episode_title}", language, gen_voice_ann.name)
-    
-    # # audios = [title_audio, desc_audio, ep_audio]
-    # audios = []
-    # conv_audios = []
-
-    # people = {person.id: person for person in podcast.people}
-    
-    # executor.submit(generate_author_images, podcast, topic, os_safe_title)
-
-
-    # with ThreadPoolExecutor() as executor:
-    #     for idx, turn in enumerate(podcast.conversation):
-    #         voice = voices[turn.speaker]
-    #         country = people[turn.speaker].country
-    #         print("Generating audio for turn: ", turn.text)
-    #         turn_audio = executor.submit(save_podcast, turn.text, country, voice.name, turn.pronunciations)
-    #         conv_audios.append(turn_audio)
-    #         print(f"Generated {turn.speaker} audio for turn {idx + 1}/{len(conversation)}")
-
-    #         if idx % 8 == 0:
-    #             time.sleep(1)  # Sleep for 1 second every 10 turns to avoid rate limiting
-    
-    # conv_audios = [audio.result() for audio in conv_audios]
-
-    # print(f"Podcast '{podcast_title}' generated and saved in {os.path.abspath('tts')} folder.")
-
-    # # merge the files into a single podcast
-    
-    # title_audio_seg = sum([pydub.AudioSegment.from_wav(audio) + pydub.AudioSegment.silent(duration=500) for audio in audios])
-    # conv_segments = [pydub.AudioSegment.from_wav(audio) for audio in conv_audios]
-    # combined = AudioSegment.silent(duration=500) + title_audio_seg  # Add silence at the beginning
-    # for idx, segment in enumerate(conv_segments):
-    #     conversation[idx]["start_time"] = len(combined) / 1000  # start time in seconds
-    #     # 500ms silence between segments - (based on the average pause between sentences)
-    #     silence_duration = min(500, len(segment) / 10)  # maximum 500ms silence or 1/10th of the segment length
-    #     combined += segment + AudioSegment.silent(duration=min(int(silence_duration), 1))  # Add a 500ms silence between segments
-
-    #     conversation[idx]["end_time"] = len(combined) / 1000
-    
-    # final_file = os.path.join(FINAL_FOLDER, f"{os_safe_title}_final.wav")
-    # combined.export(final_file, format="wav")
-
-    # print(f"Final podcast '{os_safe_title}_final.wav' generated.")
-    # res = res.result()
-    # executor.shutdown(wait=True)
-    # return {
-    #     "podcast_title": podcast_title,
-    #     "podcast_description": podcast_description,
-    #     "episode_title": episode_title,
-    #     "people": [people.model_dump() for people in podcast.people],
-    #     "language": language,
-    #     "conversation": conversation,
-    #     "audio_file": final_file,
-    #     "duration": len(combined) / 1000,  # duration in seconds
-    #     "image_file": image_file,
-    #     "episode_number": episode_number,
-    # }
-
 
 class CreatePodcast(pydantic.BaseModel):
     topic: str = pydantic.Field(..., description="The topic of the podcast")
@@ -992,9 +964,70 @@ class CreatePodcast(pydantic.BaseModel):
 
 
 async def generate_podcast_content(create_podcast: CreatePodcast):
-    response = await client.aio.models.generate_content(contents=podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
+
+    search_results = ddgs.DDGS().text(f"{create_podcast.topic} wikipedia", max_results=5)
+    contents = ["Here are some relevant search results to help you create the podcast:\n"]
+    for result in search_results:
+        contents.append(f"# {result['title']}\n{result['body']}\n{result['href']}\n")
+    contents.append("\nPODCAST PROMPT:\n")
+    content = "\n".join(contents)
+    print("Search results fetched. Generating podcast content..., content: ", content)
+
+    response = await client.aio.models.generate_content(contents=content+podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
     return PodcastAI.model_validate(response.parsed) 
 
+async def generate_podcast_metadata(create_podcast: CreatePodcast) -> InteractivePodcastAI:
+
+    search_results = ddgs.DDGS().text(f"{create_podcast.topic} wikipedia", max_results=5)
+    contents = ["Here are some relevant search results to help you create the podcast:\n"]
+    for result in search_results:
+        contents.append(f"# {result['title']}\n{result['body']}\n{result['href']}\n")
+    contents.append("\nPODCAST PROMPT:\n")
+    content = "\n".join(contents)
+    print("Search results fetched. Generating podcast metadata..., content: ", content)
+
+    response = await client.aio.models.generate_content(contents=content+interactive_podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + interactive_podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
+    return InteractivePodcastAI.model_validate(response.parsed) 
+
+async def generate_podcast_authors(create_podcast: CreatePodcast) -> list[PersonaAI]:
+    topic = create_podcast.topic
+
+
+    class PersonaResponse(pydantic.BaseModel):
+        personas: list[PersonaAI]
+
+
+    client = genai.Client()
+
+    personas = await client.aio.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"""
+    You are an expert at creating personas.
+    Create a list of 3-5 distinct personas that are experts in the topic of {topic}.
+    You may also generate personas that are novices or beginners in the topic to provide a diverse range of perspectives.
+    For each persona, provide a name, a short description of their expertise, and a brief bio.
+    Respond in JSON format as a list of objects with the following fields: name, description, bio.
+    Keep the descriptions and bios concise, each under 50-100 words.
+    Give a short but realistic background for each persona.
+
+    Make sure that the names are unique and realistic (not "cartoonish" or comedic) and the personas cover a diverse range of perspectives and backgrounds.
+    
+    Give 3 personas that are as different from each other as possible.
+    """,
+        config={
+            "response_schema": PersonaResponse,
+            "response_mime_type": "application/json",
+        }
+    )
+
+    persona_list = PersonaResponse.model_validate(personas.parsed) 
+    print(f"Generated personas: {persona_list}")
+
+    if not persona_list.personas or len(persona_list.personas) < 1:
+        raise ValueError("No personas generated. Cannot proceed.")
+    
+    return persona_list.personas
+    
 
 async def generate_audio(turn: ConversationAI, voice: tts.Voice, country: str) -> io.BytesIO:
     # speech_client: tts.TextToSpeechAsyncClient = tts.TextToSpeechAsyncClient.from_service_account_json(os.environ["GEN_LANG_JSON"])
@@ -1004,18 +1037,7 @@ async def generate_audio(turn: ConversationAI, voice: tts.Voice, country: str) -
     # filename = os.path.join(TTS_FOLDER, filename)
     request = tts.SynthesizeSpeechRequest(
         
-        input=tts.SynthesisInput(text=turn.text,
-                # custom_pronunciations=tts.CustomPronunciations(
-                #     pronunciations=[
-                #     tts.CustomPronunciationParams(
-                #         phrase=pronounciation.word,
-                #         pronunciation=pronounciation.ipa,
-                #         phonetic_encoding="PHONETIC_ENCODING_IPA"
-                #     ) for pronounciation in (pronunciations or [])
-                # ]
-                # )
-            ),        
-        # input=tts.SynthesisInput(ssml=f"<speak>{text}</speak>"),
+        input=tts.SynthesisInput(text=strip_md(turn.text)),
         voice=tts.VoiceSelectionParams(
             language_code=voice.language_codes[0] if voice.language_codes else country,
             name=voice.name,
@@ -1095,9 +1117,10 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     
 
     print(f"Creating podcast for topic: {create_podcast.topic} with ID: {task_id}")
+    await podcast_gen_task.progress_update(10, "Searching for relevant information...")
     # Generate the podcast content (metadata and conversation)
     podcast_metadata: PodcastAI = await generate_podcast_content(create_podcast)
-    await podcast_gen_task.progress_update(10, "Generating podcast content...")
+    await podcast_gen_task.progress_update(15, "Generating podcast content...")
     podcast_conversation = podcast_metadata.conversation
 
     podcast = Podcast(
@@ -1143,7 +1166,7 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
         await sess.commit() # update the task with the podcast ID at the earliest possible moment
 
 
-    await podcast_gen_task.progress_update(15, "Saving podcast metadata and episode...")
+    await podcast_gen_task.progress_update(20, "Saving podcast metadata and episode...")
 
     async with session_maker() as sess:
 
@@ -1179,7 +1202,7 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
         await sess.flush()
         
         # Generate the audio for the podcast
-        await podcast_gen_task.progress_update(20, "Selecting voices for the podcast...")
+        await podcast_gen_task.progress_update(25, "Selecting voices for the podcast...")
 
         # Currently, voices are selected automatically based on the people in the podcast and the language.
         print("Selecting voices for the podcast...")
@@ -1219,55 +1242,135 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     await podcast_gen_task.progress_update(100, "Waiting for podcast cover image and author images to complete...")
     await asyncio.gather(*image_gen_tasks)
 
-    await podcast_gen_task.progress_update(100, "Podcast generation completed successfully.")
+    await podcast_gen_task.progress_update(100, "Completed")
     await podcast_gen_task.complete()
 
     return podcast
 
 
-# if __name__ == "__main__":
-#     import dotenv
-#     dotenv.load_dotenv()
-
-#     import os
-#     import math
-
-#     task_id = uuid4()
-
-#     async def main():
-#         await create_podcast_generation_task(
-#             podcast_id=str(task_id),
-#             status="pending",
-#             progress=0,
-#             supabase=Supabase(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"]),
-#         )
-#         await create_podcast_gen(
-#             CreatePodcast(
-#                 topic="php programming language",
-#                 language="en-IN",
-#                 style="casual, friendly, and engaging",
-#                 description="Explain the PHP programming language and it's use in web development, including its history, features, and how it compares to other languages like Python and JavaScript.",
-#             ),
-#             task_id=task_id,
-#             # inngest=Inngest(app_id=os.environ["INNGEST_APP_ID"],),
-#             supabase=Supabase(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
-#         )
+async def create_interactive_podcast(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None) -> Podcast:
     
-#     start_time = time.time()
     
-#     asyncio.run(main())
+    podcast_gen_task = PodcastGenTask(podcast_id=str(task_id), supabase=supabase)
 
-#     end_time = time.time()
+    await podcast_gen_task.progress_update(0, "Starting podcast generation...")
+    if not create_podcast.language:
+        await podcast_gen_task.progress_update(5, "Detecting language...")
+        language = detect_topic_language(create_podcast.topic)
+        create_podcast.language = language
+    
+    await podcast_gen_task.progress_update(9, "Generating podcast metadata...")
 
-#     print(f"Podcast generation completed in {end_time - start_time} seconds.")
-#     print(f"Completion time: {(end_time - start_time) // 60:.0f} mins {math.fmod((end_time - start_time), 60):.0f} secs.")
+    print(f"Creating podcast for topic: {create_podcast.topic} with ID: {task_id}")
+    await podcast_gen_task.progress_update(10, "Searching for relevant information...")
+    # Generate the podcast content (metadata and conversation)
+    podcast_metadata: InteractivePodcastAI = await generate_podcast_metadata(create_podcast)
 
-    # topic = input("Enter the topic for the podcast (default: machine learning): ")
-    # topic = topic.strip() if topic else "machine learning"
-    # main(topic if topic else "machine learning")
-    # podcast = generate_podcast(topic, "en-IN")
-    # generate_image(topic, podcast)
-    # generate_author_images(podcast, topic, remap_os_safe_title(podcast.podcastTitle))
+    await podcast_gen_task.progress_update(15, "Saving podcast metadata...")
+    podcast = Podcast(
+        title=podcast_metadata.podcastTitle,
+        description=podcast_metadata.podcastDescription,
+        language=podcast_metadata.language,
+        tags=podcast_metadata.tags,
+        profile_id=profile_id,
+        is_generating=True,
+        is_public=False, 
+    )
+
+    await podcast_gen_task.progress_update(20, "Generating podcast authors...")
+    personas_data = await generate_podcast_authors(create_podcast)
+    personas = [PodcastAuthorPersona(name=person.name, bio=f"{person.bio}", background=person.background, gender=person.gender, country=person.country) for person in personas_data]
+
+    podcast.authors = [PodcastAuthorPodcast(
+        author=persona,
+        podcast=podcast,
+        is_host=(idx == 0),  # First persona is the host
+        author_id=persona.id,
+        podcast_id=podcast.id,
+    ) for idx, persona in enumerate(personas)]
+
+    async with session_maker() as sess:
+        sess.add(podcast)
+        await sess.commit()
+        await sess.refresh(podcast)
+    async with session_maker() as sess:
+        task = (await sess.execute(select(PodcastGenerationTask).where(PodcastGenerationTask.id == task_id))).scalar_one_or_none()
+        if task is None:
+            raise ValueError(f"Podcast generation task with ID {task_id} not found. Something went terribly wrong.")
+        task.podcast_id = podcast.id
+
+        sess.add(task)
+        await sess.commit() # update the task with the podcast ID at the earliest possible moment
+
+    if not supabase:
+        raise ValueError("Supabase client is required to create a podcast.")
+    
+    await podcast_gen_task.progress_update(20, "Saving podcast metadata and episode...")
+    await podcast_gen_task.complete()
+
+
+    # await podcast_gen_task.progress_update(15, "")
+
+async def generate_interactive_podcast_content(podcast: Podcast, question: str, user_id: UUID, supabase: Supabase | None = None):
+
+    if not supabase:
+        raise ValueError("Supabase client is required to create a podcast.")
+
+    async with session_maker() as sess:
+        people = (await sess.execute(select(PodcastAuthorPersona).join(PodcastAuthorPodcast).where(PodcastAuthorPodcast.podcast_id == podcast.id))).scalars().all()
+
+    text_interactive_prompt = f"The podcast is about {podcast.title}. Description: {podcast.description}\n The people in the podcast are:\n{''.join([f'{idx+1}. {person.name} from {person.country}, is a {person.gender}\n' for idx, person in enumerate(people)])}\n\n"
+    text_interactive_prompt += f"The user asked the question: {question}\n"
+    text_interactive_prompt += "Based on the podcast topic and the people in the podcast, select the most suitable persona to answer the question. If none of the personas are suitable, select the one that is closest to the topic.\n"
+    text_interactive_prompt += "Provide a detailed reason for selecting the persona.\n"
+
+    class DetectedPersona(pydantic.BaseModel):
+        persona: str
+        reason: str
+        confidence: float
+
+    class DetectedPersonaResponse(pydantic.BaseModel):
+        personas: list[DetectedPersona]
+    
+    response = await client.aio.models.generate_content(contents=text_interactive_prompt + """
+    Respond in JSON format""", config={"response_mime_type": "application/json", "response_schema": DetectedPersonaResponse}, model="gemini-2.0-flash")
+    detected_personas = DetectedPersonaResponse.model_validate(response.parsed)
+    if not detected_personas.personas or len(detected_personas.personas) < 1:
+        raise ValueError("No personas detected. Cannot proceed.")
+    selected_persona = max(detected_personas.personas, key=lambda p: p.confidence)
+    print(f"Selected persona: {selected_persona.persona} with confidence {selected_persona.confidence}")
+
+    
+    class ResponseSchema(pydantic.BaseModel):
+        persona: str
+        answer: str = pydantic.Field(description="The answer to the user's question, provided by the selected persona.")
+    
+    response = await client.aio.models.generate_content(contents=text_interactive_prompt + f"""
+    The selected persona is {selected_persona.persona}. Answer the user's question in detail, in the style of the selected persona.
+    Respond in JSON format""", config={"response_mime_type": "application/json", "response_schema": ResponseSchema}, model="gemini-2.0-flash")
+    answer = ResponseSchema.model_validate(response.parsed)
+
+    people_map = {person.name: person for person in people}
+    if answer.persona not in people_map:
+        raise ValueError(f"Selected persona {answer.persona} not found in the podcast authors.")
+
+    selected_persona = people_map[answer.persona]
+    async with session_maker() as sess:
+        pd_qn = PodcastQuestion(podcast_id=podcast.id, question=question, answer=answer.answer, persona_id=selected_persona.id, user_id=user_id)
+        sess.add(pd_qn)
+        await sess.commit()
+        await sess.refresh(pd_qn)
+
+
+    audio = await generate_audio(ConversationAI(speaker=selected_persona.name, text=answer.answer, pronunciations=[], start_time=0, end_time=5), voice=tts.Voice(name="en-US-Wavenet-D"), country="US")
+
+    buffer = io.BytesIO()
+    audio.seek(0)
+    buffer.write(audio.read())
+    buffer.seek(0)
+    await supabase.storage.from_("podcasts").upload(f"{podcast.id}/{pd_qn.id}.wav", buffer.getvalue(), {"content-type": "audio/wav", "upsert": "true"})
+
+    return answer
 
 
 
@@ -1404,7 +1507,7 @@ topic: (Rephrased version of the user query, short and clear. Not a clickbait ti
 
 style: (Podcast format, such as "Interview", "Discussion", "Explainer", etc.)
 
-language: (Detected or defaulted from the query, use (ISO-639-1), e.g., "en-IN", "en-US", "fr-FR", etc.)
+language: (Detected or defaulted from the query, use (ISO-639-1), e.g., "en-IN", "en-US", "fr-FR", etc.) Default to en-IN if not specified.
 
 description: (A short summary that explains what the topic is about. This is context for generation, not marketing copy.)
 
@@ -1458,6 +1561,7 @@ async def get_my_podcasts(offset: int = 0, limit: int = 10, user: UserProfile = 
             "id": str(p.id),
             "podcast_title": p.title,
             "podcast_description": p.description,
+            "type": p.type,
             "language": p.language,
             "created_at": p.created_at.isoformat() if p.created_at else None,
             "updated_at": p.updated_at.isoformat() if p.updated_at else None,
@@ -1487,6 +1591,7 @@ async def get_trending_podcasts(offset: int = 0, limit: int = 10):
                 "id": str(p.id),
                 "podcast_title": p.title,
                 "podcast_description": p.description,
+                "type": p.type,
                 "language": p.language,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
                 "updated_at": p.updated_at.isoformat() if p.updated_at else None,
@@ -1513,6 +1618,7 @@ async def search_podcasts(query: str, v2: bool = True):
                 "id": str(p.id),
                 "podcast_title": p.title,
                 "podcast_description": p.description,
+                "type": p.type,
                 "views_count": p.view_count,
                 "like_count": p.like_count,
                 "dislike_count": p.dislike_count,
@@ -1927,6 +2033,7 @@ async def get_featured_podcasts(offset: int = 0, limit: int = 10):
                 "id": str(p.id),
                 "podcast_title": p.title,
                 "podcast_description": p.description,
+                "type": p.type,
                 "language": p.language,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
                 "updated_at": p.updated_at.isoformat() if p.updated_at else None,
@@ -1958,6 +2065,7 @@ async def get_podcast(podcast_id: str, v2: bool = False, user = fastapi.Depends(
             "id": str(podcast_db.id),
             "podcast_title": podcast_db.title,
             "podcast_description": podcast_db.description,
+            "type": podcast_db.type,
             "language": podcast_db.language,
             "created_at": podcast_db.created_at.isoformat() if podcast_db.created_at else None,
             "updated_at": podcast_db.updated_at.isoformat() if podcast_db.updated_at else None,
@@ -1985,9 +2093,44 @@ async def get_podcasts_created_by(user_id: str):
 async def get_user_profile(user_id: str):
     async with session_maker() as sess:
         user = (await sess.execute(select(UserProfile).where(UserProfile.id == user_id))).scalar_one_or_none()
+        # calculate the total views 
         if not user:
             return {"error": "User not found"}, 404
-        return {"user": user}
+        rows = (await sess.execute(
+            select(func.sum(Podcast.view_count).label("views"), func.sum(Podcast.like_count).label("likes"), func.count(Podcast.id).label("count"), func.sum(Podcast.dislike_count).label("dislikes")
+                   ).select_from(Podcast).where(Podcast.profile_id == user_id))).one().tuple()
+        print(rows)
+        if rows:
+            total_views, total_likes, total_count, total_dislikes = rows
+        
+            net_likes = total_likes - total_dislikes
+            return {"user": user,"total_views": total_views or 0, "total_likes": total_likes or 0, "total_dislikes": total_dislikes or 0, "net_likes": net_likes or 0, "total_podcasts": total_count or 0}
+        return {
+            "user": user,
+            "total_views": 0,
+            "total_likes": 0,
+            "total_dislikes": 0,
+            "net_likes": 0,
+            "total_podcasts": 0,
+        }
+    
+@app.get("/user/{user_id}/stats")
+async def get_user_stats(user_id: str):
+    async with session_maker() as sess:
+        rows = (await sess.execute(select(func.sum(Podcast.view_count), func.sum(Podcast.like_count), func.count(Podcast.id), func.sum(Podcast.dislike_count)).where(Podcast.profile_id == user_id))).scalars().all()
+        print(rows)
+        if rows and rows[0]:
+            total_views, total_likes, total_count, total_dislikes = rows[0]
+        
+            net_likes = total_likes - total_dislikes
+            return {"total_views": total_views or 0, "total_likes": total_likes or 0, "total_dislikes": total_dislikes or 0, "net_likes": net_likes or 0, "total_podcasts": total_count or 0}
+        return {
+            "total_views": 0,
+            "total_likes": 0,
+            "total_dislikes": 0,
+            "net_likes": 0,
+            "total_podcasts": 0,
+        }
 
 
 @app.get("/audios/{podcast_id}")
@@ -2065,7 +2208,52 @@ async def get_queue(offset: int = 0, limit: int = 10):
         for task in tasks
     ]
 }
-    
+
+class LiveQuestionCreate(pydantic.BaseModel):
+    question: str
+
+@app.post('/live/questions/{podcast_id}')
+async def submit_live_question(podcast_id: str, question: LiveQuestionCreate, user: UserProfile = fastapi.Depends(get_current_user)):
+    async with session_maker() as sess:
+        # Check if the podcast exists
+        podcast = await sess.get(Podcast, podcast_id)
+        if not podcast:
+            return {"error": "Podcast not found"}, 404
+
+        res = await generate_interactive_podcast_content(podcast=podcast, question=question.question, user_id=user.id, supabase=get_supabase_client(with_service=True))
+
+        return {"message": "Question submitted successfully", "response": res}
+
+@app.get("/live/questions/{podcast_id}")
+async def get_live_questions(podcast_id: str, user: UserProfile = fastapi.Depends(get_current_user)):
+    async with session_maker() as sess:
+        # Check if the podcast exists
+        podcast = await sess.get(Podcast, podcast_id)
+        print("Podcast:", podcast)
+        if not podcast:
+            return {"error": "Podcast not found"}, 404
+
+        questions = (await sess.execute(select(PodcastQuestion).options(joinedload(PodcastQuestion.persona), joinedload(PodcastQuestion.user)).where(PodcastQuestion.podcast_id == podcast_id).order_by(asc(PodcastQuestion.created_at)))).scalars().all()
+        questions = [
+            {
+                "id": str(q.id),
+                "question": q.question,
+                "answer": q.answer,
+                "created_at": q.created_at.isoformat() if q.created_at else None,
+                "persona": {
+                    "id": str(q.persona.id),
+                    "name": q.persona.name,
+                } if q.persona else None,
+                "user": {
+                    "id": str(q.user.id),
+                    "name": q.user.display_name,
+                } if q.user else None,
+            } for q in questions
+        ]
+
+
+        return {"questions": [q for q in questions]}
+
 @app.get("/recommendations/@me")
 async def get_user_recommendations(user = fastapi.Depends(get_current_user)):
     async with session_maker() as sess:
@@ -2082,6 +2270,7 @@ async def get_user_recommendations(user = fastapi.Depends(get_current_user)):
                     "id": str(podcast.id),
                     "podcast_title": podcast.title,
                     "podcast_description": podcast.description,
+                    "type": podcast.type,
                     "language": podcast.language,
                     "created_at": podcast.created_at.isoformat() if podcast.created_at else None,
                     "updated_at": podcast.updated_at.isoformat() if podcast.updated_at else None,
@@ -2124,6 +2313,7 @@ async def get_user_history(
                 Podcast.id,
                 Podcast.title,
                 Podcast.description,
+                Podcast.type,
                 Podcast.language,
                 Podcast.created_at,
                 Podcast.updated_at,

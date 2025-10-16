@@ -32,6 +32,7 @@ class UserProfile(SQLModel, table=True):
     play_history: list["UserPlayHistory"] = Relationship(back_populates="user")
     recommendations: list["PodcastRecommendation"] = Relationship(back_populates="user")
     like_history: list["UserLikeHistory"] = Relationship(back_populates="user")
+    questions: list["PodcastQuestion"] = Relationship(back_populates="user")
 
 class UserPlayHistory(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -94,6 +95,7 @@ class Podcast(SQLModel, table=True):
     is_generating: bool = Field(default=False, nullable=True)
     is_public: bool = Field(default=True, nullable=True)
 
+    type: str = Field(default="generated") # generated, interactive
     authors: list["PodcastAuthorPodcast"] = Relationship(back_populates="podcast")
     episodes: list["PodcastEpisode"] = Relationship(back_populates="podcast")
 
@@ -129,6 +131,7 @@ class PodcastAuthorPersona(SQLModel, table=True):
     bio: str | None = None
     background: str | None = None
     profile_image: str | None = None
+    voice: str | None = None  # Voice identifier for TTS
 
     gender: str | None = None
     country: str | None = None
@@ -147,6 +150,8 @@ class PodcastAuthorPersona(SQLModel, table=True):
         back_populates="other_author",
         sa_relationship_kwargs={"foreign_keys": "[PodcastAuthorDynamics.author_id]"}
     )
+
+    answers: list["PodcastQuestion"] = Relationship(back_populates="persona")
 
     created_at: datetime.datetime | None = Field(
         default_factory=utcnow,sa_column=Column(
@@ -257,6 +262,23 @@ class PodcastGenerationTask(SQLModel, table=True):
     generation_data: dict | None = Field(
         default=None, sa_column=Column(JSON, nullable=True)
     )  # JSON or other data related to the generation task
+
+    created_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), nullable=False))
+    updated_at: datetime.datetime | None = Field(
+        default_factory=utcnow,sa_column=Column(
+        DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))
+
+class PodcastQuestion(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    podcast_id: UUID = Field(foreign_key="podcast.id", ondelete="CASCADE")
+    question: str
+    answer: str | None = None
+    persona_id: UUID | None = Field(foreign_key="podcastauthorpersona.id")  # The persona who answered the question
+    user_id: UUID | None = Field(foreign_key="userprofile.id")  # The user who asked the question
+    persona: PodcastAuthorPersona | None = Relationship()
+    user: UserProfile | None = Relationship(back_populates="questions")
 
     created_at: datetime.datetime | None = Field(
         default_factory=utcnow,sa_column=Column(

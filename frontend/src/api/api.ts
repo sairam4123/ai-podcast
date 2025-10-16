@@ -23,6 +23,8 @@ import { useDislikePodcast } from "./dislikePodcast";
 import useUserLogin from "./userLogin";
 import useUserRegister from "./userRegister";
 import useGetUserProfile from "./getUserProfile";
+import useSendLiveQuestion from "./sendLiveQuestion";
+import useGetPodcastQuestions from "./getPodcastQuestions";
 
 // check if the environment is hosted on localhost or local network
 // ?
@@ -66,4 +68,6 @@ export const api = {
   useUpdatePodcastVisibility,
   useLikePodcast,
   useDislikePodcast,
+  useSendLiveQuestion,
+  useGetPodcastQuestions,
 };
