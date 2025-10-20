@@ -17,7 +17,7 @@ from supabase_auth import Optional
 from api.utils import get_current_user, get_supabase_client, optional_user
 from api.db import session_maker
 from api.models import Conversation, Podcast, PodcastAuthorPersona, PodcastAuthorPodcast, PodcastEpisode, PodcastGenerationTask, PodcastQuestion, PodcastRecommendation, UserLikeHistory, UserPlayHistory, UserProfile
-from api.gen import CreatePodcast, create_podcast_gen, generate_interactive_podcast_content
+from api.gen import CreatePodcast, create_podcast_gen, generate_interactive_podcast_content, recognize_speech
 from uuid import UUID, uuid4
 import json
 from fuzzywuzzy import fuzz, process
@@ -876,6 +876,17 @@ async def get_live_questions(podcast_id: str, user: UserProfile = fastapi.Depend
 
 
         return {"questions": [q for q in questions]}
+
+@app.post("/podcasts/{podcast_id}/record")
+async def get_podcast_recording( podcast_id: str, file: fastapi.UploadFile = fastapi.File(...), user = fastapi.Depends(get_current_user)):
+    
+    fp = await file.read()
+    io_file = io.BytesIO(fp)
+    res =  await recognize_speech(io_file, podcast_id=podcast_id, user_id=user.id, supabase=get_supabase_client(with_service=True))
+    return {
+        "message": "Submitted successfully", 
+        "res": res,
+    }
 
 @app.get("/recommendations/@me")
 async def get_user_recommendations(user = fastapi.Depends(get_current_user)):

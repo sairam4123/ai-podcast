@@ -287,17 +287,41 @@ class PodcastQuestion(SQLModel, table=True):
         default_factory=utcnow,sa_column=Column(
         DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))
 
+
 class Quota(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     quota_key: str = Field()
     max_value: int = Field()
 
+
 class QuotaPlanOverride(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     plan_id: UUID = Field(foreign_key="subscriptionplan.id", ondelete="CASCADE")
     value: int = Field()
+    quota_id: UUID = Field(foreign_key="quota.id", ondelete="CASCADE")
+
 
 class SubscriptionPlan(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     plan_key: str = Field()
 
+    name: str = Field()
+
+class QuotaUsage(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    
+    quota_id: UUID = Field(foreign_key="quota.id", ondelete="CASCADE")
+    user_id: UUID = Field(foreign_key="userprofile.id", ondelete="CASCADE")
+
+    value: int = Field()
+
+    carryover: int = Field()
+
+
+class UserSubscription(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="userprofile.id", ondelete="CASCADE")
+    plan_id: UUID = Field(foreign_key="subscriptionplan.id", ondelete="SET NULL", nullable=True)
+    start_date: datetime.datetime = Field(default_factory=utcnow)
+    end_date: datetime.datetime | None = None
+    is_active: bool = Field(default=True)

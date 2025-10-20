@@ -29,5 +29,7 @@ dependencies = [
     "ddgs>=9.6.1",
     "beautifulsoup4>=4.14.2",
     "markdown>=3.9",
+    "python-multipart>=0.0.20",
+    "google-cloud-speech>=2.33.0",
 ]
 

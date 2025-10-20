@@ -397,21 +397,44 @@ class PodcastQuestion(SQLModel, table=True):
         default_factory=utcnow,sa_column=Column(
         DateTime, server_default=func.now(), server_onupdate=func.now(), onupdate=datetime.datetime.now))
 
+
 class Quota(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     quota_key: str = Field()
     max_value: int = Field()
 
+
 class QuotaPlanOverride(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     plan_id: UUID = Field(foreign_key="subscriptionplan.id", ondelete="CASCADE")
     value: int = Field()
+    quota_id: UUID = Field(foreign_key="quota.id", ondelete="CASCADE")
+
 
 class SubscriptionPlan(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     plan_key: str = Field()
 
+    name: str = Field()
 
+class QuotaUsage(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    
+    quota_id: UUID = Field(foreign_key="quota.id", ondelete="CASCADE")
+    user_id: UUID = Field(foreign_key="userprofile.id", ondelete="CASCADE")
+
+    value: int = Field()
+
+    carryover: int = Field()
+
+
+class UserSubscription(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="userprofile.id", ondelete="CASCADE")
+    plan_id: UUID = Field(foreign_key="subscriptionplan.id", ondelete="SET NULL", nullable=True)
+    start_date: datetime.datetime = Field(default_factory=utcnow)
+    end_date: datetime.datetime | None = None
+    is_active: bool = Field(default=True)
 # Merging api/db.py
 import contextlib
 from sqlalchemy import NullPool
@@ -1092,13 +1115,13 @@ def combine_audio_segments(audio_segments: list[pydub.AudioSegment]) -> tuple[li
     return conversation_markers, combined
 
 
-async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None) -> Podcast:
+async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None = None, supabase: Supabase | None = None, profile_id: UUID | None = None, should_upload: bool = True, should_generate_images: bool = True, raise_errors: bool = True) -> Podcast:
     task_id = task_id or uuid4()
 
     if not create_podcast.topic:
         raise ValueError("Topic is required to create a podcast.")
 
-    if not supabase:
+    if (not supabase) and should_upload:
         raise ValueError("Supabase client is required to create a podcast.")
 
 
@@ -1149,7 +1172,7 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     image_gen_tasks = [
         asyncio.create_task(save_podcast_cover(podcast,)),
         asyncio.create_task(generate_author_images([author.author for author in podcast.authors]))
-    ]
+    ] if should_generate_images else []
 
     async with session_maker() as sess:
         sess.add(podcast)
@@ -1159,11 +1182,13 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     async with session_maker() as sess:
         task = (await sess.execute(select(PodcastGenerationTask).where(PodcastGenerationTask.id == task_id))).scalar_one_or_none()
         if task is None:
-            raise ValueError(f"Podcast generation task with ID {task_id} not found. Something went terribly wrong.")
-        task.podcast_id = podcast.id
+            if raise_errors:
+                raise ValueError(f"Podcast generation task with ID {task_id} not found. Something went terribly wrong.")
+        else:
+            task.podcast_id = podcast.id
 
-        sess.add(task)
-        await sess.commit() # update the task with the podcast ID at the earliest possible moment
+            sess.add(task)
+            await sess.commit() # update the task with the podcast ID at the earliest possible moment
 
 
     await podcast_gen_task.progress_update(20, "Saving podcast metadata and episode...")
@@ -1237,7 +1262,8 @@ async def create_podcast_gen(create_podcast: CreatePodcast, task_id: UUID | None
     buffer.seek(0)  # Reset the buffer position to the beginning
 
     await podcast_gen_task.progress_update(90, "Saving podcast audio...")
-    await supabase.storage.from_("podcasts").upload(f"{podcast_id}.wav", buffer.getvalue(), {"content-type": "audio/wav", "upsert": "true"})
+    if should_upload and supabase:
+        await supabase.storage.from_("podcasts").upload(f"{podcast_id}.wav", buffer.getvalue(), {"content-type": "audio/wav", "upsert": "true"})
     
     await podcast_gen_task.progress_update(100, "Waiting for podcast cover image and author images to complete...")
     await asyncio.gather(*image_gen_tasks)
@@ -1371,6 +1397,35 @@ async def generate_interactive_podcast_content(podcast: Podcast, question: str, 
     await supabase.storage.from_("podcasts").upload(f"{podcast.id}/{pd_qn.id}.wav", buffer.getvalue(), {"content-type": "audio/wav", "upsert": "true"})
 
     return answer
+
+async def recognize_speech(file: io.BytesIO, user_id: UUID, podcast_id: str, supabase: Supabase | None = None):
+    from google.cloud import speech as stt
+    
+
+    speech_client = stt.SpeechClient.from_service_account_info(get_service_account_info())
+
+    audio = stt.RecognitionAudio(content=file.getvalue())
+    config = stt.RecognitionConfig(
+        language_code="en-US",
+    )
+
+    resp = speech_client.recognize(audio=audio, config=config)
+    question = ""
+
+    # pick the maximum confidence question
+    alts = [alt for result in resp.results for alt in result.alternatives]
+    question = max(alts, key=lambda alt: alt.confidence).transcript
+
+    async with session_maker() as sess:
+        podcast = await sess.get(Podcast, podcast_id)
+        if not podcast:
+            return
+
+        return await generate_interactive_podcast_content(podcast, question, user_id, supabase)
+    
+    
+
+
 
 
 
@@ -2253,6 +2308,17 @@ async def get_live_questions(podcast_id: str, user: UserProfile = fastapi.Depend
 
 
         return {"questions": [q for q in questions]}
+
+@app.post("/podcasts/{podcast_id}/record")
+async def get_podcast_recording( podcast_id: str, file: fastapi.UploadFile = fastapi.File(...), user = fastapi.Depends(get_current_user)):
+    
+    fp = await file.read()
+    io_file = io.BytesIO(fp)
+    res =  await recognize_speech(io_file, podcast_id=podcast_id, user_id=user.id, supabase=get_supabase_client(with_service=True))
+    return {
+        "message": "Submitted successfully", 
+        "res": res,
+    }
 
 @app.get("/recommendations/@me")
 async def get_user_recommendations(user = fastapi.Depends(get_current_user)):

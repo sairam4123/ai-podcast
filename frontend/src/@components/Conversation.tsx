@@ -7,9 +7,11 @@ import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
 import ReactMarkdown from "react-markdown";
 import { FaMicrophone, FaPaperPlane, FaSpinner } from "react-icons/fa";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import useSendLiveQuestion from "../api/sendLiveQuestion";
 import { ProfileAvatarIcon } from "./AvatarIcon";
+import { RecordModal } from "../modals/Record";
+import { useGetAudio } from "../api/getAudio";
 
 export function Conversation({
   podcastId,
@@ -30,6 +32,8 @@ export function Conversation({
 }) {
   const { isPlaying, currentPosition, play, seek } = useMediaPlayerContext();
   const { currentPodcast } = usePodcastContext();
+
+  // const { audioUrl,  } = useGetAudio()
 
   const [currentQuestion, setCurrentQuestion] = useState("");
 
@@ -110,38 +114,7 @@ export function Conversation({
               isHost={true}
             />
 
-            {q.answer && (
-              <MessageCard
-                id={`response-${q.id}`}
-                currentPosition={0}
-                isPlaying={false}
-                onClick={() => {}}
-                key={`response-${q.id}`}
-                podcastId={podcastId}
-                person={{
-                  id: q.persona?.id ?? "host-" + q.id,
-                  name: q.persona?.name || "Host",
-                }}
-                message={{
-                  id: q.id,
-                  text: q.answer,
-                  episode_id: podcastId,
-                  start_time: 0,
-                  end_time: 0,
-                  speaker_id: "",
-                  speaker: {
-                    id: "host-" + q.id,
-                    name: q.persona?.name || "Host",
-                  },
-                  podcast_author: {
-                    is_host: true,
-                    podcast_id: podcastId,
-                    author_id: "host-" + q.id,
-                  },
-                }}
-                isCurrent={false}
-              />
-            )}
+            {q.answer && <ResponseCard podcastId={podcastId} q={q} />}
           </>
         ))}
       </div>
@@ -154,6 +127,60 @@ export function Conversation({
     </div>
   );
 }
+
+const ResponseCard = ({ podcastId, q }) => {
+  const { audioUrl, isLoading, error } = useGetAudio(
+    {
+      podcast_id: podcastId,
+      resp_id: q.id,
+    },
+    {
+      enabled: true,
+    }
+  );
+  const ref = useRef<HTMLAudioElement | null>(null);
+
+  console.log(audioUrl)
+  return (
+    <>
+      <MessageCard
+        id={`response-${q.id}`}
+        currentPosition={0}
+        isPlaying={false}
+        onClick={() => {
+          if (ref) {
+            ref.current?.play();
+          }
+        }}
+        key={`response-${q.id}`}
+        podcastId={podcastId}
+        person={{
+          id: q.persona?.id ?? "host-" + q.id,
+          name: q.persona?.name || "Host",
+        }}
+        message={{
+          id: q.id,
+          text: q.answer,
+          episode_id: podcastId,
+          start_time: 0,
+          end_time: 0,
+          speaker_id: "",
+          speaker: {
+            id: "host-" + q.id,
+            name: q.persona?.name || "Host",
+          },
+          podcast_author: {
+            is_host: true,
+            podcast_id: podcastId,
+            author_id: "host-" + q.id,
+          },
+        }}
+        isCurrent={false}
+      />
+      <audio src={audioUrl ?? ""} autoPlay={false} hidden ref={ref} />
+    </>
+  );
+};
 
 const MessageCard = ({
   message: conv,
@@ -274,8 +301,15 @@ const QuestionBox = ({
       },
     });
 
+  const [recordingIsVisible, setRecordingModalIsVisible] = useState(false);
+
   return (
     <div className="w-full flex flex-row justify-center items-center p-2 mt-4 text-center text-gray-200 border-2 border-dashed rounded-lg border-gray-600">
+      <RecordModal
+        isVisible={recordingIsVisible}
+        setIsVisible={setRecordingModalIsVisible}
+        podcast_id={podcastId}
+      />
       <input
         value={question}
         onChange={(e) => onChange?.(e.target.value)}
@@ -291,7 +325,12 @@ const QuestionBox = ({
         }}
       />
       <div className="text-xl gap-2 flex flex-row">
-        <FaMicrophone className="text-xl cursor-pointer pr-2 hover:text-gray-100 text-gray-400" />
+        <FaMicrophone
+          onClick={() => {
+            setRecordingModalIsVisible(true);
+          }}
+          className="text-xl cursor-pointer pr-2 hover:text-gray-100 text-gray-400"
+        />
         {isMutationLoading ? (
           <div className="pr-2">
             <FaSpinner className="text-xl cursor-pointer animate-spin object-center origin-center text-gray-400" />

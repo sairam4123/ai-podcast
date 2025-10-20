@@ -14,6 +14,12 @@ asyncpg==0.30.0
     # via ai-podcast
 audioop-lts==0.2.2 ; python_full_version >= '3.13'
     # via ai-podcast
+beautifulsoup4==4.14.2
+    # via ai-podcast
+brotli==1.1.0 ; platform_python_implementation == 'CPython'
+    # via httpx
+brotlicffi==1.1.0.0 ; platform_python_implementation != 'CPython'
+    # via httpx
 cachetools==5.5.2
     # via google-auth
 certifi==2025.8.3
@@ -22,10 +28,13 @@ certifi==2025.8.3
     #   httpx
     #   requests
     #   sentry-sdk
+cffi==2.0.0 ; platform_python_implementation != 'CPython'
+    # via brotlicffi
 charset-normalizer==3.4.3
     # via requests
 click==8.1.8
     # via
+    #   ddgs
     #   gtts
     #   rich-toolkit
     #   typer
@@ -34,6 +43,8 @@ colorama==0.4.6 ; sys_platform == 'win32'
     # via
     #   click
     #   uvicorn
+ddgs==9.6.1
+    # via ai-podcast
 deprecation==2.1.0
     # via
     #   postgrest
@@ -53,12 +64,17 @@ fastapi-cloud-cli==0.1.5
 fuzzywuzzy==0.18.0
     # via ai-podcast
 google-api-core==2.25.1
-    # via google-cloud-texttospeech
+    # via
+    #   google-cloud-speech
+    #   google-cloud-texttospeech
 google-auth==2.40.3
     # via
     #   google-api-core
+    #   google-cloud-speech
     #   google-cloud-texttospeech
     #   google-genai
+google-cloud-speech==2.33.0
+    # via ai-podcast
 google-cloud-texttospeech==2.29.0
     # via ai-podcast
 google-genai==1.34.0
@@ -91,6 +107,7 @@ httptools==0.6.4
     # via uvicorn
 httpx==0.28.1
     # via
+    #   ddgs
     #   fastapi
     #   fastapi-cloud-cli
     #   google-genai
@@ -118,8 +135,12 @@ jinja2==3.1.6
     # via fastapi
 levenshtein==0.27.1
     # via python-levenshtein
+lxml==6.0.2
+    # via ddgs
 mako==1.3.10
     # via alembic
+markdown==3.9
+    # via ai-podcast
 markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.2
@@ -134,13 +155,17 @@ packaging==25.0
     # via deprecation
 postgrest==1.1.1
     # via supabase
+primp==0.15.0
+    # via ddgs
 proto-plus==1.26.1
     # via
     #   google-api-core
+    #   google-cloud-speech
     #   google-cloud-texttospeech
 protobuf==6.32.0
     # via
     #   google-api-core
+    #   google-cloud-speech
     #   google-cloud-texttospeech
     #   googleapis-common-protos
     #   grpcio-status
@@ -153,6 +178,8 @@ pyasn1==0.6.1
     #   rsa
 pyasn1-modules==0.4.2
     # via google-auth
+pycparser==2.23 ; implementation_name != 'PyPy' and platform_python_implementation != 'CPython'
+    # via cffi
 pydantic==2.11.7
     # via
     #   fastapi
@@ -189,7 +216,9 @@ python-dotenv==1.1.1
 python-levenshtein==0.27.1
     # via ai-podcast
 python-multipart==0.0.20
-    # via fastapi
+    # via
+    #   ai-podcast
+    #   fastapi
 pyyaml==6.0.2
     # via
     #   fastapi
@@ -224,6 +253,10 @@ six==1.17.0
     # via python-dateutil
 sniffio==1.3.1
     # via anyio
+socksio==1.0.0
+    # via httpx
+soupsieve==2.8
+    # via beautifulsoup4
 sqlalchemy==2.0.43
     # via
     #   alembic
@@ -252,6 +285,7 @@ typing-extensions==4.15.0
     # via
     #   alembic
     #   anyio
+    #   beautifulsoup4
     #   fastapi
     #   google-genai
     #   inngest

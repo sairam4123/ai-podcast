@@ -932,4 +932,33 @@ async def generate_interactive_podcast_content(podcast: Podcast, question: str, 
 
     return answer
 
+async def recognize_speech(file: io.BytesIO, user_id: UUID, podcast_id: str, supabase: Supabase | None = None):
+    from google.cloud import speech as stt
+    
+
+    speech_client = stt.SpeechClient.from_service_account_info(get_service_account_info())
+
+    audio = stt.RecognitionAudio(content=file.getvalue())
+    config = stt.RecognitionConfig(
+        language_code="en-US",
+    )
+
+    resp = speech_client.recognize(audio=audio, config=config)
+    question = ""
+
+    # pick the maximum confidence question
+    alts = [alt for result in resp.results for alt in result.alternatives]
+    question = max(alts, key=lambda alt: alt.confidence).transcript
+
+    async with session_maker() as sess:
+        podcast = await sess.get(Podcast, podcast_id)
+        if not podcast:
+            return
+
+        return await generate_interactive_podcast_content(podcast, question, user_id, supabase)
+    
+    
+
+
+
 
