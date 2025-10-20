@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export function useGetAudio(
-  { podcast_id, resp_id }: { podcast_id: string; resp_id: string },
+  { podcast_id, resp_id }: { podcast_id: string; resp_id?: string },
   { enabled = true }: { enabled?: boolean }
 ) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);

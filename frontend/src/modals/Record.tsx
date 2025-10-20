@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import ActionModal from "../@components/ActionModal";
 import useRecognizeAudio from "../api/recognizeAudio";
+import { cn } from "../lib/cn";
 
 type RecordingState = "idle" | "recording" | "stopped";
 
@@ -27,7 +28,7 @@ export function useRecorder() {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks.current, { type: "audio/webm", });
+        const blob = new Blob(chunks.current, { type: "audio/webm" });
         setAudioUrl(URL.createObjectURL(blob));
         setState("stopped");
         setAudioBlob(blob);
@@ -111,6 +112,10 @@ export function RecordModal({
         )}
         {audioBlob && (
           <div
+            className={cn(
+              "text-white bg-green-600 px-4 py-2 rounded mt-4 cursor-pointer inline-block",
+              isLoading && "opacity-50 cursor-not-allowed"
+            )}
             onClick={() => {
               mutate({
                 audioBlob,

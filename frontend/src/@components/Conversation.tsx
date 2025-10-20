@@ -128,7 +128,19 @@ export function Conversation({
   );
 }
 
-const ResponseCard = ({ podcastId, q }) => {
+const ResponseCard = ({
+  podcastId,
+  q,
+}: {
+  podcastId: Podcast["id"];
+  q: {
+    id: string;
+    question: string;
+    answer?: string;
+    user?: { id: string; name: string };
+    persona?: { id: string; name: string };
+  };
+}) => {
   const { audioUrl, isLoading, error } = useGetAudio(
     {
       podcast_id: podcastId,
@@ -140,9 +152,20 @@ const ResponseCard = ({ podcastId, q }) => {
   );
   const ref = useRef<HTMLAudioElement | null>(null);
 
-  console.log(audioUrl)
+  console.log(audioUrl);
   return (
     <>
+      {isLoading && (
+        <div className="flex flex-row items-center text-gray-400 p-2">
+          <FaSpinner className="animate-spin mr-2" />
+          <span>Loading response audio...</span>
+        </div>
+      )}
+      {error && (
+        <div className="flex flex-row items-center text-red-400 p-2">
+          <span>Error loading response audio: {error.message}</span>
+        </div>
+      )}
       <MessageCard
         id={`response-${q.id}`}
         currentPosition={0}
@@ -160,7 +183,7 @@ const ResponseCard = ({ podcastId, q }) => {
         }}
         message={{
           id: q.id,
-          text: q.answer,
+          text: q.answer ?? "N/A",
           episode_id: podcastId,
           start_time: 0,
           end_time: 0,
