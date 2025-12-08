@@ -141,6 +141,7 @@ const ResponseCard = ({
     persona?: { id: string; name: string };
   };
 }) => {
+  console.log("Rendering ResponseCard for question ID:", q.id);
   const { audioUrl, isLoading, error } = useGetAudio(
     {
       podcast_id: podcastId,
@@ -150,6 +151,7 @@ const ResponseCard = ({
       enabled: true,
     }
   );
+  console.log("Response audioUrl:", audioUrl);
   const ref = useRef<HTMLAudioElement | null>(null);
 
   console.log(audioUrl);
@@ -198,7 +200,7 @@ const ResponseCard = ({
             author_id: "host-" + q.id,
           },
         }}
-        isCurrent={false}
+        isCurrent={ref.current?.paused === false}
       />
       <audio src={audioUrl ?? ""} autoPlay={false} hidden ref={ref} />
     </>

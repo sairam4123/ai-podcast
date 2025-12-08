@@ -675,15 +675,14 @@ async def get_featured_podcasts(offset: int = 0, limit: int = 10):
 async def get_podcast(podcast_id: str, v2: bool = False, user = fastapi.Depends(optional_user)):
     if not v2:
         raise NotImplementedError("This endpoint is no longer available in v1")
-    
     async with session_maker() as sess:
         podcast_db = (await sess.execute(select(Podcast).options(selectinload(Podcast.liked_by_users)).where(and_(Podcast.id == podcast_id)))).scalar_one_or_none()
         if not podcast_db:
             return {"error": "Podcast not found"}, 404
-        print("Liked by Users", podcast_db.liked_by_users)
-        print("Current User", user.id if user else "Anonymous")
-        print("Liked", any(user.id == u.id and u.is_like for u in podcast_db.liked_by_users) if user else False)
-        print("Test", list((user.id, u.id, user.id == str(u.id), str(u.id), u.is_like, user.id == str(u.id) and u.is_like) for u in podcast_db.liked_by_users) if user else [])
+        # print("Liked by Users", podcast_db.liked_by_users)
+        # print("Current User", user.id if user else "Anonymous")
+        # print("Liked", any(user.id == u.id and u.is_like for u in podcast_db.liked_by_users) if user else False)
+        # print("Test", list((user.id, u.id, user.id == str(u.id), str(u.id), u.is_like, user.id == str(u.id) and u.is_like) for u in podcast_db.liked_by_users) if user else [])
         podcast = {
             "id": str(podcast_db.id),
             "podcast_title": podcast_db.title,

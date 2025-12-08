@@ -90,7 +90,11 @@ async def get_current_user(api_key = Depends(security)):
 
     token = auth_header.split("Bearer ")[1]
     supabase = get_supabase_client(with_service=False)
-    user_info = await supabase.auth.get_user(token)
+    try:
+        user_info = await supabase.auth.get_user(token)
+    except Exception as e:
+        print("Error getting user info:", e)
+        raise HTTPException(status_code=401, detail="Invalid token")
     if not user_info or not user_info.user:
         raise HTTPException(status_code=401, detail="Invalid token")
 

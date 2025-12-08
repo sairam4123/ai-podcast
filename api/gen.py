@@ -48,7 +48,7 @@ def get_speech_client():
 speech_client = get_speech_client()
 
 
-VOICE_MODEL = "Standard" # "Standard" | "Wavenet" | "Chirp3"
+VOICE_MODEL = "Chirp3" # "Standard" | "Wavenet" | "Chirp3"
 
 # TTS_FOLDER = "tts"
 # FINAL_FOLDER = "finals" # Folder to save the final podcast
@@ -372,7 +372,7 @@ async def generate_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
         podcastTitle=podcast.title,
         people="".join([people_prompt.format(index=index, persona=persona.author, interviewer=("host" if persona.is_host else "guest")) for index, persona in enumerate(podcast.authors, start=1)]),
         podcastDescription=podcast.description,
-    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-exp-image-generation")
+    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
     for content in response.candidates[0].content.parts:
@@ -394,7 +394,7 @@ async def generate_featured_podcast_thumbnail_image(podcast: Podcast) -> io.Byte
         podcastTitle=podcast.title,
         people="".join([people_prompt.format(index=index, persona=persona.author, interviewer=("host" if persona.is_host else "guest")) for index, persona in enumerate(podcast.authors, start=1)]),
         podcastDescription=podcast.description,
-    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-exp-image-generation")
+    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
     for content in response.candidates[0].content.parts:
@@ -412,7 +412,7 @@ async def generate_featured_podcast_thumbnail_image(podcast: Podcast) -> io.Byte
     return image
 
 def detect_topic_language(topic: str) -> str:
-    response = client.models.generate_content(contents=f"Detect the language given in the topic: {topic}. The language must be in the form of en-US, en-IN, etc. Also, if the user requests for a specific language, eg: (in tamil, in hindi), return that language instead in the format as specified earlier. (ISO-639-1)", config={"response_mime_type": "application/json", "response_schema": DetectedLanguageAI}, model="gemini-2.0-flash")
+    response = client.models.generate_content(contents=f"Detect the language given in the topic: {topic}. The language must be in the form of en-US, en-IN, etc. Also, if the user requests for a specific language, eg: (in tamil, in hindi), return that language instead in the format as specified earlier. (ISO-639-1)", config={"response_mime_type": "application/json", "response_schema": DetectedLanguageAI}, model="gemini-2.5-flash")
     data = DetectedLanguageAI.model_validate(response.parsed)
     return data.lang
 
@@ -471,7 +471,7 @@ async def save_podcast_cover(podcast: Podcast) -> None:
     await save_image(image, f"{podcast.id}.png", "podcast-cover-images")
 
 async def generate_author_image(persona: PodcastAuthorPersona) -> tuple[UUID, io.BytesIO]:
-    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-exp-image-generation")
+    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-image")
 
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
@@ -893,7 +893,7 @@ async def generate_interactive_podcast_content(podcast: Podcast, question: str, 
         personas: list[DetectedPersona]
     
     response = await client.aio.models.generate_content(contents=text_interactive_prompt + """
-    Respond in JSON format""", config={"response_mime_type": "application/json", "response_schema": DetectedPersonaResponse}, model="gemini-2.0-flash")
+    Respond in JSON format""", config={"response_mime_type": "application/json", "response_schema": DetectedPersonaResponse}, model="gemini-2.5-flash")
     detected_personas = DetectedPersonaResponse.model_validate(response.parsed)
     if not detected_personas.personas or len(detected_personas.personas) < 1:
         raise ValueError("No personas detected. Cannot proceed.")
@@ -906,13 +906,13 @@ async def generate_interactive_podcast_content(podcast: Podcast, question: str, 
         answer: str = pydantic.Field(description="The answer to the user's question, provided by the selected persona.")
     
     response = await client.aio.models.generate_content(contents=text_interactive_prompt + f"""
-    The selected persona is {selected_persona.persona}. Answer the user's question in detail, in the style of the selected persona.
-    Respond in JSON format""", config={"response_mime_type": "application/json", "response_schema": ResponseSchema}, model="gemini-2.0-flash")
+    The selected persona is {selected_persona.persona}. Answer the user's question in brief, in the style of the selected persona. Ensure that the answer is relevant to the persona's expertise and background.
+    Respond in JSON format. Keep the answer concise and short yet ensure all questions raised by the user are addressed.""", config={"response_mime_type": "application/json", "response_schema": ResponseSchema}, model="gemini-2.5-flash")
     answer = ResponseSchema.model_validate(response.parsed)
 
     people_map = {person.name: person for person in people}
     if answer.persona not in people_map:
-        raise ValueError(f"Selected persona {answer.persona} not found in the podcast authors.")
+        raise ValueError(f"Answered persona {answer.persona} not found in the podcast authors.")
 
     selected_persona = people_map[answer.persona]
     async with session_maker() as sess:

@@ -44,6 +44,7 @@ export function useGetAudio(
             .from("podcasts")
             .getPublicUrl(`${podcast_id}/${resp_id}.wav`);
           setAudioUrl(data.data.publicUrl);
+          return;
         }
 
         const exists = await supabase.storage
