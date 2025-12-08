@@ -1,33 +1,33 @@
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ActionModal from "../@components/ActionModal";
 import useRecognizeAudio from "../api/recognizeAudio";
 import { cn } from "../lib/cn";
 import { FaMicrophone } from "react-icons/fa";
 
-type RecordingState = "idle" | "recording" | "stopped";
+// type RecordingState = "idle" | "recording" | "stopped";
 
-type SilenceStopOptions = {
-  /** Peak/RMS normalized 0..1 considered "loud" (post-smoothing). Default 0.03 */
-  threshold?: number;
-  /** How long the signal must stay below threshold to stop (ms). Default 1500 */
-  durationMs?: number;
-  /** Don't auto-stop before this much recording time (ms). Default 1200 */
-  minRecordMs?: number;
-  /** Smoothing factor for EMA (0..1). Higher=snappier. Default 0.35 */
-  smoothing?: number;
-  /** Use RMS instead of peak; more robust to crackles. Default true */
-  useRms?: boolean;
-};
+// type SilenceStopOptions = {
+//   /** Peak/RMS normalized 0..1 considered "loud" (post-smoothing). Default 0.03 */
+//   threshold?: number;
+//   /** How long the signal must stay below threshold to stop (ms). Default 1500 */
+//   durationMs?: number;
+//   /** Don't auto-stop before this much recording time (ms). Default 1200 */
+//   minRecordMs?: number;
+//   /** Smoothing factor for EMA (0..1). Higher=snappier. Default 0.35 */
+//   smoothing?: number;
+//   /** Use RMS instead of peak; more robust to crackles. Default true */
+//   useRms?: boolean;
+// };
 
-function pickMime(): string | undefined {
-  const candidates = [
-    "audio/webm;codecs=opus",
-    "audio/webm",
-    "audio/ogg;codecs=opus",
-    "audio/mp4;codecs=mp4a.40.2", // Safari-ish if available
-  ];
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t));
-}
+// function pickMime(): string | undefined {
+//   const candidates = [
+//     "audio/webm;codecs=opus",
+//     "audio/webm",
+//     "audio/ogg;codecs=opus",
+//     "audio/mp4;codecs=mp4a.40.2", // Safari-ish if available
+//   ];
+//   return candidates.find((t) => MediaRecorder.isTypeSupported(t));
+// }
 
 export function useRecorder() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -151,7 +151,7 @@ export function RecordModal({
     amplitude,
     state,
     startRecording,
-    stopRecording,
+    // stopRecording,
   } = useRecorder();
 
   useEffect(() => {
@@ -204,7 +204,7 @@ export function RecordModal({
           />
         </div>
         <div>
-          <audio controls src={audioUrl} className="w-full" />
+          <audio controls src={audioUrl ?? ""} className="w-full" />
           {audioUrl && (
             <div className="mt-2">
               <a
@@ -220,7 +220,7 @@ export function RecordModal({
         {state === "recording" && (
           <progress className="w-full" value={amplitude} max={1}></progress>
         )}
-        {/* {audioBlob && (
+        {audioBlob && (
           <div
             className={cn(
               "text-white bg-green-600 px-4 py-2 rounded mt-4 cursor-pointer inline-block",
@@ -235,7 +235,7 @@ export function RecordModal({
           >
             Submit
           </div>
-        )} */}
+        )}
       </div>
     </ActionModal>
   );
