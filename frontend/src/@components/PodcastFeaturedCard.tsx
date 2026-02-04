@@ -35,88 +35,77 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02, y: -4 }}
+      whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
       onClick={() => navigate(`/podcast/${podcast?.id}`)}
-      className="relative cursor-pointer min-w-80 w-80 h-52 m-3 rounded-2xl overflow-hidden group shadow-lg shadow-black/30"
+      className="relative cursor-pointer w-full aspect-[4/3] rounded-2xl overflow-hidden group bg-cyan-950/60 shadow-lg shadow-black/20"
     >
       {/* Background Image */}
       <img
         src={image}
         alt={podcast?.podcast_title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
 
-      {/* Dark Gradient Overlay - stronger for better readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/20" />
+      {/* Dark Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-      {/* Cyan accent glow on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-blue-600/0 group-hover:from-cyan-500/10 group-hover:to-blue-600/20 transition-all duration-300" />
+      {/* Play Button - Shows on hover */}
+      <button
+        onClick={handlePlay}
+        className={cn(
+          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-cyan-500 hover:bg-cyan-400 flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100",
+          audioLoading && "opacity-50 cursor-wait"
+        )}
+      >
+        <FaPlay className="text-white text-lg ml-1" />
+      </button>
 
       {/* Content */}
-      <div className="absolute inset-0 flex flex-col justify-end p-5">
-        {/* Title and Description */}
-        <h3 className="font-heading text-lg font-bold text-white line-clamp-1 drop-shadow-lg">
+      <div className="absolute inset-x-0 bottom-0 p-4">
+        {/* Title */}
+        <h3 className="font-heading text-base font-bold text-white line-clamp-2 mb-1">
           {podcast?.podcast_title ?? "Podcast Title"}
         </h3>
-        <p className="text-sm text-white/80 line-clamp-2 mt-1 drop-shadow-md">
+
+        {/* Description */}
+        <p className="text-xs text-white/70 line-clamp-2 mb-2">
           {podcast?.podcast_description ?? "Description..."}
         </p>
 
         {/* Stats Row */}
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex items-center gap-3 text-xs text-white/70">
-            <span className="flex items-center gap-1">
-              <FaHeadphones className="text-cyan-400" />
-              {formatNumber(podcast?.view_count ?? 0)}
-            </span>
-            <span className="flex items-center gap-1">
-              <FaThumbsUp className="text-cyan-400" />
-              {formatNumber(podcast?.like_count ?? 0)}
-            </span>
-            <span className="text-white/60">
-              {formatDuration(podcast?.duration)}
-            </span>
-          </div>
-
-          {/* Play Button */}
-          <button
-            onClick={handlePlay}
-            className={cn(
-              "w-11 h-11 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 flex items-center justify-center transition-all shadow-lg shadow-cyan-500/30 active:scale-95",
-              audioLoading && "opacity-50 cursor-wait"
-            )}
-          >
-            <FaPlay className="text-white text-sm ml-0.5" />
-          </button>
+        <div className="flex items-center gap-3 text-xs text-white/60">
+          <span className="flex items-center gap-1">
+            <FaHeadphones className="text-cyan-400" />
+            {formatNumber(podcast?.view_count ?? 0)}
+          </span>
+          <span className="flex items-center gap-1">
+            <FaThumbsUp className="text-cyan-400" />
+            {formatNumber(podcast?.like_count ?? 0)}
+          </span>
+          <span>{formatDuration(podcast?.duration)}</span>
         </div>
       </div>
     </motion.div>
   );
 }
 
-function ShimmerBlock({ className = "" }: { className?: string }) {
-  return (
-    <div className={cn("relative overflow-hidden bg-white/10 rounded-md shimmer", className)} />
-  );
-}
-
 export function PodcastFeaturedCardSkeleton() {
   return (
-    <div className="relative min-w-80 w-80 h-52 m-3 rounded-2xl overflow-hidden bg-cyan-950/60 shadow-lg">
-      <ShimmerBlock className="absolute inset-0 w-full h-full" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
-      <div className="absolute inset-0 flex flex-col justify-end p-5 gap-2">
-        <ShimmerBlock className="h-5 w-3/4" />
-        <ShimmerBlock className="h-4 w-full" />
-        <ShimmerBlock className="h-4 w-5/6" />
-        <div className="flex justify-between items-center mt-2">
-          <div className="flex gap-3">
-            <ShimmerBlock className="h-4 w-12" />
-            <ShimmerBlock className="h-4 w-12" />
-          </div>
-          <ShimmerBlock className="w-11 h-11 rounded-full" />
+    <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-cyan-950/60 pulse-loader">
+      {/* Image placeholder */}
+      <div className="absolute inset-0 shimmer" />
+
+      {/* Content overlay */}
+      <div className="absolute inset-x-0 bottom-0 p-4 space-y-2 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+        <div className="h-5 w-3/4 shimmer rounded-lg" />
+        <div className="h-3 w-full shimmer rounded-lg" />
+        <div className="h-3 w-5/6 shimmer rounded-lg" />
+        <div className="flex gap-3 mt-3">
+          <div className="h-3 w-12 shimmer rounded-lg" />
+          <div className="h-3 w-12 shimmer rounded-lg" />
+          <div className="h-3 w-12 shimmer rounded-lg" />
         </div>
       </div>
     </div>

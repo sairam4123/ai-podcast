@@ -1,6 +1,5 @@
 import { PiSpinnerGap } from "react-icons/pi";
 import { ActionModalActionRow } from "../@components/ActionModal";
-import { NavBar } from "../@components/NavBar";
 import { api } from "../api/api";
 import { useEffect, useRef, useState } from "react";
 import { PodcastGenTask } from "../@types/PodcastGenTask";
@@ -27,159 +26,156 @@ export default function Create() {
   const [description, setDescription] = useState("");
 
   return (
-    <div className="flex flex-col min-h-screen lg:h-screen select-none pb-32">
-      <NavBar />
-      <div className="flex flex-col lg:flex-row flex-1 gap-4 p-4 overflow-hidden max-w-7xl mx-auto w-full">
-        {/* Form Panel */}
-        <div className="flex flex-col flex-1 lg:flex-[0.4] glass-panel p-4 space-y-4">
-          <h1 className="font-heading text-2xl font-bold text-white">
-            Create a new podcast
-          </h1>
-          <form ref={formRef} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Topic
-              </label>
-              <input
-                type="text"
-                name="topic"
-                required
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
-                placeholder="e.g., AI in Healthcare, Space Exploration"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Description
-              </label>
-              <textarea
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                value={description}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors resize-none"
-                placeholder="Provide details about the topic, target audience..."
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Style
-              </label>
-              <input
-                type="text"
-                name="style"
-                required
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
-                placeholder="e.g., interview, solo, debate"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Language
-              </label>
-              <input
-                type="text"
-                name="language"
-                required
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
-                placeholder="e.g., en-US, en-IN, ta-IN"
-              />
-            </div>
-
+    <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto w-full">
+      {/* Form Panel */}
+      <div className="flex flex-col lg:w-96 glass-panel p-6 space-y-4">
+        <h1 className="font-heading text-2xl font-bold text-white">
+          Create a new podcast
+        </h1>
+        <form ref={formRef} className="flex flex-col gap-4">
+          <div>
+            <label className="block text-sm font-medium text-cyan-300 mb-1">
+              Topic
+            </label>
             <input
-              name="description"
-              type="hidden"
-              value={description}
+              type="text"
+              name="topic"
+              required
+              className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
+              placeholder="e.g., AI in Healthcare, Space Exploration"
             />
-
-            <ActionModalActionRow
-              buttons={[
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDescription("");
-                    formRef.current?.reset();
-                  }}
-                  className="px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors cursor-pointer"
-                >
-                  Clear
-                </button>,
-                <button
-                  type="button"
-                  onClick={() => setIsAutoFillModalOpen(true)}
-                  className="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium transition-colors cursor-pointer"
-                >
-                  Auto-Fill
-                </button>,
-                <button
-                  type="submit"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const form = e.currentTarget.closest("form") as HTMLFormElement;
-                    const formData = new FormData(form);
-
-                    if (
-                      !formData.get("topic") ||
-                      !formData.get("description") ||
-                      !formData.get("style") ||
-                      !formData.get("language")
-                    ) {
-                      toast.error("All fields are required.");
-                      return;
-                    }
-
-                    const data = {
-                      topic: formData.get("topic") as string,
-                      description: formData.get("description") as string,
-                      style: formData.get("style") as string,
-                      language: formData.get("language") as string,
-                    };
-                    createPodcastMutation.mutate(data);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all cursor-pointer"
-                >
-                  <div
-                    className="transition-all duration-300 overflow-hidden"
-                    style={{
-                      width: createPodcastMutation.isLoading ? "1.25rem" : "0px",
-                      height: createPodcastMutation.isLoading ? "1.25rem" : "0px",
-                      marginRight: createPodcastMutation.isLoading ? "0.5rem" : "0px",
-                    }}
-                  >
-                    <PiSpinnerGap className="animate-spin text-xl" />
-                  </div>
-                  <FaPlus className="text-sm" />
-                  Create
-                </button>,
-              ]}
-            />
-          </form>
-        </div>
-
-        {/* Queue Panel */}
-        <div className="flex flex-col flex-1 lg:flex-[0.6] glass-panel p-4 overflow-hidden">
-          <h2 className="font-heading text-xl font-semibold text-white mb-3">
-            Your Podcasts
-          </h2>
-
-          <div className="flex-1 overflow-y-auto space-y-3">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-32">
-                <PiSpinnerGap className="animate-spin text-4xl text-slate-400" />
-              </div>
-            ) : queueData?.tasks.length === 0 ? (
-              <p className="text-slate-500 text-center py-8">
-                No podcasts in the queue.
-              </p>
-            ) : (
-              queueData?.tasks.map((task: PodcastGenTask) => (
-                <HorizontalPodcastCard key={task.id} task={task} />
-              ))
-            )}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-cyan-300 mb-1">
+              Description
+            </label>
+            <textarea
+              onChange={(e) => setDescription(e.target.value)}
+              required
+              value={description}
+              className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors resize-none"
+              placeholder="Provide details about the topic, target audience..."
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              Style
+            </label>
+            <input
+              type="text"
+              name="style"
+              required
+              className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
+              placeholder="e.g., interview, solo, debate"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              Language
+            </label>
+            <input
+              type="text"
+              name="language"
+              required
+              className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
+              placeholder="e.g., en-US, en-IN, ta-IN"
+            />
+          </div>
+
+          <input
+            name="description"
+            type="hidden"
+            value={description}
+          />
+
+          <ActionModalActionRow
+            buttons={[
+              <button
+                type="button"
+                onClick={() => {
+                  setDescription("");
+                  formRef.current?.reset();
+                }}
+                className="px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors cursor-pointer"
+              >
+                Clear
+              </button>,
+              <button
+                type="button"
+                onClick={() => setIsAutoFillModalOpen(true)}
+                className="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium transition-colors cursor-pointer"
+              >
+                Auto-Fill
+              </button>,
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget.closest("form") as HTMLFormElement;
+                  const formData = new FormData(form);
+
+                  if (
+                    !formData.get("topic") ||
+                    !formData.get("description") ||
+                    !formData.get("style") ||
+                    !formData.get("language")
+                  ) {
+                    toast.error("All fields are required.");
+                    return;
+                  }
+
+                  const data = {
+                    topic: formData.get("topic") as string,
+                    description: formData.get("description") as string,
+                    style: formData.get("style") as string,
+                    language: formData.get("language") as string,
+                  };
+                  createPodcastMutation.mutate(data);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all cursor-pointer"
+              >
+                <div
+                  className="transition-all duration-300 overflow-hidden"
+                  style={{
+                    width: createPodcastMutation.isLoading ? "1.25rem" : "0px",
+                    height: createPodcastMutation.isLoading ? "1.25rem" : "0px",
+                    marginRight: createPodcastMutation.isLoading ? "0.5rem" : "0px",
+                  }}
+                >
+                  <PiSpinnerGap className="animate-spin text-xl" />
+                </div>
+                <FaPlus className="text-sm" />
+                Create
+              </button>,
+            ]}
+          />
+        </form>
+      </div>
+
+      {/* Queue Panel */}
+      <div className="flex flex-col flex-1 lg:flex-[0.6] glass-panel p-4 overflow-hidden">
+        <h2 className="font-heading text-xl font-semibold text-white mb-3">
+          Your Podcasts
+        </h2>
+
+        <div className="flex-1 overflow-y-auto space-y-3">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <PiSpinnerGap className="animate-spin text-4xl text-slate-400" />
+            </div>
+          ) : queueData?.tasks.length === 0 ? (
+            <p className="text-slate-500 text-center py-8">
+              No podcasts in the queue.
+            </p>
+          ) : (
+            queueData?.tasks.map((task: PodcastGenTask) => (
+              <HorizontalPodcastCard key={task.id} task={task} />
+            ))
+          )}
         </div>
       </div>
       <CreatePodcastModal

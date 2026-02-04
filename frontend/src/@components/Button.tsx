@@ -46,7 +46,7 @@ export default function Button({
         className
       )}
     >
-      <Spinner isLoading={isLoading} />
+      {isLoading && <Spinner size="sm" />}
       {children}
     </button>
   );

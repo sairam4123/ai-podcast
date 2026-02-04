@@ -1,5 +1,4 @@
 import { useParams } from "react-router";
-import { NavBar } from "../@components/NavBar";
 import { api } from "../api/api";
 import {
   FaEye,
@@ -29,25 +28,22 @@ export function PodcastNew() {
   });
 
   return (
-    <main className="flex flex-col lg:h-screen min-h-screen">
-      <NavBar />
-      <div className="flex flex-col flex-grow gap-4 overflow-hidden p-4 max-w-7xl mx-auto w-full">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center flex-grow">
-            <FaSpinner className="animate-spin text-4xl text-slate-400" />
-          </div>
-        ) : (data as unknown as number[])?.[1] === 404 ? (
-          <NotFound />
-        ) : (
-          <PodcastCard refetch={refetch} podcast={data?.podcast} />
-        )}
-        {error && (
-          <div className="text-red-400 text-center w-full">
-            Error loading podcast: {error.message}
-          </div>
-        )}
-      </div>
-    </main>
+    <div className="flex flex-col gap-4 p-4 lg:p-6 max-w-7xl mx-auto w-full">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <FaSpinner className="animate-spin text-4xl text-cyan-400" />
+        </div>
+      ) : (data as unknown as number[])?.[1] === 404 ? (
+        <NotFound />
+      ) : (
+        <PodcastCard refetch={refetch} podcast={data?.podcast} />
+      )}
+      {error && (
+        <div className="text-red-400 text-center w-full">
+          Error loading podcast: {error.message}
+        </div>
+      )}
+    </div>
   );
 }
 

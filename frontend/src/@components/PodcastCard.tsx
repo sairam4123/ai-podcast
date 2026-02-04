@@ -21,7 +21,7 @@ function ShimmerBlock({ className = "" }: { className?: string }) {
   return (
     <div
       className={clsx(
-        "relative overflow-hidden bg-white/10 rounded-md shimmer",
+        "shimmer rounded-lg",
         className
       )}
     />
@@ -30,11 +30,18 @@ function ShimmerBlock({ className = "" }: { className?: string }) {
 
 export default function PodcastCardSkeleton() {
   return (
-    <div className="relative w-48 h-64 m-3 min-w-48 rounded-2xl overflow-hidden bg-cyan-950/60">
-      <ShimmerBlock className="w-full h-48 rounded-t-2xl" />
-      <div className="p-3 space-y-2">
+    <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-cyan-950/60 pulse-loader">
+      {/* Image placeholder */}
+      <div className="absolute inset-0 shimmer" />
+
+      {/* Content overlay */}
+      <div className="absolute inset-x-0 bottom-0 p-3 space-y-2 bg-gradient-to-t from-black/80 to-transparent">
         <ShimmerBlock className="h-4 w-4/5" />
         <ShimmerBlock className="h-3 w-3/5" />
+        <div className="flex items-center gap-2 mt-2">
+          <ShimmerBlock className="h-3 w-10" />
+          <ShimmerBlock className="h-3 w-10" />
+        </div>
       </div>
     </div>
   );
@@ -73,7 +80,7 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className="relative cursor-pointer select-none w-48 h-64 m-3 min-w-48 rounded-2xl overflow-hidden bg-cyan-950/60 group"
+      className="relative cursor-pointer select-none w-full aspect-[3/4] rounded-2xl overflow-hidden bg-cyan-950/60 group shadow-lg shadow-black/20"
     >
       {/* Image */}
       <img
