@@ -48,7 +48,7 @@ export function NavBar() {
   return (
     <nav className="relative">
       {/* Main Nav Bar */}
-      <div className="flex items-center justify-between px-4 py-3 md:px-6 bg-cyan-950/70 backdrop-blur-md border-b border-cyan-500/10">
+      <div className="flex items-center justify-between px-4 py-3 md:px-6 bg-surface/80 backdrop-blur-md border-b border-tertiary/20">
         {/* Logo */}
         <a
           onClick={(e) => {
@@ -59,11 +59,11 @@ export function NavBar() {
           className="flex items-center gap-2 group"
         >
           <img
-            className="h-9 w-auto object-contain"
+            className="h-8 w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity"
             src="/logo.png"
             alt="Podolli.AI Logo"
           />
-          <span className="font-heading text-xl md:text-2xl font-bold text-white group-hover:text-cyan-400 transition-colors">
+          <span className="font-heading text-xl md:text-2xl font-bold text-tertiary-foreground group-hover:text-primary transition-colors">
             Podolli.AI
           </span>
         </a>
@@ -78,7 +78,7 @@ export function NavBar() {
           {/* Mobile Search Button */}
           <button
             onClick={() => setSearchFlyoutIsOpen(true)}
-            className="md:hidden p-2.5 rounded-full bg-cyan-900/40 hover:bg-cyan-800/50 text-cyan-300 hover:text-white transition-all"
+            className="md:hidden p-2.5 rounded-full bg-surface hover:bg-surface-highlight text-tertiary hover:text-tertiary-foreground transition-all border border-tertiary/10"
           >
             <FaSearch className="text-lg" />
           </button>
@@ -86,7 +86,7 @@ export function NavBar() {
           {/* Create Button */}
           <button
             onClick={() => navigate("/create")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-all active:scale-95 shadow-sm shadow-primary/20"
           >
             <FaPlus className="text-sm" />
             <span className="hidden lg:inline">Create</span>
@@ -95,7 +95,7 @@ export function NavBar() {
           {/* User Menu */}
           {!signedIn ? (
             <a
-              className="px-4 py-2 text-cyan-200 hover:text-white font-medium transition-colors"
+              className="px-4 py-2 text-tertiary hover:text-tertiary-foreground font-medium transition-colors"
               href="/login"
             >
               Sign&nbsp;In
@@ -124,13 +124,13 @@ export function NavBar() {
                 },
               ]}
             >
-              <div className="flex items-center gap-2 p-1 rounded-full hover:bg-white/5 transition-colors">
+              <div className="flex items-center gap-2 p-1 rounded-full hover:bg-surface-highlight transition-colors">
                 <ProfileAvatarIcon id={user?.id} />
-                <span className="hidden lg:block text-sm font-medium text-cyan-100 pr-2">
+                <span className="hidden lg:block text-sm font-medium text-tertiary-foreground pr-2">
                   {data ? (
                     data.user?.display_name ?? "N/A"
                   ) : error ? (
-                    <span className="text-red-400">Error</span>
+                    <span className="text-rose-400">Error</span>
                   ) : (
                     <Spinner isLoading={isLoading || loading} size="1rem" marginRight="0px" />
                   )}
@@ -158,13 +158,13 @@ export function NavBar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="md:hidden fixed inset-0 z-50 bg-cyan-950/98 backdrop-blur-lg"
+            className="md:hidden fixed inset-0 z-50 bg-surface/98 backdrop-blur-lg"
           >
-            <div className="flex items-center justify-between p-4 border-b border-cyan-500/10">
-              <h2 className="text-lg font-heading font-semibold text-white">Search</h2>
+            <div className="flex items-center justify-between p-4 border-b border-tertiary/20">
+              <h2 className="text-lg font-heading font-semibold text-tertiary-foreground">Search</h2>
               <button
                 onClick={() => setSearchFlyoutIsOpen(false)}
-                className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                className="p-2 rounded-full hover:bg-surface-highlight text-tertiary hover:text-tertiary-foreground transition-colors"
               >
                 <FaX />
               </button>

@@ -57,17 +57,9 @@ export function BottomBar() {
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
-            {/* Branding header for mobile */}
-            <div className="absolute -top-10 left-0 right-0 flex items-center justify-center pointer-events-none">
-                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/90 backdrop-blur-md border border-cyan-500/20">
-                    <img src="/logo.png" alt="Podolli.AI" className="h-5 w-5 object-contain" />
-                    <span className="font-heading text-sm font-bold text-white">Podolli.AI</span>
-                </div>
-            </div>
-
             {/* Bottom nav bar */}
-            <div className="bg-cyan-950/95 backdrop-blur-xl border-t border-cyan-500/20 safe-area-bottom">
-                <div className="flex items-center justify-around px-2 py-2">
+            <div className="bg-surface/95 backdrop-blur-xl border-t border-tertiary/20 safe-area-bottom shadow-lg shadow-black/20">
+                <div className="flex items-center justify-around px-2 py-1.5">
                     {navItems.map((item) => {
                         const active = isActive(item);
                         const isProfile = item.label === "Profile";
@@ -77,10 +69,10 @@ export function BottomBar() {
                                 key={item.path}
                                 onClick={() => handleNavClick(item)}
                                 className={cn(
-                                    "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[56px]",
+                                    "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all min-w-[60px]",
                                     active
-                                        ? "text-cyan-400"
-                                        : "text-cyan-200/60 active:text-white"
+                                        ? "text-primary bg-primary/10"
+                                        : "text-tertiary hover:text-tertiary-foreground active:text-tertiary-foreground"
                                 )}
                             >
                                 {isProfile && userId ? (
@@ -88,20 +80,20 @@ export function BottomBar() {
                                         imageUrl={imageUrl}
                                         id={userId}
                                         className={cn(
-                                            "w-6 h-6 flex-shrink-0",
-                                            active && "scale-110 ring-2 ring-cyan-500/50 rounded-full"
+                                            "w-5 h-5 flex-shrink-0 transition-all",
+                                            active && "scale-105 ring-2 ring-primary ring-offset-2 ring-offset-surface rounded-full"
                                         )}
-                                        imageClassName="w-6 h-6 rounded-full object-cover border border-cyan-500/30"
+                                        imageClassName="w-5 h-5 rounded-full object-cover"
                                     />
                                 ) : (
                                     <item.icon className={cn(
                                         "text-xl transition-transform",
-                                        active && "scale-110"
+                                        active && "scale-105"
                                     )} />
                                 )}
                                 <span className={cn(
                                     "text-[10px] font-medium",
-                                    active ? "text-cyan-400" : "text-cyan-200/60"
+                                    active ? "text-primary" : "text-tertiary"
                                 )}>
                                     {isProfile && !userId ? "Sign In" : item.label}
                                 </span>

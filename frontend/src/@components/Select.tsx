@@ -35,19 +35,19 @@ export function Select({ options, value, onChange, className, placeholder = "Sel
         <div className={cn("relative", className)} ref={containerRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-between w-full gap-2 px-3 py-2 text-sm font-medium text-white transition-all border rounded-lg bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 focus:outline-none"
+                className="flex items-center justify-between w-full gap-2 px-3 py-2 text-sm font-medium text-tertiary-foreground transition-all border rounded-lg bg-surface border-tertiary/20 hover:bg-surface-highlight focus:outline-none focus:border-primary/50"
             >
-                <span className={cn("truncate", !selectedOption && "text-slate-400")}>
+                <span className={cn("truncate", !selectedOption && "text-tertiary")}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
                 <FaChevronDown
-                    className={cn("w-3 h-3 text-slate-400 transition-transform duration-200", isOpen && "rotate-180")}
+                    className={cn("w-3 h-3 text-tertiary transition-transform duration-200", isOpen && "rotate-180")}
                 />
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 z-50 w-full min-w-[140px] mt-2 overflow-hidden bg-[#0f1014] border border-white/10 rounded-lg shadow-xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 origin-top-right">
-                    <div className="max-h-60 overflow-y-auto py-1">
+                <div className="absolute right-0 z-50 w-full min-w-[140px] mt-2 overflow-hidden bg-surface border border-tertiary/20 rounded-lg shadow-xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                    <div className="max-h-60 overflow-y-auto py-1 custom-scrollbar">
                         {options.map((option) => (
                             <button
                                 key={option.value}
@@ -58,8 +58,8 @@ export function Select({ options, value, onChange, className, placeholder = "Sel
                                 className={cn(
                                     "flex items-center w-full px-3 py-2 text-sm text-left transition-colors",
                                     option.value === value
-                                        ? "bg-cyan-500/10 text-cyan-400"
-                                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                                        ? "bg-primary/10 text-primary"
+                                        : "text-tertiary hover:bg-surface-highlight hover:text-tertiary-foreground"
                                 )}
                             >
                                 {option.label}

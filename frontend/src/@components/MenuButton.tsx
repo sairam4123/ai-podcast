@@ -83,7 +83,7 @@ export default function MenuButton({
         tabIndex={0}
         aria-expanded={open}
         aria-controls="dropdown-menu"
-        className="bg-transparent hover:bg-white/5 text-white px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+        className="bg-transparent hover:bg-surface-highlight text-tertiary-foreground px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
       >
         {children}
       </button>
@@ -99,7 +99,7 @@ export default function MenuButton({
             transition={{ duration: 0.15 }}
             aria-label="Options"
             onKeyDown={handleKeyDown}
-            className="absolute right-0 mt-2 w-44 bg-cyan-950/95 backdrop-blur-md rounded-xl shadow-xl border border-cyan-500/20 z-50 overflow-hidden"
+            className="absolute right-0 mt-2 w-44 bg-surface/95 backdrop-blur-md rounded-xl shadow-xl border border-tertiary/20 z-50 overflow-hidden"
           >
             <ul className="py-1">
               {options.map((opt, index) => (
@@ -111,10 +111,10 @@ export default function MenuButton({
                     onClick={() => handleSelect(opt)}
                     disabled={opt.disabled}
                     className={`w-full text-left px-4 py-2.5 text-sm transition-colors focus:outline-none ${opt.isDangerous
-                      ? "text-red-400 hover:bg-red-500/10 focus:bg-red-500/10"
+                      ? "text-rose-400 hover:bg-rose-500/10 focus:bg-rose-500/10"
                       : opt.disabled
-                        ? "text-cyan-700 cursor-not-allowed"
-                        : "text-cyan-100 hover:bg-cyan-800/50 focus:bg-cyan-800/50"
+                        ? "text-tertiary cursor-not-allowed"
+                        : "text-tertiary-foreground hover:bg-surface-highlight focus:bg-surface-highlight"
                       }`}
                   >
                     {opt.label}

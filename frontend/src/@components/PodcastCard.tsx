@@ -30,7 +30,7 @@ function ShimmerBlock({ className = "" }: { className?: string }) {
 
 export default function PodcastCardSkeleton() {
   return (
-    <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-surface pulse-loader border border-tertiary/10">
+    <div className="relative w-full aspect-[4/5] md:aspect-[3/4] rounded-2xl overflow-hidden bg-surface pulse-loader border border-tertiary/10">
       {/* Content overlay */}
       <div className="absolute inset-x-0 bottom-0 p-3 space-y-2 bg-gradient-to-t from-surface to-transparent">
         <ShimmerBlock className="h-4 w-4/5" />
@@ -77,45 +77,56 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className="relative cursor-pointer select-none w-full aspect-[3/4] rounded-2xl overflow-hidden bg-surface group shadow-sm border border-tertiary/10 hover:shadow-md hover:border-tertiary/30"
+      // Use flex flex-col to manage vertical layout naturally without calc()
+      className="flex flex-col relative cursor-pointer select-none w-full md:aspect-[3/4] rounded-2xl overflow-hidden bg-surface group shadow-sm border border-tertiary/10 hover:shadow-md hover:border-tertiary/30"
     >
-      {/* Image */}
-      <img
-        src={imageUrl ?? "/podcastplaceholdercover.png"}
-        alt={podcast?.podcast_title}
-        className="w-full h-48 object-cover transition-all duration-300 group-hover:brightness-75 group-hover:scale-105"
-      />
+      {/* Upper Section: Image & Overlay - Fixed Height (Responsive) */}
+      <div className="relative w-full h-40 md:h-48 flex-shrink-0 bg-surface-highlight">
+        <img
+          src={imageUrl ?? "/podcastplaceholdercover.png"}
+          alt={podcast?.podcast_title}
+          className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75 group-hover:scale-105"
+        />
 
-      {/* Play/Pause Overlay */}
-      <div
-        className={cn(
-          "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300",
-          isCurrentPodcast && "opacity-100"
-        )}
-        style={{ height: "192px" }}
-      >
-        {audioLoading && isCurrentPodcast ? (
-          <FaSpinner className="text-4xl text-white/90 animate-spin drop-shadow-md" />
-        ) : isPlaying && isCurrentPodcast ? (
-          <button
-            onClick={handlePause}
-            className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors border border-white/20 shadow-lg group-active:scale-95"
-          >
-            <FaPause className="text-xl text-white" />
-          </button>
-        ) : (
-          <button
-            onClick={handlePlay}
-            className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors border border-white/20 shadow-lg group-active:scale-95"
-          >
-            <FaPlay className="text-xl text-white ml-0.5" />
-          </button>
+        {/* Play/Pause Overlay */}
+        <div
+          className={cn(
+            "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+            isCurrentPodcast && "opacity-100"
+          )}
+        >
+          {audioLoading && isCurrentPodcast ? (
+            <FaSpinner className="text-4xl text-white/90 animate-spin drop-shadow-md" />
+          ) : isPlaying && isCurrentPodcast ? (
+            <button
+              onClick={handlePause}
+              className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors border border-white/20 shadow-lg group-active:scale-95"
+            >
+              <FaPause className="text-xl text-white" />
+            </button>
+          ) : (
+            <button
+              onClick={handlePlay}
+              className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors border border-white/20 shadow-lg group-active:scale-95"
+            >
+              <FaPlay className="text-xl text-white ml-0.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Mobile ONLY: Persistent Play Button (Bottom Right) */}
+        {!isPlaying && (
+          <div className="absolute bottom-2 right-2 md:hidden">
+            <div className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-md">
+              <FaPlay className="text-xs text-white ml-0.5" />
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-surface border-t border-tertiary/10 h-[calc(100%-192px)] flex flex-col justify-between">
-        <div>
+      {/* Lower Section: Content - Fills remaining space */}
+      <div className="flex-1 flex flex-col justify-between p-3 bg-surface border-t border-tertiary/10 min-h-0">
+        <div className="min-h-0">
           <h3
             onClick={(e) => {
               e.stopPropagation();
@@ -125,11 +136,13 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
           >
             {podcast?.podcast_title}
           </h3>
-          <p className="text-xs text-tertiary line-clamp-1 mt-1 leading-relaxed">
+          {/* Mobile: 3 lines, Desktop: 1 line */}
+          <p className="text-xs text-tertiary line-clamp-3 md:line-clamp-1 mt-1 leading-normal">
             {podcast?.podcast_description}
           </p>
         </div>
-        <div className="flex items-center gap-2.5 mt-2 text-[10px] text-tertiary/70 font-medium">
+
+        <div className="flex items-center gap-2.5 mt-2 text-[10px] text-tertiary/70 font-medium flex-shrink-0">
           <span className="flex items-center gap-1">
             <FaPlay className="text-[8px]" /> {formatNumber(podcast?.view_count ?? 0)}
           </span>

@@ -8,10 +8,10 @@ import { useEffect, useRef, useState } from "react";
 import { PodcastGenTask } from "../@types/PodcastGenTask";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router";
-import { ShimmerBlock } from "../@components/Shimmer";
 import toast from "react-hot-toast";
 import { CreatePodcastModal } from "../modals/CreatePodcast";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaPlay, FaCheckCircle, FaExclamationCircle, FaClock } from "react-icons/fa";
+import { cn } from "../lib/cn";
 
 export default function Create() {
   const { data: queueData, isLoading, error, refetch } = api.useGetQueue();
@@ -20,6 +20,12 @@ export default function Create() {
 
   const createPodcastMutation = api.useGeneratePodcast({
     onSuccess: (data) => {
+      if (Array.isArray(data)) {
+        if ("emsg" in data[0]) {
+          toast.error(data[0].emsg as string);
+          return;
+        }
+      }
       console.log("Podcast created successfully:", data);
       refetch();
     },
@@ -29,14 +35,14 @@ export default function Create() {
   const [description, setDescription] = useState("");
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto w-full">
+    <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto w-full h-[calc(100vh-6rem)] overflow-hidden">
       {/* Form Panel */}
-      <div className="flex flex-col lg:w-96 glass-panel p-6 space-y-6">
+      <div className="flex flex-col lg:w-96 glass-panel p-6 space-y-6 bg-surface/40 border-tertiary/20 flex-shrink-0 h-full overflow-y-auto custom-scrollbar">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-white leading-tight">
+          <h1 className="font-heading text-2xl font-bold text-tertiary-foreground leading-tight">
             Create a new podcast
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-tertiary text-sm mt-1">
             Fill in the details below to generate your AI podcast.
           </p>
         </div>
@@ -87,14 +93,14 @@ export default function Create() {
                   setDescription("");
                   formRef.current?.reset();
                 }}
-                className="px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors cursor-pointer text-sm"
+                className="px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-highlight text-tertiary hover:text-tertiary-foreground font-medium transition-colors cursor-pointer text-sm border border-tertiary/10"
               >
                 Clear
               </button>,
               <button
                 type="button"
                 onClick={() => setIsAutoFillModalOpen(true)}
-                className="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium transition-colors cursor-pointer text-sm"
+                className="px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-highlight text-tertiary-foreground font-medium transition-colors cursor-pointer text-sm border border-tertiary/10"
               >
                 Auto-Fill
               </button>,
@@ -123,7 +129,7 @@ export default function Create() {
                   };
                   createPodcastMutation.mutate(data);
                 }}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed text-sm shadow-lg shadow-cyan-500/20"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed text-sm shadow-lg shadow-primary/20"
                 disabled={createPodcastMutation.isLoading}
               >
                 {createPodcastMutation.isLoading && <Spinner size="sm" color="white" />}
@@ -135,21 +141,33 @@ export default function Create() {
         </form>
       </div>
 
-      {/* Queue Panel */}
-      <div className="flex flex-col flex-1 lg:flex-[0.6] glass-panel p-4 overflow-hidden">
-        <h2 className="font-heading text-xl font-semibold text-white mb-3">
-          Your Podcasts
-        </h2>
+      {/* Queue Panel - Suno Inspired List */}
+      <div className="flex flex-col flex-1 glass-panel p-0 overflow-hidden bg-surface/30 border-tertiary/20">
+        <div className="p-6 border-b border-tertiary/10 bg-surface/50 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex justify-between items-center">
+            <h2 className="font-heading text-xl font-semibold text-tertiary-foreground">
+              Your Podcasts
+            </h2>
+            <div className="flex gap-2">
+              <span className="text-xs font-medium text-tertiary px-2 py-1 rounded bg-surface border border-tertiary/10">
+                {queueData?.tasks.length} Podcasts
+              </span>
+            </div>
+          </div>
+        </div>
 
-        <div className="flex-1 overflow-y-auto space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <PiSpinnerGap className="animate-spin text-4xl text-slate-400" />
+              <PiSpinnerGap className="animate-spin text-4xl text-primary" />
             </div>
           ) : queueData?.tasks.length === 0 ? (
-            <p className="text-slate-500 text-center py-8">
-              No podcasts in the queue.
-            </p>
+            <div className="flex flex-col items-center justify-center py-20 opacity-50">
+              <img src="/podcastplaceholdercover.png" className="w-24 h-24 rounded-2xl mb-4 grayscale opacity-50" />
+              <p className="text-tertiary text-center">
+                No podcasts yet. Start creating!
+              </p>
+            </div>
           ) : (
             queueData?.tasks.map((task: PodcastGenTask) => (
               <HorizontalPodcastCard key={task.id} task={task} />
@@ -175,6 +193,8 @@ export default function Create() {
 
 function HorizontalPodcastCard({ task }: { task?: PodcastGenTask }) {
   const [trackedTask, setTrackedTask] = useState<PodcastGenTask | null>(task ?? null);
+  const navigate = useNavigate();
+  const { imageUrl } = api.useGetImage({ podcastId: trackedTask?.podcast?.id ?? "" });
 
   useEffect(() => {
     async function setupSupabaseRealtime() {
@@ -210,63 +230,87 @@ function HorizontalPodcastCard({ task }: { task?: PodcastGenTask }) {
     };
   }, [task?.id, task?.status, trackedTask?.podcast?.id]);
 
-  const navigate = useNavigate();
-  const { imageUrl } = api.useGetImage({ podcastId: trackedTask?.podcast?.id ?? "" });
 
-  const statusColors: Record<string, string> = {
-    pending: "bg-amber-600/80",
-    in_progress: "bg-blue-600/80",
-    completed: "bg-green-600/80",
-    failed: "bg-red-600/80",
+  const statusConfig: Record<string, { bg: string, text: string, icon: React.ReactNode, label: string }> = {
+    pending: { bg: "bg-amber-500/10", text: "text-amber-500", icon: <FaClock />, label: "Pending" },
+    in_progress: { bg: "bg-blue-500/10", text: "text-blue-500", icon: <PiSpinnerGap className="animate-spin" />, label: "Processing" },
+    completed: { bg: "bg-emerald-500/10", text: "text-emerald-500", icon: <FaCheckCircle />, label: "Ready" },
+    failed: { bg: "bg-rose-500/10", text: "text-rose-500", icon: <FaExclamationCircle />, label: "Failed" },
   };
 
-  const statusLabels: Record<string, string> = {
-    pending: "Pending",
-    in_progress: "Processing",
-    completed: "Completed",
-    failed: "Failed",
-  };
+  const status = trackedTask?.status ?? "pending";
+  const config = statusConfig[status] ?? statusConfig.pending;
 
   return (
-    <div className="flex gap-3 p-2 rounded-xl bg-slate-900/60 hover:bg-slate-900/80 transition-colors">
-      <img
-        className={`h-20 w-20 rounded-lg object-cover flex-shrink-0 ${!imageUrl && "animate-pulse bg-slate-800"}`}
-        src={imageUrl ?? "/podcastplaceholdercover.png"}
-        alt=""
-      />
-      <div className="flex flex-col justify-center flex-1 min-w-0">
-        <a
-          onClick={(e) => {
-            e.preventDefault();
-            if (!trackedTask?.podcast_id) return;
-            navigate(`/podcast/${trackedTask?.podcast_id}`);
-          }}
-          href={`/podcast/${trackedTask?.podcast_id}`}
-          className="font-heading font-semibold text-white text-sm line-clamp-1 hover:underline"
-        >
-          {!trackedTask?.podcast?.title ? (
-            <ShimmerBlock className="w-32 h-4" />
-          ) : (
-            trackedTask?.podcast?.title
-          )}
-        </a>
-        <p className="text-xs text-slate-400 line-clamp-2 mt-0.5">
+    <div
+      className="group flex gap-3 p-2 rounded-lg bg-surface hover:bg-surface-highlight transition-all border border-tertiary/10 hover:border-tertiary/30 cursor-pointer items-center"
+      onClick={() => {
+        if (trackedTask?.status === "completed" && trackedTask?.podcast_id) {
+          navigate(`/podcast/${trackedTask.podcast_id}`);
+        }
+      }}
+    >
+      {/* Thumbnail */}
+      <div className="relative h-14 w-14 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+        <img
+          className={`h-14 w-14 rounded-md object-cover shadow-sm ${!imageUrl && "animate-pulse bg-surface-highlight"}`}
+          src={imageUrl ?? "/podcastplaceholdercover.png"}
+          alt=""
+        />
+        {/* Play Overlay */}
+        {status === 'completed' && (
+          <div className="absolute inset-0 bg-black/30 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <FaPlay className="text-white text-xs drop-shadow-md" />
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex flex-col justify-center flex-1 min-w-0 pr-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-heading font-semibold text-tertiary-foreground text-sm line-clamp-1 group-hover:text-primary transition-colors">
+            {!trackedTask?.podcast?.title ? (
+              <span className="text-tertiary italic">Generating title...</span>
+            ) : (
+              trackedTask?.podcast?.title
+            )}
+          </h3>
+          {/* Status Badge */}
+          <span className={cn(
+            "text-[9px] font-medium px-1.5 py-0.5 rounded-full flex items-center gap-1 border border-transparent flex-shrink-0",
+            config.bg, config.text
+          )}>
+            {config.icon}
+            {status === "in_progress" && trackedTask?.progress ? `${trackedTask.progress}%` : config.label}
+          </span>
+        </div>
+
+        <p className="text-[11px] text-tertiary line-clamp-1 mt-0.5">
           {!trackedTask?.podcast?.description ? (
-            <ShimmerBlock className="w-48 h-6 mt-1" />
+            <span className="opacity-50">Generating description...</span>
           ) : (
             trackedTask?.podcast?.description
           )}
         </p>
-        <div className="flex items-center gap-2 mt-2">
-          <span className={`text-xs px-2 py-0.5 rounded-full text-white ${statusColors[trackedTask?.status ?? ""] ?? "bg-slate-600"}`}>
-            {statusLabels[trackedTask?.status ?? ""] ?? "Unknown"}
-          </span>
-          {trackedTask?.status === "in_progress" && trackedTask?.progress !== undefined && (
-            <span className="text-xs text-slate-400">
-              {trackedTask.progress}% - {trackedTask?.progress_message}
-            </span>
-          )}
-        </div>
+
+        {/* Progress Bar for processing */}
+        {status === "in_progress" && (
+          <div className="w-full h-1 bg-surface-highlight rounded-full mt-1.5 overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-500 relative"
+              style={{ width: `${trackedTask?.progress ?? 5}%` }}
+            >
+              <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Actions / Meta */}
+      <div className="hidden sm:flex items-center gap-4 text-xs text-tertiary font-medium">
+        {trackedTask?.podcast?.duration && (
+          <span>{Math.floor(trackedTask.podcast.duration / 60)}m {trackedTask.podcast.duration % 60}s</span>
+        )}
       </div>
     </div>
   );

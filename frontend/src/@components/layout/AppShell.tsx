@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { BottomBar } from "./BottomBar";
+import { TopBar } from "./TopBar";
 import { useIsMobile } from "../../hooks/useMediaQuery";
 import { MediaPlayer } from "../MediaPlayer";
 
@@ -20,8 +21,11 @@ export function AppShell({ children }: AppShellProps) {
                 </aside>
             )}
 
+            {/* Mobile Top Bar */}
+            {isMobile && <TopBar />}
+
             {/* Main Content Area - Scrollable */}
-            <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24 lg:pb-28">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden pb-36 lg:pb-28">
                 {children}
             </main>
 

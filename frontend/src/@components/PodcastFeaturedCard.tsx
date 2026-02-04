@@ -55,7 +55,7 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
       <button
         onClick={handlePlay}
         className={cn(
-          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-surface/40 backdrop-blur-md flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 border border-white/20 hover:bg-surface/60",
+          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 border border-white/20 hover:bg-black/60",
           audioLoading && "opacity-50 cursor-wait"
         )}
       >
@@ -65,23 +65,23 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
       {/* Content */}
       <div className="absolute inset-x-0 bottom-0 p-4">
         {/* Title */}
-        <h3 className="font-heading text-lg font-bold text-white line-clamp-2 mb-1 group-hover:text-primary-foreground transition-colors">
+        <h3 className="font-heading text-lg font-bold text-white line-clamp-2 mb-1 group-hover:text-blue-300 transition-colors">
           {podcast?.podcast_title ?? "Podcast Title"}
         </h3>
 
         {/* Description */}
-        <p className="text-xs text-white/70 line-clamp-2 mb-3">
+        <p className="text-xs text-white/80 line-clamp-2 mb-3">
           {podcast?.podcast_description ?? "Description..."}
         </p>
 
         {/* Stats Row */}
-        <div className="flex items-center gap-3 text-xs text-white/60 font-medium">
+        <div className="flex items-center gap-3 text-xs text-white/70 font-medium h-5">
           <span className="flex items-center gap-1">
-            <FaHeadphones className="text-primary" />
+            <FaHeadphones className="text-white/90" />
             {formatNumber(podcast?.view_count ?? 0)}
           </span>
           <span className="flex items-center gap-1">
-            <FaThumbsUp className="text-primary" />
+            <FaThumbsUp className="text-white/90" />
             {formatNumber(podcast?.like_count ?? 0)}
           </span>
           <span>{formatDuration(podcast?.duration)}</span>
