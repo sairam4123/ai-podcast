@@ -1,4 +1,4 @@
-import { FaPlay, FaHeadphones, FaThumbsUp } from "react-icons/fa";
+import { FaPlay, FaHeadphones, FaThumbsUp, FaStar } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { Podcast } from "../@types/Podcast";
 import { api } from "../api/api";
@@ -35,56 +35,68 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       onClick={() => navigate(`/podcast/${podcast?.id}`)}
-      className="relative cursor-pointer w-full aspect-[4/3] rounded-2xl overflow-hidden group bg-surface shadow-md hover:shadow-lg border border-tertiary/10"
+      className="relative cursor-pointer w-full flex flex-col md:flex-row rounded-2xl overflow-hidden group bg-surface shadow-sm border border-tertiary/10 hover:shadow-md hover:border-tertiary/30 h-auto md:h-auto md:aspect-[1.9/1]"
     >
-      {/* Background Image */}
-      <img
-        src={image}
-        alt={podcast?.podcast_title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-      />
+      {/* LEFT: Image Section */}
+      <div className="relative w-full md:w-1/2 h-48 md:h-full shrink-0">
+        <img
+          src={image}
+          alt={podcast?.podcast_title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
 
-      {/* Dark Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
+        {/* Featured Badge */}
+        <div className="absolute top-3 left-3 bg-primary/90 text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1">
+          <FaStar className="text-[8px]" /> Featured
+        </div>
 
-      {/* Play Button - Shows on hover */}
-      <button
-        onClick={handlePlay}
-        className={cn(
-          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 border border-white/20 hover:bg-black/60",
-          audioLoading && "opacity-50 cursor-wait"
-        )}
-      >
-        <FaPlay className="text-white text-lg ml-1" />
-      </button>
+        {/* Play Overlay */}
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+          <button
+            onClick={handlePlay}
+            className={cn(
+              "w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md flex items-center justify-center transition-all shadow-lg scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100 hover:bg-surface text-tertiary-foreground",
+              audioLoading && "opacity-50 cursor-wait"
+            )}
+          >
+            <FaPlay className="text-xs ml-0.5" />
+          </button>
+        </div>
+      </div>
 
-      {/* Content */}
-      <div className="absolute inset-x-0 bottom-0 p-4">
-        {/* Title */}
-        <h3 className="font-heading text-lg font-bold text-white line-clamp-2 mb-1 group-hover:text-blue-300 transition-colors">
-          {podcast?.podcast_title ?? "Podcast Title"}
-        </h3>
+      {/* RIGHT: Content Section */}
+      <div className="relative w-full md:w-1/2 p-5 md:p-6 flex flex-col justify-center bg-surface">
+        {/* Decorative gradient bleed */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/0 to-transparent pointer-events-none md:block hidden" />
 
-        {/* Description */}
-        <p className="text-xs text-white/80 line-clamp-2 mb-3">
-          {podcast?.podcast_description ?? "Description..."}
-        </p>
+        <div className="space-y-2 relative z-10">
+          <div>
+            <h3 className="font-heading text-lg md:text-xl font-bold text-tertiary-foreground line-clamp-2 leading-tight group-hover:underline decoration-primary decoration-2 underline-offset-4 transition-all">
+              {podcast?.podcast_title ?? "Podcast Title"}
+            </h3>
+            <p className="text-xs text-tertiary line-clamp-2 md:line-clamp-3 mt-1.5 leading-relaxed">
+              {podcast?.podcast_description ?? "Description..."}
+            </p>
+          </div>
 
-        {/* Stats Row */}
-        <div className="flex items-center gap-3 text-xs text-white/70 font-medium h-5">
-          <span className="flex items-center gap-1">
-            <FaHeadphones className="text-white/90" />
-            {formatNumber(podcast?.view_count ?? 0)}
-          </span>
-          <span className="flex items-center gap-1">
-            <FaThumbsUp className="text-white/90" />
-            {formatNumber(podcast?.like_count ?? 0)}
-          </span>
-          <span>{formatDuration(podcast?.duration)}</span>
+          {/* Stats Row */}
+          <div className="flex items-center gap-3 text-[10px] text-tertiary font-medium pt-1">
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-highlight/50 border border-tertiary/5">
+              <FaHeadphones className="text-primary" />
+              {formatNumber(podcast?.view_count ?? 0)}
+            </span>
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-highlight/50 border border-tertiary/5">
+              <FaThumbsUp className="text-primary" />
+              {formatNumber(podcast?.like_count ?? 0)}
+            </span>
+            <span className="px-1.5 py-0.5 rounded-md bg-surface-highlight/50 border border-tertiary/5">
+              {formatDuration(podcast?.duration)}
+            </span>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -93,16 +105,18 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
 
 export function PodcastFeaturedCardSkeleton() {
   return (
-    <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-surface pulse-loader border border-tertiary/10">
-      {/* Content overlay */}
-      <div className="absolute inset-x-0 bottom-0 p-4 space-y-2 bg-gradient-to-t from-background/90 via-background/40 to-transparent">
-        <div className="h-5 w-3/4 shimmer rounded-lg bg-surface-highlight" />
-        <div className="h-3 w-full shimmer rounded-lg bg-surface-highlight" />
-        <div className="h-3 w-5/6 shimmer rounded-lg bg-surface-highlight" />
-        <div className="flex gap-3 mt-3">
-          <div className="h-3 w-12 shimmer rounded-lg bg-surface-highlight" />
-          <div className="h-3 w-12 shimmer rounded-lg bg-surface-highlight" />
-          <div className="h-3 w-12 shimmer rounded-lg bg-surface-highlight" />
+    <div className="relative w-full flex flex-col md:flex-row rounded-2xl overflow-hidden bg-surface pulse-loader border border-tertiary/10 h-auto md:h-auto md:aspect-[1.9/1]">
+      {/* Image Skeleton */}
+      <div className="w-full md:w-1/2 h-48 md:h-full bg-surface-highlight shimmer" />
+
+      {/* Content Skeleton */}
+      <div className="w-full md:w-1/2 p-6 flex flex-col justify-center space-y-4">
+        <div className="h-6 w-3/4 bg-surface-highlight shimmer rounded-lg" />
+        <div className="h-4 w-full bg-surface-highlight shimmer rounded-md" />
+        <div className="h-4 w-5/6 bg-surface-highlight shimmer rounded-md" />
+        <div className="flex gap-3 pt-2">
+          <div className="h-5 w-12 bg-surface-highlight shimmer rounded-md" />
+          <div className="h-5 w-12 bg-surface-highlight shimmer rounded-md" />
         </div>
       </div>
     </div>
