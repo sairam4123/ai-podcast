@@ -3,7 +3,7 @@ import { cn } from "../lib/cn";
 interface SpinnerProps {
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
-  color?: "cyan" | "white" | "gray";
+  color?: "primary" | "white" | "gray";
 }
 
 const sizeMap = {
@@ -14,15 +14,15 @@ const sizeMap = {
 };
 
 const colorMap = {
-  cyan: "text-cyan-400",
+  primary: "text-primary",
   white: "text-white",
-  gray: "text-slate-400",
+  gray: "text-tertiary",
 };
 
 export default function Spinner({
   size = "md",
   className = "",
-  color = "cyan",
+  color = "primary",
 }: SpinnerProps) {
   return (
     <div className={cn("relative", sizeMap[size], className)}>
@@ -50,7 +50,7 @@ export function PageLoader({ message }: { message?: string }) {
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <Spinner size="xl" />
       {message && (
-        <p className="text-cyan-400/80 text-sm animate-pulse">{message}</p>
+        <p className="text-tertiary text-sm animate-pulse">{message}</p>
       )}
     </div>
   );
@@ -60,9 +60,9 @@ export function PageLoader({ message }: { message?: string }) {
 export function InlineLoader({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-1.5", className)}>
-      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
+      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
+      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
     </div>
   );
 }

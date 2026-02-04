@@ -1,5 +1,7 @@
 import { PiSpinnerGap } from "react-icons/pi";
 import { ActionModalActionRow } from "../@components/ActionModal";
+import { Input } from "../@components/Input";
+import { TextArea } from "../@components/TextArea";
 import { api } from "../api/api";
 import Spinner from "../@components/Spinner";
 import { useEffect, useRef, useState } from "react";
@@ -29,63 +31,46 @@ export default function Create() {
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto w-full">
       {/* Form Panel */}
-      <div className="flex flex-col lg:w-96 glass-panel p-6 space-y-4">
-        <h1 className="font-heading text-2xl font-bold text-white">
-          Create a new podcast
-        </h1>
-        <form ref={formRef} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-cyan-300 mb-1">
-              Topic
-            </label>
-            <input
-              type="text"
-              name="topic"
-              required
-              className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
-              placeholder="e.g., AI in Healthcare, Space Exploration"
-            />
-          </div>
+      <div className="flex flex-col lg:w-96 glass-panel p-6 space-y-6">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-white leading-tight">
+            Create a new podcast
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Fill in the details below to generate your AI podcast.
+          </p>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-cyan-300 mb-1">
-              Description
-            </label>
-            <textarea
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              value={description}
-              className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors resize-none"
-              placeholder="Provide details about the topic, target audience..."
-              rows={3}
-            />
-          </div>
+        <form ref={formRef} className="flex flex-col gap-5">
+          <Input
+            label="Topic"
+            name="topic"
+            required
+            placeholder="e.g., AI in Healthcare, Space Exploration"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              Style
-            </label>
-            <input
-              type="text"
-              name="style"
-              required
-              className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
-              placeholder="e.g., interview, solo, debate"
-            />
-          </div>
+          <TextArea
+            label="Description"
+            required
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Provide details about the topic, target audience..."
+            rows={4}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              Language
-            </label>
-            <input
-              type="text"
-              name="language"
-              required
-              className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-cyan-500 transition-colors"
-              placeholder="e.g., en-US, en-IN, ta-IN"
-            />
-          </div>
+          <Input
+            label="Style"
+            name="style"
+            required
+            placeholder="e.g., interview, solo, debate"
+          />
+
+          <Input
+            label="Language"
+            name="language"
+            required
+            placeholder="e.g., en-US, en-IN, ta-IN"
+          />
 
           <input
             name="description"
@@ -94,6 +79,7 @@ export default function Create() {
           />
 
           <ActionModalActionRow
+            className="pt-2 border-0 mt-2"
             buttons={[
               <button
                 type="button"
@@ -101,14 +87,14 @@ export default function Create() {
                   setDescription("");
                   formRef.current?.reset();
                 }}
-                className="px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors cursor-pointer text-sm"
               >
                 Clear
               </button>,
               <button
                 type="button"
                 onClick={() => setIsAutoFillModalOpen(true)}
-                className="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium transition-colors cursor-pointer text-sm"
               >
                 Auto-Fill
               </button>,
@@ -137,11 +123,11 @@ export default function Create() {
                   };
                   createPodcastMutation.mutate(data);
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed text-sm shadow-lg shadow-cyan-500/20"
                 disabled={createPodcastMutation.isLoading}
               >
                 {createPodcastMutation.isLoading && <Spinner size="sm" color="white" />}
-                <FaPlus className="text-sm" />
+                {!createPodcastMutation.isLoading && <FaPlus className="text-xs" />}
                 Create
               </button>,
             ]}

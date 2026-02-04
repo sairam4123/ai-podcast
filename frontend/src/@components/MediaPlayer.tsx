@@ -56,11 +56,11 @@ export function MediaPlayer() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ ease: "easeOut", duration: 0.2 }}
-          className="fixed flex flex-col h-28 bottom-24 lg:bottom-4 left-1/2 -translate-x-1/2 w-11/12 max-w-4xl rounded-2xl bg-cyan-950/95 backdrop-blur-md border border-cyan-500/20 shadow-2xl shadow-cyan-900/30 z-50"
+          className="fixed flex flex-col h-28 bottom-24 lg:bottom-4 left-1/2 -translate-x-1/2 w-11/12 max-w-4xl rounded-2xl bg-surface/90 backdrop-blur-md border border-tertiary/20 shadow-2xl shadow-black/20 z-50 ring-1 ring-white/5"
         >
-          <div className="flex flex-row flex-grow items-center gap-3 p-2">
+          <div className="flex flex-row flex-grow items-center gap-4 p-2 pr-4">
             <img
-              className="h-20 w-20 rounded-xl object-cover flex-shrink-0"
+              className="h-20 w-20 rounded-xl object-cover flex-shrink-0 shadow-sm ring-1 ring-white/10"
               src={imageUrl ?? "/podcastplaceholdercover.png"}
               alt=""
             />
@@ -71,42 +71,42 @@ export function MediaPlayer() {
                     e.preventDefault();
                     navigate(`/podcast/${currentPodcast?.id}`);
                   }}
-                  className="font-heading font-semibold text-white hover:text-cyan-300 transition-colors cursor-pointer"
+                  className="font-heading font-semibold text-tertiary-foreground hover:text-primary transition-colors cursor-pointer"
                 >
                   {currentPodcast?.podcast_title ?? "Podcast Title.."}
                 </a>
               </SlidingTitle>
-              <p className="text-xs text-cyan-300/60 line-clamp-1 mt-0.5">
+              <p className="text-xs text-tertiary line-clamp-1 mt-0.5">
                 {currentPodcast?.podcast_description ?? "Description..."}
               </p>
 
               <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-cyan-400/60">{formatDuration(currentPosition)}</span>
+                <span className="text-xs text-secondary-foreground/70 font-medium tabular-nums">{formatDuration(currentPosition)}</span>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-5">
                   <FaBackward
                     onClick={() => seek(Math.max(currentPosition - 15, 0))}
-                    className="text-lg text-cyan-300/70 hover:text-cyan-200 cursor-pointer transition-colors"
+                    className="text-lg text-tertiary hover:text-primary cursor-pointer transition-colors"
                   />
                   {isPlaying ? (
                     <FaPause
                       onClick={() => pause()}
-                      className="text-xl text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors"
+                      className="text-xl text-primary cursor-pointer hover:scale-110 transition-all"
                     />
                   ) : (
                     <FaPlay
                       onClick={() => play()}
-                      className="text-xl text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors"
+                      className="text-xl text-primary cursor-pointer hover:scale-110 transition-all"
                     />
                   )}
                   <FaForward
                     onClick={() => seek(Math.min(currentPosition + 15, currentPodcast.duration))}
-                    className="text-lg text-cyan-300/70 hover:text-cyan-200 cursor-pointer transition-colors"
+                    className="text-lg text-tertiary hover:text-primary cursor-pointer transition-colors"
                   />
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {(likeLoading || dislikeLoading) && <Spinner className="text-cyan-400" size="sm" />}
+                  {(likeLoading || dislikeLoading) && <Spinner color="primary" size="sm" />}
                   {currentPodcast.liked_by_user || isCurrentPodcastLiked ? (
                     <FaThumbsUp
                       onClick={() => {
@@ -114,7 +114,7 @@ export function MediaPlayer() {
                         setIsCurrentPodcastDisliked(currentPodcast.disliked_by_user ?? false);
                         likePodcast({ podcast_id: currentPodcast.id, liked: false });
                       }}
-                      className="text-lg hidden md:block text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors"
+                      className="text-lg hidden md:block text-primary cursor-pointer hover:text-primary-foreground transition-colors"
                     />
                   ) : (
                     <FaRegThumbsUp
@@ -123,7 +123,7 @@ export function MediaPlayer() {
                         setIsCurrentPodcastDisliked(false);
                         likePodcast({ podcast_id: currentPodcast.id, liked: true });
                       }}
-                      className="text-lg hidden md:block text-cyan-400/60 cursor-pointer hover:text-cyan-300 transition-colors"
+                      className="text-lg hidden md:block text-tertiary cursor-pointer hover:text-primary transition-colors"
                     />
                   )}
                   {currentPodcast.disliked_by_user || isCurrentPodcastDisliked ? (
@@ -133,7 +133,7 @@ export function MediaPlayer() {
                         setIsCurrentPodcastDisliked(false);
                         setIsCurrentPodcastLiked(currentPodcast?.liked_by_user ?? false);
                       }}
-                      className="text-lg hidden md:block text-cyan-400 cursor-pointer hover:text-cyan-300 transition-colors"
+                      className="text-lg hidden md:block text-primary cursor-pointer hover:text-primary-foreground transition-colors"
                     />
                   ) : (
                     <FaRegThumbsDown
@@ -142,14 +142,14 @@ export function MediaPlayer() {
                         setIsCurrentPodcastDisliked(true);
                         setIsCurrentPodcastLiked(false);
                       }}
-                      className="text-lg hidden md:block text-cyan-400/60 cursor-pointer hover:text-cyan-300 transition-colors"
+                      className="text-lg hidden md:block text-tertiary cursor-pointer hover:text-primary transition-colors"
                     />
                   )}
                   <FaShare
                     onClick={onShare}
-                    className="text-lg text-cyan-400/60 cursor-pointer hover:text-cyan-300 transition-colors"
+                    className="text-lg text-tertiary cursor-pointer hover:text-primary transition-colors"
                   />
-                  <span className="text-xs text-cyan-400/60">{formatDuration(currentPodcast?.duration)}</span>
+                  <span className="text-xs text-secondary-foreground/70 font-medium tabular-nums">{formatDuration(currentPodcast?.duration)}</span>
                 </div>
               </div>
             </div>
@@ -157,9 +157,9 @@ export function MediaPlayer() {
 
           {/* Progress Bar */}
           <div className="px-2 pb-2">
-            <div className="w-full h-1 bg-cyan-900/50 rounded-full overflow-hidden group hover:h-2 transition-all">
+            <div className="w-full h-1 bg-surface-highlight rounded-full overflow-hidden group hover:h-2 transition-all cursor-pointer">
               <div
-                className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all"
+                className="h-full bg-primary rounded-full transition-all"
                 style={{ width: `${(currentPosition / currentPodcast.duration) * 100}%` }}
               />
             </div>

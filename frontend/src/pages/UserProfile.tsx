@@ -22,9 +22,9 @@ export default function UserProfile() {
     api.useGetListenHistory({});
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto">
+    <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-7xl mx-auto lg:h-[calc(100vh-6rem)]">
       {/* Profile Sidebar */}
-      <div className="lg:w-80 glass-panel p-6 space-y-6 flex-shrink-0">
+      <div className="lg:w-80 glass-panel p-6 space-y-6 flex-shrink-0 overflow-y-auto">
         <ProfileAvatarIcon
           imageUrl={undefined}
           id={user_id}

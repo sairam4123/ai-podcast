@@ -12,10 +12,10 @@ export function AppShell({ children }: AppShellProps) {
     const isMobile = useIsMobile();
 
     return (
-        <div className="h-screen flex flex-col lg:flex-row overflow-hidden">
+        <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-background">
             {/* Desktop Sidebar - Fixed, never scrolls */}
             {!isMobile && (
-                <aside className="hidden lg:flex flex-col w-64 h-full flex-shrink-0 border-r border-cyan-500/10 overflow-y-auto">
+                <aside className="hidden lg:flex flex-col w-64 h-full flex-shrink-0 border-r border-tertiary/20 overflow-y-auto bg-surface">
                     <Sidebar />
                 </aside>
             )}

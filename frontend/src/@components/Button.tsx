@@ -1,7 +1,7 @@
 import { cn } from "../lib/cn";
 import Spinner from "./Spinner";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 interface ButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -15,11 +15,13 @@ interface ButtonProps {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20",
+    "bg-gradient-to-r from-slate-200 to-slate-200 hover:from-white hover:to-slate-100 text-slate-900 shadow-sm border border-slate-300/50",
   secondary:
-    "bg-cyan-950/50 hover:bg-cyan-900/50 text-cyan-100 border border-cyan-500/20",
+    "bg-surface hover:bg-surface-highlight text-tertiary-foreground border border-tertiary/20",
   ghost:
-    "bg-transparent hover:bg-cyan-900/30 text-cyan-200 hover:text-white",
+    "bg-transparent hover:bg-surface-highlight text-tertiary hover:text-primary",
+  danger:
+    "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20",
 };
 
 export default function Button({
@@ -46,7 +48,7 @@ export default function Button({
         className
       )}
     >
-      {isLoading && <Spinner size="sm" color={variant === 'primary' ? 'white' : 'cyan'} />}
+      {isLoading && <Spinner size="sm" color={variant === 'primary' ? 'gray' : 'primary'} />}
       {children}
     </button>
   );

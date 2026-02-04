@@ -61,22 +61,22 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-sm glass-panel p-8 space-y-6">
-        <div className="text-center">
-          <h1 className="font-heading text-2xl font-bold text-white">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-background">
+      <div className="w-full max-w-sm glass-panel p-9 space-y-6 bg-surface/30 border-tertiary/20">
+        <div className="text-center space-y-2">
+          <h1 className="font-heading text-3xl font-bold text-tertiary-foreground">
             Create account
           </h1>
-          <p className="text-cyan-300/70 text-sm mt-1">
+          <p className="text-tertiary text-sm">
             Join Podolli.AI today
           </p>
         </div>
 
         <form className="space-y-4">
-          <div>
+          <div className="space-y-1.5">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-cyan-200 mb-1"
+              className="block text-sm font-medium text-tertiary"
             >
               Email
             </label>
@@ -86,14 +86,14 @@ export default function Register() {
               id="email"
               required
               placeholder="you@example.com"
-              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
+              className="w-full px-4 py-3 rounded-lg bg-surface border border-tertiary/20 text-tertiary-foreground placeholder-tertiary/60 focus:border-primary/50 transition-colors"
             />
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-cyan-200 mb-1"
+              className="block text-sm font-medium text-tertiary"
             >
               Username
             </label>
@@ -103,14 +103,14 @@ export default function Register() {
               id="username"
               required
               placeholder="Choose a username"
-              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
+              className="w-full px-4 py-3 rounded-lg bg-surface border border-tertiary/20 text-tertiary-foreground placeholder-tertiary/60 focus:border-primary/50 transition-colors"
             />
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <label
               htmlFor="full_name"
-              className="block text-sm font-medium text-cyan-200 mb-1"
+              className="block text-sm font-medium text-tertiary"
             >
               Display Name
             </label>
@@ -120,14 +120,14 @@ export default function Register() {
               id="full_name"
               required
               placeholder="Your display name"
-              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
+              className="w-full px-4 py-3 rounded-lg bg-surface border border-tertiary/20 text-tertiary-foreground placeholder-tertiary/60 focus:border-primary/50 transition-colors"
             />
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-cyan-200 mb-1"
+              className="block text-sm font-medium text-tertiary"
             >
               Password
             </label>
@@ -137,14 +137,14 @@ export default function Register() {
               id="password"
               required
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
+              className="w-full px-4 py-3 rounded-lg bg-surface border border-tertiary/20 text-tertiary-foreground placeholder-tertiary/60 focus:border-primary/50 transition-colors"
             />
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-cyan-200 mb-1"
+              className="block text-sm font-medium text-tertiary"
             >
               Confirm Password
             </label>
@@ -154,25 +154,27 @@ export default function Register() {
               id="confirmPassword"
               required
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
+              className="w-full px-4 py-3 rounded-lg bg-surface border border-tertiary/20 text-tertiary-foreground placeholder-tertiary/60 focus:border-primary/50 transition-colors"
             />
           </div>
 
-          <p className="text-sm text-cyan-300/60 text-center pt-2">
-            Already have an account?{" "}
-            <Link to="/login" className="text-cyan-400 hover:underline">
-              Sign in
-            </Link>
-          </p>
+          <div className="text-center space-y-3 pt-3">
+            <Button
+              type="submit"
+              isLoading={registerMutation.isLoading}
+              onClick={handleSubmit}
+              className="w-full"
+            >
+              Create Account
+            </Button>
 
-          <Button
-            type="submit"
-            isLoading={registerMutation.isLoading}
-            onClick={handleSubmit}
-            className="w-full"
-          >
-            Create Account
-          </Button>
+            <p className="text-sm text-tertiary">
+              Already have an account?{" "}
+              <Link to="/login" className="text-primary hover:text-primary-foreground font-medium hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
         </form>
       </div>
     </div>

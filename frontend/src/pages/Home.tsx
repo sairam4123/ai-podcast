@@ -14,8 +14,8 @@ function GridSection({
 }) {
   return (
     <section className="space-y-4">
-      <h2 className="font-heading text-xl font-semibold text-white">{title}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      <h2 className="font-heading text-xl font-semibold text-tertiary-foreground">{title}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {children}
       </div>
     </section>
@@ -53,11 +53,11 @@ export function Home() {
   } = api.useGetRecommendations();
 
   return (
-    <div className="max-w-[1800px] mx-auto px-4 lg:px-6 py-6 space-y-10">
+    <div className="max-w-[1800px] mx-auto px-4 lg:px-8 py-8 space-y-12">
       {/* Featured Hero Section - Grid layout */}
       <section className="space-y-4">
-        <h2 className="font-heading text-2xl font-bold text-white">Featured</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <h2 className="font-heading text-2xl font-bold text-tertiary-foreground">Featured</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {featuredData?.results.map((podcast) => (
             <PodcastFeaturedCard key={podcast.id} podcast={podcast} />
           ))}
@@ -66,7 +66,7 @@ export function Home() {
               <PodcastFeaturedCardSkeleton key={i} />
             ))}
           {featuredError && (
-            <p className="text-red-400 text-sm col-span-full">
+            <p className="text-rose-400 text-sm col-span-full">
               Error: {featuredError.message}
             </p>
           )}
@@ -83,7 +83,7 @@ export function Home() {
             <PodcastCardSkeleton key={i} />
           ))}
         {recommendationsError && (
-          <p className="text-red-400 text-sm col-span-full">
+          <p className="text-rose-400 text-sm col-span-full">
             Error: {recommendationsError.message}
           </p>
         )}
@@ -99,7 +99,7 @@ export function Home() {
             <PodcastCardSkeleton key={i} />
           ))}
         {trendingError && (
-          <p className="text-red-400 text-sm col-span-full">
+          <p className="text-rose-400 text-sm col-span-full">
             Error: {trendingError.message}
           </p>
         )}
@@ -115,7 +115,7 @@ export function Home() {
             <PodcastCardSkeleton key={i} />
           ))}
         {error && (
-          <p className="text-red-400 text-sm col-span-full">
+          <p className="text-rose-400 text-sm col-span-full">
             Error: {error.message}
           </p>
         )}

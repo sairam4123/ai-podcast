@@ -21,7 +21,7 @@ function ShimmerBlock({ className = "" }: { className?: string }) {
   return (
     <div
       className={clsx(
-        "shimmer rounded-lg",
+        "shimmer rounded-lg bg-surface-highlight",
         className
       )}
     />
@@ -30,12 +30,9 @@ function ShimmerBlock({ className = "" }: { className?: string }) {
 
 export default function PodcastCardSkeleton() {
   return (
-    <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-cyan-950/60 pulse-loader">
-      {/* Image placeholder */}
-      <div className="absolute inset-0 shimmer" />
-
+    <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-surface pulse-loader border border-tertiary/10">
       {/* Content overlay */}
-      <div className="absolute inset-x-0 bottom-0 p-3 space-y-2 bg-gradient-to-t from-black/80 to-transparent">
+      <div className="absolute inset-x-0 bottom-0 p-3 space-y-2 bg-gradient-to-t from-surface to-transparent">
         <ShimmerBlock className="h-4 w-4/5" />
         <ShimmerBlock className="h-3 w-3/5" />
         <div className="flex items-center gap-2 mt-2">
@@ -80,66 +77,68 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className="relative cursor-pointer select-none w-full aspect-[3/4] rounded-2xl overflow-hidden bg-cyan-950/60 group shadow-lg shadow-black/20"
+      className="relative cursor-pointer select-none w-full aspect-[3/4] rounded-2xl overflow-hidden bg-surface group shadow-sm border border-tertiary/10 hover:shadow-md hover:border-tertiary/30"
     >
       {/* Image */}
       <img
         src={imageUrl ?? "/podcastplaceholdercover.png"}
         alt={podcast?.podcast_title}
-        className="w-full h-48 object-cover transition-all duration-200 group-hover:brightness-75"
+        className="w-full h-48 object-cover transition-all duration-300 group-hover:brightness-75 group-hover:scale-105"
       />
 
       {/* Play/Pause Overlay */}
       <div
         className={cn(
-          "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity",
+          "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300",
           isCurrentPodcast && "opacity-100"
         )}
         style={{ height: "192px" }}
       >
         {audioLoading && isCurrentPodcast ? (
-          <FaSpinner className="text-5xl text-white animate-spin" />
+          <FaSpinner className="text-4xl text-white/90 animate-spin drop-shadow-md" />
         ) : isPlaying && isCurrentPodcast ? (
           <button
             onClick={handlePause}
-            className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+            className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors border border-white/20 shadow-lg group-active:scale-95"
           >
-            <FaPause className="text-2xl text-white" />
+            <FaPause className="text-xl text-white" />
           </button>
         ) : (
           <button
             onClick={handlePlay}
-            className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+            className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors border border-white/20 shadow-lg group-active:scale-95"
           >
-            <FaPlay className="text-2xl text-white ml-1" />
+            <FaPlay className="text-xl text-white ml-0.5" />
           </button>
         )}
       </div>
 
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-cyan-950 via-cyan-950/80 to-transparent">
-        <h3
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/podcast/${podcast?.id}`);
-          }}
-          className="font-heading font-semibold text-white text-sm line-clamp-1 hover:underline cursor-pointer"
-        >
-          {podcast?.podcast_title}
-        </h3>
-        <p className="text-xs text-cyan-300/60 line-clamp-1 mt-0.5">
-          {podcast?.podcast_description}
-        </p>
-        <div className="flex items-center gap-2 mt-1.5 text-xs text-cyan-400/60">
+      <div className="absolute bottom-0 left-0 right-0 p-3 bg-surface border-t border-tertiary/10 h-[calc(100%-192px)] flex flex-col justify-between">
+        <div>
+          <h3
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/podcast/${podcast?.id}`);
+            }}
+            className="font-heading font-semibold text-tertiary-foreground text-sm line-clamp-1 hover:text-primary transition-colors cursor-pointer"
+          >
+            {podcast?.podcast_title}
+          </h3>
+          <p className="text-xs text-tertiary line-clamp-1 mt-1 leading-relaxed">
+            {podcast?.podcast_description}
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5 mt-2 text-[10px] text-tertiary/70 font-medium">
           <span className="flex items-center gap-1">
-            <FaPlay className="text-[9px]" /> {formatNumber(podcast?.view_count ?? 0)}
+            <FaPlay className="text-[8px]" /> {formatNumber(podcast?.view_count ?? 0)}
           </span>
-          <FaCircle className="text-[4px]" />
+          <FaCircle className="text-[3px] opacity-40" />
           <span className="flex items-center gap-1">
-            <FaThumbsUp className="text-[9px]" /> {formatNumber(podcast?.like_count ?? 0)}
+            <FaThumbsUp className="text-[8px]" /> {formatNumber(podcast?.like_count ?? 0)}
           </span>
-          <FaCircle className="text-[4px]" />
-          <span>{getRelativeTime(podcast?.created_at ?? null)}</span>
+          <FaCircle className="text-[3px] opacity-40 max-[350px]:hidden" />
+          <span className="max-[350px]:hidden">{getRelativeTime(podcast?.created_at ?? null)}</span>
         </div>
       </div>
     </motion.div>
@@ -173,19 +172,29 @@ export function HorizontalPodcastCard({ podcast }: { podcast: Podcast }) {
 
   return (
     <motion.div
-      className="h-28 w-full bg-cyan-950/60 rounded-xl overflow-hidden flex gap-3 hover:bg-cyan-900/60 transition-colors cursor-pointer"
+      className="h-24 w-full bg-surface rounded-xl overflow-hidden flex gap-3 hover:bg-surface-highlight hover:border-tertiary/30 border border-tertiary/10 transition-all cursor-pointer group"
       onClick={handleClick}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
     >
-      <img
-        className={cn(
-          "h-28 w-28 object-cover flex-shrink-0",
-          !imageUrl && "animate-pulse bg-cyan-900"
+      <div className="relative h-24 w-24 flex-shrink-0">
+        <img
+          className={cn(
+            "h-full w-full object-cover",
+            !imageUrl && "animate-pulse bg-surface-highlight"
+          )}
+          src={imageUrl ?? "/podcastplaceholdercover.png"}
+          alt={podcast?.podcast_title}
+        />
+        {isCurrentPodcast && isPlaying && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-white mx-0.5 animate-bounce" style={{ animationDelay: '0s' }}></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-white mx-0.5 animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-white mx-0.5 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
         )}
-        src={imageUrl ?? "/podcastplaceholdercover.png"}
-        alt={podcast?.podcast_title}
-      />
+      </div>
+
       <div className="flex flex-col justify-center py-2 pr-3 flex-1 min-w-0">
         <a
           onClick={(e) => {
@@ -194,16 +203,15 @@ export function HorizontalPodcastCard({ podcast }: { podcast: Podcast }) {
             navigate(`/podcast/${podcast?.id}`);
           }}
           href={`/podcast/${podcast?.id}`}
-          className="font-heading font-semibold text-white text-sm line-clamp-1 hover:underline"
+          className="font-heading font-semibold text-tertiary-foreground text-sm line-clamp-1 hover:text-primary transition-colors"
         >
           {podcast?.podcast_title}
         </a>
-        <p className="text-xs text-cyan-300/60 line-clamp-2 mt-0.5">
+        <p className="text-xs text-tertiary line-clamp-1 mt-0.5 group-hover:text-tertiary-foreground/80 transition-colors">
           {podcast?.podcast_description}
         </p>
-        <div className="flex items-center justify-between mt-2 text-xs text-cyan-400/60">
-          <span>{formatDuration(podcast?.last_known_position ?? 0)}</span>
-          <span>{formatDuration(podcast?.duration)}</span>
+        <div className="flex items-center justify-between mt-auto mb-1 text-[10px] text-tertiary">
+          <span>{formatDuration(podcast?.last_known_position ?? 0)} / {formatDuration(podcast?.duration)}</span>
         </div>
       </div>
     </motion.div>

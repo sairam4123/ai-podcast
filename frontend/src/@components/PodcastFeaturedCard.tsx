@@ -39,7 +39,7 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       onClick={() => navigate(`/podcast/${podcast?.id}`)}
-      className="relative cursor-pointer w-full aspect-[4/3] rounded-2xl overflow-hidden group bg-cyan-950/60 shadow-lg shadow-black/20"
+      className="relative cursor-pointer w-full aspect-[4/3] rounded-2xl overflow-hidden group bg-surface shadow-md hover:shadow-lg border border-tertiary/10"
     >
       {/* Background Image */}
       <img
@@ -49,13 +49,13 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
       />
 
       {/* Dark Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
 
       {/* Play Button - Shows on hover */}
       <button
         onClick={handlePlay}
         className={cn(
-          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-cyan-500 hover:bg-cyan-400 flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100",
+          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-surface/40 backdrop-blur-md flex items-center justify-center transition-all shadow-lg opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 border border-white/20 hover:bg-surface/60",
           audioLoading && "opacity-50 cursor-wait"
         )}
       >
@@ -65,23 +65,23 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
       {/* Content */}
       <div className="absolute inset-x-0 bottom-0 p-4">
         {/* Title */}
-        <h3 className="font-heading text-base font-bold text-white line-clamp-2 mb-1">
+        <h3 className="font-heading text-lg font-bold text-white line-clamp-2 mb-1 group-hover:text-primary-foreground transition-colors">
           {podcast?.podcast_title ?? "Podcast Title"}
         </h3>
 
         {/* Description */}
-        <p className="text-xs text-white/70 line-clamp-2 mb-2">
+        <p className="text-xs text-white/70 line-clamp-2 mb-3">
           {podcast?.podcast_description ?? "Description..."}
         </p>
 
         {/* Stats Row */}
-        <div className="flex items-center gap-3 text-xs text-white/60">
+        <div className="flex items-center gap-3 text-xs text-white/60 font-medium">
           <span className="flex items-center gap-1">
-            <FaHeadphones className="text-cyan-400" />
+            <FaHeadphones className="text-primary" />
             {formatNumber(podcast?.view_count ?? 0)}
           </span>
           <span className="flex items-center gap-1">
-            <FaThumbsUp className="text-cyan-400" />
+            <FaThumbsUp className="text-primary" />
             {formatNumber(podcast?.like_count ?? 0)}
           </span>
           <span>{formatDuration(podcast?.duration)}</span>
@@ -93,19 +93,16 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
 
 export function PodcastFeaturedCardSkeleton() {
   return (
-    <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-cyan-950/60 pulse-loader">
-      {/* Image placeholder */}
-      <div className="absolute inset-0 shimmer" />
-
+    <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-surface pulse-loader border border-tertiary/10">
       {/* Content overlay */}
-      <div className="absolute inset-x-0 bottom-0 p-4 space-y-2 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-        <div className="h-5 w-3/4 shimmer rounded-lg" />
-        <div className="h-3 w-full shimmer rounded-lg" />
-        <div className="h-3 w-5/6 shimmer rounded-lg" />
+      <div className="absolute inset-x-0 bottom-0 p-4 space-y-2 bg-gradient-to-t from-background/90 via-background/40 to-transparent">
+        <div className="h-5 w-3/4 shimmer rounded-lg bg-surface-highlight" />
+        <div className="h-3 w-full shimmer rounded-lg bg-surface-highlight" />
+        <div className="h-3 w-5/6 shimmer rounded-lg bg-surface-highlight" />
         <div className="flex gap-3 mt-3">
-          <div className="h-3 w-12 shimmer rounded-lg" />
-          <div className="h-3 w-12 shimmer rounded-lg" />
-          <div className="h-3 w-12 shimmer rounded-lg" />
+          <div className="h-3 w-12 shimmer rounded-lg bg-surface-highlight" />
+          <div className="h-3 w-12 shimmer rounded-lg bg-surface-highlight" />
+          <div className="h-3 w-12 shimmer rounded-lg bg-surface-highlight" />
         </div>
       </div>
     </div>

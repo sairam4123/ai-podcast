@@ -40,8 +40,8 @@ export function Conversation({
   console.log({ questions });
 
   return (
-    <div className="flex flex-col items-start justify-start w-full p-2 overflow-hidden">
-      <div className="flex flex-col items-start justify-start w-full p-2 px-4 overflow-y-scroll mt-4 space-y-4">
+    <div className="flex flex-col items-start justify-start w-full p-2 overflow-hidden h-full">
+      <div className="flex flex-col items-start justify-start w-full p-2 px-4 overflow-y-auto mt-4 space-y-6 scrollbar-thin scrollbar-track-surface scrollbar-thumb-tertiary">
         {conversation?.map((conv, index) => {
           const currentSpeaker = conv.speaker;
           const isCurrent =
@@ -157,13 +157,13 @@ const ResponseCard = ({
   return (
     <>
       {isLoading && (
-        <div className="flex flex-row items-center text-gray-400 p-2">
+        <div className="flex flex-row items-center text-primary p-2 text-sm">
           <FaSpinner className="animate-spin mr-2" />
           <span>Loading response audio...</span>
         </div>
       )}
       {error && (
-        <div className="flex flex-row items-center text-red-400 p-2">
+        <div className="flex flex-row items-center text-rose-400 p-2 text-sm">
           <span>Error loading response audio: {error.message}</span>
         </div>
       )}
@@ -238,25 +238,21 @@ const MessageCard = ({
   return (
     <div
       id={id}
-      className={`flex ${isHost
-        ? `bg-gradient-to-tl from-cyan-600/70 to-cyan-800/90 ml-auto rounded-t-2xl rounded-l-2xl rounded-br-md`
-        : `bg-gradient-to-tr from-cyan-900/80 to-cyan-950/90 rounded-t-2xl rounded-bl-md rounded-r-2xl`
-        } text-white max-w-6/7 md:max-w-4/7 lg:max-w-3/7 transition-all ${currentPosition > startTime &&
-          currentPosition < endTime &&
-          isPlaying &&
-          isCurrent
-          ? "outline-1 outline-white scale-105 shadow-lg shadow-cyan-500/20"
-          : ""
-        } hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`}
-      onClick={() => {
-        onClick();
-      }}
+      className={cn(
+        "flex max-w-[90%] md:max-w-[80%] transition-all duration-500 ease-out group",
+        isHost ? "ml-auto flex-row-reverse" : "mr-auto",
+        currentPosition > startTime && currentPosition < endTime && isPlaying && isCurrent
+          ? "scale-[1.01]"
+          : "hover:scale-[1.005] opacity-80 hover:opacity-100"
+      )}
+      onClick={onClick}
     >
-      <div className="flex flex-row items-start gap-2">
+      {/* Avatar */}
+      <div className={cn("flex-shrink-0 mt-auto mb-2", isHost ? "ml-4" : "mr-4")}>
         {imageUrl ? (
           <img
             className={cn(
-              "h-8 w-8 object-cover rounded-full border border-white/20",
+              "h-10 w-10 object-cover rounded-full shadow-sm ring-2 ring-white/5",
               isLoading && "hidden"
             )}
             src={imageUrl}
@@ -265,40 +261,67 @@ const MessageCard = ({
           <ProfileAvatarIcon
             imageUrl={imageUrl}
             id={person.id}
-            imageClassName="h-8 w-8 object-cover rounded-full"
-            className="h-8 w-8 flex-shrink-0"
+            imageClassName="h-10 w-10 object-cover rounded-full"
+            className="h-10 w-10 flex-shrink-0"
           />
         )}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs md:text-sm font-bold text-gray-200 mb-1 opacity-80">
-            {person?.name}
-          </p>
-          <p className="text-sm md:text-base leading-relaxed break-words">
-            {words.map((word, i) => {
-              const wordStart = startTime + i * wordDuration;
-              const wordEnd = wordStart + wordDuration;
-              // If we are currently playing this segment, highlight words up to current position
-              const isPast = isPlaying && isCurrent && currentPosition >= wordEnd;
-              const isCurrentWord = isPlaying && isCurrent && currentPosition >= wordStart && currentPosition < wordEnd;
-              const isActive = (isPlaying && isCurrent && currentPosition >= wordStart) || (currentPosition > endTime);
+      </div>
 
-              return (
-                <span
-                  key={i}
-                  className={cn(
-                    "transition-colors duration-200 inline-block mr-1",
-                    isActive
-                      ? "text-white font-medium drop-shadow-sm"
-                      : "text-gray-300/80",
-                    isCurrentWord && "text-cyan-200 scale-105 origin-bottom"
-                  )}
-                >
-                  {word}
-                </span>
-              );
-            })}
-          </p>
-        </div>
+      {/* Bubble */}
+      <div
+        className={cn(
+          "relative p-5 md:p-6 rounded-3xl shadow-sm border transition-all duration-300",
+          isHost
+            ? "bg-secondary/60 border-primary/20 text-secondary-foreground rounded-br-lg"
+            : "bg-surface/60 border-tertiary/20 text-tertiary-foreground rounded-bl-lg",
+          isCurrent
+            ? "shadow-md ring-1 ring-white/10 bg-opacity-80 backdrop-blur-md"
+            : "backdrop-blur-sm"
+        )}
+      >
+        <p className={cn(
+          "text-xs font-semibold mb-2 opacity-80 tracking-wide uppercase",
+          isHost ? "text-right text-primary" : "text-left text-tertiary"
+        )}>
+          {person?.name}
+        </p>
+
+        <p className="text-[15px] leading-7 font-light tracking-wide text-pretty">
+          {words.map((word, i) => {
+            const wordStart = startTime + i * wordDuration;
+            const wordEnd = wordStart + wordDuration;
+
+            // Logic:
+            // Past: Fully visible
+            // Current: Highlighted/Popping
+            // Future: Dimmed
+
+            const isPast = isPlaying && isCurrent && currentPosition >= wordEnd;
+            const isCurrentWord = isPlaying && isCurrent && currentPosition >= wordStart && currentPosition < wordEnd;
+            const isFuture = isPlaying && isCurrent && currentPosition < wordStart;
+
+            // If not actively playing this card, everything is normal (unless strictly playing mode, then maybe dim?)
+            // Let's assume non-active cards are full opacity but container is dimmed (handled by parent className).
+
+            // For active card:
+            const opacityClass = isCurrent
+              ? (isFuture ? "opacity-50 blur-[0.3px] transition-all duration-300" : "opacity-100")
+              : "opacity-100";
+
+            return (
+              <span
+                key={i}
+                className={cn(
+                  "inline-block mr-1.5 transition-all duration-200 rounded px-0.5",
+                  opacityClass,
+                  isCurrentWord && "text-white font-medium scale-105"
+                )}
+              >
+                {word}
+              </span>
+            );
+          })}
+        </p>
       </div>
     </div>
   );
@@ -330,7 +353,7 @@ const QuestionBox = ({
   const [recordingIsVisible, setRecordingModalIsVisible] = useState(false);
 
   return (
-    <div className="w-full flex flex-row justify-center items-center p-3 mt-4 text-center text-cyan-200 rounded-xl bg-cyan-950/60 border border-cyan-500/20">
+    <div className="w-full flex flex-row justify-center items-center p-2 mt-4 text-center text-tertiary-foreground rounded-2xl bg-surface/60 border border-tertiary/30 shadow-inner">
       <RecordModal
         isVisible={recordingIsVisible}
         setIsVisible={setRecordingModalIsVisible}
@@ -340,7 +363,7 @@ const QuestionBox = ({
         value={question}
         onChange={(e) => onChange?.(e.target.value)}
         type="text"
-        className="flex grow p-2 bg-transparent border-none outline-none"
+        className="flex grow p-3 bg-transparent border-none outline-none placeholder:text-tertiary"
         placeholder="Ask a question..."
         onKeyDown={(event) => {
           if (event.key === "Enter") {
@@ -350,16 +373,16 @@ const QuestionBox = ({
           }
         }}
       />
-      <div className="text-xl gap-2 flex flex-row">
+      <div className="text-xl gap-3 flex flex-row px-2">
         <FaMicrophone
           onClick={() => {
             setRecordingModalIsVisible(true);
           }}
-          className="text-xl cursor-pointer pr-2 hover:text-cyan-200 text-cyan-400/60"
+          className="text-lg cursor-pointer hover:text-primary text-tertiary transition-colors"
         />
         {isMutationLoading ? (
-          <div className="pr-2">
-            <FaSpinner className="text-xl cursor-pointer animate-spin object-center origin-center text-cyan-400" />
+          <div className="">
+            <FaSpinner className="text-lg cursor-pointer animate-spin object-center origin-center text-primary" />
           </div>
         ) : (
           <FaPaperPlane
@@ -367,7 +390,7 @@ const QuestionBox = ({
               if (!question || question.trim() === "") return;
               sendLiveQuestion({ question: question, podcast_id: podcastId });
             }}
-            className="text-xl cursor-pointer pr-2 hover:text-cyan-200 text-cyan-400/60"
+            className="text-lg cursor-pointer hover:text-primary text-tertiary transition-colors"
           />
         )}
       </div>

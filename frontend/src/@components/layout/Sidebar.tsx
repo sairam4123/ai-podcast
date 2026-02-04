@@ -60,9 +60,9 @@ export function Sidebar() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gradient-to-b from-cyan-950/95 to-slate-950/95 backdrop-blur-md">
+        <div className="flex flex-col h-full bg-surface/50 backdrop-blur-md border-r border-tertiary/10">
             {/* Header / Logo */}
-            <div className="flex items-center gap-3 p-5 border-b border-cyan-500/10">
+            <div className="flex items-center gap-3 p-6 border-b border-tertiary/10">
                 <a
                     onClick={(e) => {
                         e.preventDefault();
@@ -71,33 +71,33 @@ export function Sidebar() {
                     href="/"
                     className="flex items-center gap-3 group"
                 >
-                    <img src="/logo.png" alt="Podolli.AI" className="h-9 w-9 object-contain transition-transform group-hover:scale-110" />
-                    <span className="font-heading text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    <img src="/logo.png" alt="Podolli.AI" className="h-8 w-8 object-contain opacity-90 transition-transform group-hover:scale-105" />
+                    <span className="font-heading text-lg font-bold text-tertiary-foreground tracking-tight">
                         Podolli.AI
                     </span>
                 </a>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-3 space-y-1">
+            <nav className="flex-1 p-3 space-y-1 mt-2">
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.path;
                     return (
                         <motion.button
                             key={item.path}
                             onClick={() => navigate(item.path)}
-                            whileHover={{ x: 4 }}
-                            whileTap={{ scale: 0.98 }}
+                            whileHover={{ x: 2 }}
+                            whileTap={{ scale: 0.99 }}
                             className={cn(
-                                "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all",
+                                "w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200",
                                 isActive
-                                    ? "bg-gradient-to-r from-cyan-500/20 to-blue-600/10 text-white border-l-2 border-cyan-400"
-                                    : "text-cyan-200/70 hover:bg-cyan-800/30 hover:text-white"
+                                    ? "bg-secondary text-secondary-foreground shadow-sm"
+                                    : "text-tertiary hover:bg-surface-highlight hover:text-primary"
                             )}
                         >
                             <item.icon className={cn(
                                 "text-lg flex-shrink-0 transition-colors",
-                                isActive ? "text-cyan-400" : "text-cyan-400/60"
+                                isActive ? "text-primary" : "text-tertiary"
                             )} />
                             <span className={cn(
                                 "font-medium text-sm",
@@ -111,10 +111,10 @@ export function Sidebar() {
             </nav>
 
             {/* Bottom Section - Profile, Settings, Logout */}
-            <div className="p-3 border-t border-cyan-500/10 space-y-1">
+            <div className="p-3 border-t border-tertiary/10 space-y-1 mb-2">
                 <button
                     onClick={handleProfileClick}
-                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-cyan-200/70 hover:bg-cyan-800/30 hover:text-white transition-all text-left"
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-tertiary hover:bg-surface-highlight hover:text-primary transition-all text-left"
                 >
                     {userId ? (
                         <>
@@ -122,7 +122,7 @@ export function Sidebar() {
                                 imageUrl={imageUrl}
                                 id={userId}
                                 className="w-5 h-5 flex-shrink-0"
-                                imageClassName="w-5 h-5 rounded-full object-cover border border-cyan-500/30"
+                                imageClassName="w-5 h-5 rounded-full object-cover ring-1 ring-tertiary/30"
                             />
                             <span className="font-medium text-sm line-clamp-1 flex-1">
                                 {userProfile?.user?.display_name || "Profile"}
@@ -130,21 +130,21 @@ export function Sidebar() {
                         </>
                     ) : (
                         <>
-                            <FaUser className="text-lg flex-shrink-0 text-cyan-400/60" />
+                            <FaUser className="text-lg flex-shrink-0 text-tertiary" />
                             <span className="font-medium text-sm">Sign In</span>
                         </>
                     )}
                 </button>
                 <button
                     onClick={() => navigate("/settings")}
-                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-cyan-200/70 hover:bg-cyan-800/30 hover:text-white transition-all"
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-tertiary hover:bg-surface-highlight hover:text-primary transition-all"
                 >
-                    <FaCog className="text-lg flex-shrink-0 text-cyan-400/60" />
+                    <FaCog className="text-lg flex-shrink-0 text-tertiary" />
                     <span className="font-medium text-sm">Settings</span>
                 </button>
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-all"
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-rose-400/70 hover:bg-rose-500/10 hover:text-rose-400 transition-all"
                 >
                     <FaSignOutAlt className="text-lg flex-shrink-0" />
                     <span className="font-medium text-sm">Logout</span>

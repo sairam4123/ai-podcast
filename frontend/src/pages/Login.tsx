@@ -47,22 +47,22 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4">
-            <div className="w-full max-w-sm glass-panel p-8 space-y-6">
-                <div className="text-center">
-                    <h1 className="font-heading text-2xl font-bold text-white">
+        <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+            <div className="w-full max-w-sm glass-panel p-10 space-y-8 bg-surface/30 border-tertiary/20">
+                <div className="text-center space-y-2">
+                    <h1 className="font-heading text-3xl font-bold text-tertiary-foreground">
                         Welcome back
                     </h1>
-                    <p className="text-cyan-300/70 text-sm mt-1">
+                    <p className="text-tertiary text-sm">
                         Sign in to your account
                     </p>
                 </div>
 
-                <form className="space-y-4">
-                    <div>
+                <form className="space-y-5">
+                    <div className="space-y-1.5">
                         <label
                             htmlFor="username"
-                            className="block text-sm font-medium text-cyan-200 mb-1"
+                            className="block text-sm font-medium text-tertiary"
                         >
                             Username
                         </label>
@@ -72,14 +72,14 @@ export default function Login() {
                             id="username"
                             required
                             placeholder="Enter your username"
-                            className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
+                            className="w-full px-4 py-3 rounded-lg bg-surface border border-tertiary/20 text-tertiary-foreground placeholder-tertiary/60 focus:border-primary/50 transition-colors"
                         />
                     </div>
 
-                    <div>
+                    <div className="space-y-1.5">
                         <label
                             htmlFor="password"
-                            className="block text-sm font-medium text-cyan-200 mb-1"
+                            className="block text-sm font-medium text-tertiary"
                         >
                             Password
                         </label>
@@ -89,33 +89,35 @@ export default function Login() {
                             id="password"
                             required
                             placeholder="••••••••"
-                            className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
+                            className="w-full px-4 py-3 rounded-lg bg-surface border border-tertiary/20 text-tertiary-foreground placeholder-tertiary/60 focus:border-primary/50 transition-colors"
                         />
                     </div>
 
-                    <div className="text-center space-y-2 pt-2">
-                        <p className="text-sm text-cyan-300/60">
-                            Don't have an account?{" "}
-                            <Link to="/register" className="text-cyan-400 hover:underline">
-                                Register
-                            </Link>
-                        </p>
-                        <a
-                            href="/forgot-password"
-                            className="text-sm text-cyan-400/60 hover:text-cyan-300"
+                    <div className="text-center space-y-3 pt-3">
+                        <Button
+                            type="submit"
+                            isLoading={loginMutation.isLoading}
+                            onClick={handleSubmit}
+                            className="w-full"
                         >
-                            Forgot password?
-                        </a>
-                    </div>
+                            Sign In
+                        </Button>
 
-                    <Button
-                        type="submit"
-                        isLoading={loginMutation.isLoading}
-                        onClick={handleSubmit}
-                        className="w-full"
-                    >
-                        Sign In
-                    </Button>
+                        <div className="flex flex-col gap-2 pt-2">
+                            <p className="text-sm text-tertiary">
+                                Don't have an account?{" "}
+                                <Link to="/register" className="text-primary hover:text-primary-foreground font-medium hover:underline">
+                                    Register
+                                </Link>
+                            </p>
+                            <a
+                                href="/forgot-password"
+                                className="text-xs text-tertiary/70 hover:text-tertiary"
+                            >
+                                Forgot password?
+                            </a>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>

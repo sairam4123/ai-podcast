@@ -1,140 +1,32 @@
 import { useEffect, useRef, useState } from "react";
 import ActionModal from "../@components/ActionModal";
-import useRecognizeAudio from "../api/recognizeAudio";
+import { FaMicrophone, FaStop, FaRotateRight, FaToggleOn, FaToggleOff } from "react-icons/fa6";
+import useRecorder from "../api/useRecorder";
 import { cn } from "../lib/cn";
-import { FaMicrophone } from "react-icons/fa";
+import { TextArea } from "../@components/TextArea";
+import { PiSpinnerGap } from "react-icons/pi";
+import useSendLiveQuestion from "../api/sendLiveQuestion";
+import toast from "react-hot-toast";
+import { Select } from "../@components/Select";
 
-// type RecordingState = "idle" | "recording" | "stopped";
-
-// type SilenceStopOptions = {
-//   /** Peak/RMS normalized 0..1 considered "loud" (post-smoothing). Default 0.03 */
-//   threshold?: number;
-//   /** How long the signal must stay below threshold to stop (ms). Default 1500 */
-//   durationMs?: number;
-//   /** Don't auto-stop before this much recording time (ms). Default 1200 */
-//   minRecordMs?: number;
-//   /** Smoothing factor for EMA (0..1). Higher=snappier. Default 0.35 */
-//   smoothing?: number;
-//   /** Use RMS instead of peak; more robust to crackles. Default true */
-//   useRms?: boolean;
-// };
-
-// function pickMime(): string | undefined {
-//   const candidates = [
-//     "audio/webm;codecs=opus",
-//     "audio/webm",
-//     "audio/ogg;codecs=opus",
-//     "audio/mp4;codecs=mp4a.40.2", // Safari-ish if available
-//   ];
-//   return candidates.find((t) => MediaRecorder.isTypeSupported(t));
-// }
-
-export function useRecorder() {
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [amplitude, setAmplitude] = useState(0);
-  const [state, setState] = useState<"idle" | "recording" | "stopped">("idle");
-
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const checkIntervalRef = useRef<number | null>(null);
-  const lastLoudRef = useRef<number>(0);
-
-  const startRecording = async () => {
-    setAudioUrl(null);
-    setAudioBlob(null);
-    setAmplitude(0);
-    chunksRef.current = [];
-    setState("recording");
-
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    streamRef.current = stream;
-
-    const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : "audio/webm";
-    const recorder = new MediaRecorder(stream, { mimeType: mime });
-    mediaRecorderRef.current = recorder;
-
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-
-    recorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: mime });
-      setAudioBlob(blob);
-      setAudioUrl(URL.createObjectURL(blob));
-      setState("stopped");
-      stopSilenceCheck();
-    };
-
-    // Start analyser for amplitude
-    const ctx = new AudioContext();
-    const src = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
-    src.connect(analyser);
-    audioCtxRef.current = ctx;
-    analyserRef.current = analyser;
-
-    const data = new Uint8Array(analyser.fftSize);
-    lastLoudRef.current = Date.now();
-
-    // Start recording
-    recorder.start(250);
-
-    // Check every 200ms
-    checkIntervalRef.current = window.setInterval(() => {
-      analyser.getByteTimeDomainData(data);
-
-      let sum = 0;
-      for (let i = 0; i < data.length; i++) {
-        const v = (data[i] - 128) / 128;
-        sum += v * v;
-      }
-      const rms = Math.sqrt(sum / data.length);
-      setAmplitude(rms);
-
-      if (rms > 0.02) lastLoudRef.current = Date.now();
-
-      // Stop if silent for 1.5 seconds
-      if (Date.now() - lastLoudRef.current > 1500) {
-        stopRecording();
-      }
-    }, 200);
-  };
-
-  const stopSilenceCheck = () => {
-    if (checkIntervalRef.current) {
-      clearInterval(checkIntervalRef.current);
-      checkIntervalRef.current = null;
-    }
-    analyserRef.current?.disconnect();
-    audioCtxRef.current?.close();
-  };
-
-  const stopRecording = () => {
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state === "recording"
-    ) {
-      mediaRecorderRef.current.stop();
-    }
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    stopSilenceCheck();
-  };
-
-  return {
-    audioUrl,
-    audioBlob,
-    amplitude,
-    state,
-    startRecording,
-    stopRecording,
-  };
+// Polyfill for SpeechRecognition type support
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
 }
+
+const LANGUAGES = [
+  { label: "English (US)", value: "en-US" },
+  { label: "English (UK)", value: "en-GB" },
+  { label: "English (IN)", value: "en-IN" },
+  { label: "Spanish", value: "es-ES" },
+  { label: "French", value: "fr-FR" },
+  { label: "German", value: "de-DE" },
+  { label: "Hindi", value: "hi-IN" },
+  { label: "Japanese", value: "ja-JP" },
+];
 
 export function RecordModal({
   isVisible,
@@ -146,96 +38,206 @@ export function RecordModal({
   podcast_id: string;
 }) {
   const {
-    audioUrl,
-    audioBlob,
-    amplitude,
     state,
+    amplitude,
     startRecording,
-    // stopRecording,
+    stopRecording,
   } = useRecorder();
+
+  const [transcript, setTranscript] = useState("");
+  const [stopOnSilence, setStopOnSilence] = useState(false);
+  const [language, setLanguage] = useState("en-US");
+  const recognitionRef = useRef<any>(null);
+
+  const { mutate: sendQuestion, isLoading: isSending } = useSendLiveQuestion({
+    onSuccess: () => {
+      toast.success("Question submitted successfully!");
+      setIsVisible(false);
+      setTranscript("");
+    },
+    onError: () => {
+      toast.error("Failed to submit question. Please try again.");
+    }
+  });
+
+  const startSession = () => {
+    setTranscript("");
+    startRecording({ stopOnSilence }).catch((err) => {
+      console.error("Error starting recording:", err);
+    });
+
+    // Initialize SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = language;
+
+      recognition.onresult = (event: any) => {
+        let currentTranscript = "";
+        for (let i = 0; i < event.results.length; ++i) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        setTranscript(currentTranscript);
+      };
+
+      recognition.start();
+      recognitionRef.current = recognition;
+    } else {
+      console.warn("Speech Recognition API not supported in this browser.");
+    }
+  };
+
+  const handleStop = () => {
+    stopRecording();
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+  };
 
   useEffect(() => {
     if (isVisible) {
-      startRecording().catch((err) => {
-        console.error("Error starting recording:", err);
-        setIsVisible(false);
-      });
+      startSession();
+    } else {
+      handleStop();
     }
-  }, [isVisible]);
 
-  const { mutate, isLoading } = useRecognizeAudio();
+    return () => {
+      handleStop();
+    }
+  }, [isVisible, stopOnSilence, language]);
+
+  // Sync state
+  useEffect(() => {
+    if (state === "idle" && recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  }, [state]);
+
+  const handleRestart = () => {
+    handleStop();
+    setTimeout(() => {
+      startSession();
+    }, 100);
+  }
+
   return (
     <ActionModal
-      title="Recording Modal"
+      title="Ask a Question"
+      description="Speak clearly to record your question. You can edit the text before sending."
       isOpen={isVisible}
       onClose={() => {
         setIsVisible(false);
+        handleStop();
       }}
+      className="max-w-xl"
     >
-      <div>
-        <div className="mb-4 flex items-center">
-          {/* <button
-            onClick={() =>
-              state === "recording" ? stopRecording() : startRecording()
-            }
-            className="mr-2 px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
-          >
-            {state === "recording" ? <FaStop /> : <FaPlay />}
-          </button> */}
-          {/* <button
-            onClick={stopRecording}
-            disabled={state !== "recording"}
-            className="px-4 py-2 bg-red-600 text-white rounded disabled:bg-gray-400"
-          >
-            Stop Recording
-          </button> */}
+      <div className="flex flex-col gap-6">
+
+        {/* Visualizer & Status */}
+        <div className="flex flex-col items-center justify-center py-6 bg-surface/30 rounded-2xl border border-tertiary/10 relative overflow-hidden transition-all duration-300 min-h-[160px]">
+          {state === "recording" && (
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none transition-opacity duration-300"
+              style={{ opacity: Math.min(amplitude * 5, 1) }}
+            />
+          )}
+
+          <div className="relative z-10 p-4 rounded-full bg-surface border border-tertiary/20 shadow-xl transition-transform duration-100"
+            style={{ transform: `scale(${1 + amplitude * 0.2})` }}>
+            <FaMicrophone
+              size={32}
+              className={cn(
+                "transition-colors duration-300",
+                state === "recording" ? "text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.4)]" : "text-tertiary"
+              )}
+            />
+          </div>
+
+          <p className="mt-4 text-sm font-medium text-tertiary animate-pulse">
+            {state === "recording" ? "Listening..." : "Recording Paused"}
+          </p>
+
+          {/* Controls: Language & Silence */}
+          <div className="absolute top-3 right-4 flex flex-col items-end gap-3 z-30">
+            {/* Language Selector */}
+            <div className="w-40 relative">
+              <Select
+                options={LANGUAGES}
+                value={language}
+                onChange={setLanguage}
+                className="w-full"
+                placeholder="Select Language"
+              />
+            </div>
+
+            {/* Silence Toggle */}
+            <div className="flex items-center gap-2 bg-surface/80 px-2.5 py-1.5 rounded-lg backdrop-blur-md border border-tertiary/20">
+              <span className="text-xs text-tertiary font-medium">Stop on silence</span>
+              <button
+                onClick={() => setStopOnSilence(!stopOnSilence)}
+                className="text-primary hover:text-primary-foreground transition-colors flex items-center"
+              >
+                {stopOnSilence ? <FaToggleOn size={22} /> : <FaToggleOff size={22} className="text-tertiary" />}
+              </button>
+            </div>
+          </div>
         </div>
-        {/* <div className="mb-4">
-          <strong>Status:</strong> {state}
-        </div> */}
-        <div className="mb-4 w-full text-center">
-          <FaMicrophone
-            size={32}
-            className={"inline-block"}
-            style={{
-              color: state === "recording" ? "red" : "black",
-              scale: amplitude * 1.1 + 1,
-            }}
+
+        {/* Text Area */}
+        <div className="space-y-2">
+          <TextArea
+            label="Transcript Preview"
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            placeholder="Your speech will appear here..."
+            rows={4}
+            className="text-lg font-medium leading-relaxed bg-surface border-tertiary/20 text-tertiary-foreground"
           />
         </div>
-        <div>
-          <audio controls src={audioUrl ?? ""} className="w-full" />
-          {audioUrl && (
-            <div className="mt-2">
-              <a
-                href={audioUrl}
-                download="recording.webm"
-                className="text-blue-600 underline"
+
+        {/* Actions */}
+        <div className="flex justify-between items-center pt-2 gap-3">
+          {/* Left side actions (Restart) */}
+          <div>
+            {state !== "recording" && (
+              <button
+                onClick={handleRestart}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-highlight text-tertiary font-medium transition-colors text-sm border border-tertiary/10"
               >
-                Download Recording
-              </a>
-            </div>
-          )}
-        </div>
-        {state === "recording" && (
-          <progress className="w-full" value={amplitude} max={1}></progress>
-        )}
-        {audioBlob && (
-          <div
-            className={cn(
-              "text-white bg-green-600 px-4 py-2 rounded mt-4 cursor-pointer inline-block",
-              isLoading && "opacity-50 cursor-not-allowed"
+                <FaRotateRight />
+                Record Again
+              </button>
             )}
-            onClick={() => {
-              mutate({
-                audioBlob,
-                podcast_id,
-              });
-            }}
-          >
-            Submit
           </div>
-        )}
+
+          {/* Right side actions */}
+          <div className="flex gap-3">
+            {state === "recording" ? (
+              <button
+                onClick={handleStop}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-medium transition-all"
+              >
+                <FaStop className="text-sm" />
+                Stop Recording
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  sendQuestion({ question: transcript, podcast_id });
+                }}
+                disabled={!transcript.trim() || isSending}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-white text-slate-900 border border-slate-200 hover:bg-slate-100 font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                {isSending ? <PiSpinnerGap className="animate-spin text-lg" /> : null}
+                Send Question
+              </button>
+            )}
+          </div>
+        </div>
+
       </div>
     </ActionModal>
   );

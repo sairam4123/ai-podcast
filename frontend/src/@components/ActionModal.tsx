@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../lib/cn';
 
 interface ActionModalProps {
     isOpen: boolean;
@@ -8,6 +9,7 @@ interface ActionModalProps {
     description?: string;
     onClose: () => void;
     children?: React.ReactNode | React.ReactNode[];
+    className?: string;
 }
 
 const ActionModal: React.FC<ActionModalProps> = ({
@@ -15,39 +17,59 @@ const ActionModal: React.FC<ActionModalProps> = ({
     title,
     description,
     onClose,
-    children
+    children,
+    className
 }) => {
     return ReactDOM.createPortal(
         <AnimatePresence>
             {isOpen && (
-                <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                    />
+
+                    {/* Modal Content */}
                     <motion.div
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-white flex flex-col min-w-96 rounded-lg shadow-lg p-4"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.3 }}
+                        className={cn(
+                            "relative w-full max-w-lg glass-panel p-6 shadow-2xl overflow-hidden",
+                            className
+                        )}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
                     >
-                        <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
-                        {description && <p className="mt-2 text-sm text-gray-600 py-2">{description}</p>}
-                        {children}
+                        <div className="mb-6">
+                            <h2 className="font-heading text-xl font-bold text-white mb-1.5">{title}</h2>
+                            {description && <p className="text-sm text-slate-400 leading-relaxed">{description}</p>}
+                        </div>
+
+                        <div className="space-y-6">
+                            {children}
+                        </div>
                     </motion.div>
                 </div>
             )}
         </AnimatePresence>,
-        document.body // Render the modal into the body element
+        document.body
     );
 };
 
 interface ActionRowProps {
     buttons: React.ReactElement<HTMLButtonElement>[];
+    className?: string;
 }
 
-export const ActionModalActionRow: React.FC<ActionRowProps> = ({ buttons }) => {
-    return <div className="flex justify-end space-x-3">{
-        buttons.map(button => button) 
-    }</div>;
+export const ActionModalActionRow: React.FC<ActionRowProps> = ({ buttons, className }) => {
+    return <div className={cn("flex flex-wrap items-center justify-end gap-3 mt-6 pt-4 border-t border-white/10", className)}>
+        {buttons.map((button, idx) => React.cloneElement(button, { key: idx }))}
+    </div>;
 };
 
 export default ActionModal;
