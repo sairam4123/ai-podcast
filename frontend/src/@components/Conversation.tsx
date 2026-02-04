@@ -296,7 +296,7 @@ const MessageCard = ({
             // Current: Highlighted/Popping
             // Future: Dimmed
 
-            const isPast = isPlaying && isCurrent && currentPosition >= wordEnd;
+            // const isPast = isPlaying && isCurrent && currentPosition >= wordEnd;
             const isCurrentWord = isPlaying && isCurrent && currentPosition >= wordStart && currentPosition < wordEnd;
             const isFuture = isPlaying && isCurrent && currentPosition < wordStart;
 

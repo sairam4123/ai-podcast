@@ -132,7 +132,7 @@ export function NavBar() {
                   ) : error ? (
                     <span className="text-rose-400">Error</span>
                   ) : (
-                    <Spinner isLoading={isLoading || loading} size="1rem" marginRight="0px" />
+                    (isLoading || loading) && <Spinner size="sm" />
                   )}
                 </span>
               </div>

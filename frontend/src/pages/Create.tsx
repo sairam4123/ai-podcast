@@ -14,7 +14,7 @@ import { FaPlus, FaPlay, FaCheckCircle, FaExclamationCircle, FaClock } from "rea
 import { cn } from "../lib/cn";
 
 export default function Create() {
-  const { data: queueData, isLoading, error, refetch } = api.useGetQueue();
+  const { data: queueData, isLoading, refetch } = api.useGetQueue();
 
   const [isAutoFillModalOpen, setIsAutoFillModalOpen] = useState(false);
 
@@ -146,7 +146,7 @@ export default function Create() {
         <div className="p-6 border-b border-tertiary/10 bg-surface/50 backdrop-blur-sm sticky top-0 z-10">
           <div className="flex justify-between items-center">
             <h2 className="font-heading text-xl font-semibold text-tertiary-foreground">
-              Your Podcasts
+              Queue
             </h2>
             <div className="flex gap-2">
               <span className="text-xs font-medium text-tertiary px-2 py-1 rounded bg-surface border border-tertiary/10">
