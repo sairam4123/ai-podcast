@@ -1,214 +1,178 @@
 import { PiSpinnerGap } from "react-icons/pi";
 import { ActionModalActionRow } from "../@components/ActionModal";
-import { NavBar } from "../@components/NavBar";
+import { Input } from "../@components/Input";
+import { TextArea } from "../@components/TextArea";
 import { api } from "../api/api";
+import Spinner from "../@components/Spinner";
 import { useEffect, useRef, useState } from "react";
 import { PodcastGenTask } from "../@types/PodcastGenTask";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router";
-import { ShimmerBlock } from "../@components/Shimmer";
 import toast from "react-hot-toast";
 import { CreatePodcastModal } from "../modals/CreatePodcast";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaPlay, FaCheckCircle, FaExclamationCircle, FaClock } from "react-icons/fa";
+import { cn } from "../lib/cn";
 
 export default function Create() {
-  const { data: queueData, isLoading, error, refetch } = api.useGetQueue();
-  console.log(
-    "Queue data:",
-    queueData,
-    "isLoading:",
-    isLoading,
-    "error:",
-    error
-  );
+  const { data: queueData, isLoading, refetch } = api.useGetQueue();
 
   const [isAutoFillModalOpen, setIsAutoFillModalOpen] = useState(false);
 
   const createPodcastMutation = api.useGeneratePodcast({
     onSuccess: (data) => {
+      if (Array.isArray(data)) {
+        if ("emsg" in data[0]) {
+          toast.error(data[0].emsg as string);
+          return;
+        }
+      }
       console.log("Podcast created successfully:", data);
-      refetch(); // Refetch the queue after successful creation
+      refetch();
     },
   });
 
   const formRef = useRef<HTMLFormElement>(null);
-
   const [description, setDescription] = useState("");
 
   return (
-    <div className="flex flex-col min-h-screen lg:h-screen select-none bg-radial pb-32 from-sky-950 to-black">
-      <NavBar />
-      <div className="flex flex-col lg:flex-row flex-1 gap-4 p-4 overflow-hidden">
-        <div className="flex flex-col flex-1/3 overflow-y-auto bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
-          <h1 className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
+    <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1800px] mx-auto w-full h-[calc(100vh-6rem)] overflow-hidden">
+      {/* Form Panel */}
+      <div className="flex flex-col lg:w-96 glass-panel p-6 space-y-6 bg-surface/40 border-tertiary/20 flex-shrink-0 h-full overflow-y-auto custom-scrollbar">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-tertiary-foreground leading-tight">
             Create a new podcast
           </h1>
-          <form ref={formRef} className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-gray-50">Topic</label>
-            <input
-              type="text"
-              name="topic"
-              required
-              className="border text-white bg-black/50 placeholder:text-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="e.g., AI in Healthcare, Space Exploration, etc."
-            />
-            <label className="text-sm font-semibold text-gray-50">
-              Description
-            </label>
-            <textarea
-              autoComplete="description"
-              onChange={(e) => {
-                console.log("Description input changed:", e.target.value);
-                setDescription(e.target.value);
-              }}
-              required={true}
-              value={description}
-              className="border text-white bg-black/50 placeholder:text-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="provide more details about the topic, target audience, etc."
-              rows={3}
-            ></textarea>
-            <label className="text-sm font-semibold text-gray-50">Style</label>
-            <input
-              type="text"
-              name="style"
-              required
-              className="border text-white bg-black/50 placeholder:text-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="e.g., interview, solo, etc."
-            />
-
-            <label className="text-sm font-semibold text-gray-50">
-              Language
-            </label>
-            <input
-              type="text"
-              name="language"
-              required
-              className="border text-white bg-black/50 placeholder:text-gray-100 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="e.g., en-US, en-IN, ta-IN, etc."
-            />
-            <input
-              name="description"
-              type="text"
-              onChange={(e) => {
-                console.log("Description input changed:", e.target.value);
-                setDescription(e.target.value);
-              }}
-              value={description}
-              className="bg-gray-100 rounded-lg focus:outline-none h-0 opacity-0 focus:ring-2 focus:ring-blue-500"
-              placeholder=""
-            />
-
-            <ActionModalActionRow
-              buttons={[
-                <button
-                  type="button"
-                  onClick={() => {
-                    console.log("Clear form action triggered");
-                    setDescription(""); // Reset description state
-                    const form = document.querySelector(
-                      "form"
-                    ) as HTMLFormElement;
-                    if (form) {
-                      form.reset(); // Reset the form fields
-                    }
-                    // Handle cancel action here, e.g., reset form or close modal
-                  }}
-                  className="bg-gray-300 text-gray-800 rounded-lg px-4 py-2 hover:bg-gray-400 transition-colors cursor-pointer"
-                >
-                  {" "}
-                  Clear
-                </button>,
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAutoFillModalOpen(true);
-                  }}
-                  className="bg-sky-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-sky-600 transition-colors cursor-pointer"
-                >
-                  Auto-Fill
-                </button>,
-
-                <button
-                  type="submit"
-                  onClick={(e) => {
-                    e.preventDefault();
-
-                    const form = e.currentTarget.closest(
-                      "form"
-                    ) as HTMLFormElement;
-                    const formData = new FormData(form);
-
-                    // validate the form data
-                    if (
-                      !formData.get("topic") ||
-                      !formData.get("description") ||
-                      !formData.get("style") ||
-                      !formData.get("language")
-                    ) {
-                      console.error("All fields are required.");
-                      toast.error("All fields are required.");
-                      return;
-                    }
-
-                    const data = {
-                      topic: formData.get("topic") as string,
-                      description: formData.get("description") as string,
-                      style: formData.get("style") as string,
-                      language: formData.get("language") as string,
-                    };
-                    console.log("Creating podcast with data:", data);
-                    createPodcastMutation.mutate(data);
-                  }}
-                  className="bg-sky-500 flex items-center text-white rounded-lg px-4 py-2 hover:bg-sky-600 transition-colors cursor-pointer"
-                >
-                  <div className="flex flex-row items-center justify-center gap-2">
-                    <div
-                      className="transition-all duration-300 overflow-hidden"
-                      style={{
-                        width: createPodcastMutation.isLoading
-                          ? "1.25rem"
-                          : "0px", // 1.25rem = 20px
-                        height: createPodcastMutation.isLoading
-                          ? "1.25rem"
-                          : "0px",
-                        marginRight: createPodcastMutation.isLoading
-                          ? "0.5rem"
-                          : "0px",
-                      }}
-                    >
-                      <PiSpinnerGap className="animate-spin text-xl" />
-                    </div>
-                    <FaPlus className="text-lg" />
-                    Create
-                  </div>
-                </button>,
-              ]}
-            />
-          </form>
-        </div>
-        <div className="flex flex-col flex-2/3 bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg overflow-hidden">
-          <p className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
-            Podcasts
+          <p className="text-tertiary text-sm mt-1">
+            Fill in the details below to generate your AI podcast.
           </p>
+        </div>
 
-          <div className="flex-1 overflow-y-auto w-full">
-            <div className="flex flex-col gap-2 px-4 py-1">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <PiSpinnerGap className="animate-spin text-4xl text-gray-200" />
-                </div>
-              ) : queueData?.tasks.length === 0 ? (
-                <p className="text-gray-400 text-center">
-                  No podcasts in the queue.
-                </p>
-              ) : (
-                queueData?.tasks.map((task: PodcastGenTask) => (
-                  <HorizontalPodcastCard key={task.id} task={task} />
-                ))
-              )}
+        <form ref={formRef} className="flex flex-col gap-5">
+          <Input
+            label="Topic"
+            name="topic"
+            required
+            placeholder="e.g., AI in Healthcare, Space Exploration"
+          />
+
+          <TextArea
+            label="Description"
+            required
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Provide details about the topic, target audience..."
+            rows={4}
+          />
+
+          <Input
+            label="Style"
+            name="style"
+            required
+            placeholder="e.g., interview, solo, debate"
+          />
+
+          <Input
+            label="Language"
+            name="language"
+            required
+            placeholder="e.g., en-US, en-IN, ta-IN"
+          />
+
+          <input
+            name="description"
+            type="hidden"
+            value={description}
+          />
+
+          <ActionModalActionRow
+            className="pt-2 border-0 mt-2"
+            buttons={[
+              <button
+                type="button"
+                onClick={() => {
+                  setDescription("");
+                  formRef.current?.reset();
+                }}
+                className="px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-highlight text-tertiary hover:text-tertiary-foreground font-medium transition-colors cursor-pointer text-sm border border-tertiary/10"
+              >
+                Clear
+              </button>,
+              <button
+                type="button"
+                onClick={() => setIsAutoFillModalOpen(true)}
+                className="px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-highlight text-tertiary-foreground font-medium transition-colors cursor-pointer text-sm border border-tertiary/10"
+              >
+                Auto-Fill
+              </button>,
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget.closest("form") as HTMLFormElement;
+                  const formData = new FormData(form);
+
+                  if (
+                    !formData.get("topic") ||
+                    !formData.get("description") ||
+                    !formData.get("style") ||
+                    !formData.get("language")
+                  ) {
+                    toast.error("All fields are required.");
+                    return;
+                  }
+
+                  const data = {
+                    topic: formData.get("topic") as string,
+                    description: formData.get("description") as string,
+                    style: formData.get("style") as string,
+                    language: formData.get("language") as string,
+                  };
+                  createPodcastMutation.mutate(data);
+                }}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed text-sm shadow-lg shadow-primary/20"
+                disabled={createPodcastMutation.isLoading}
+              >
+                {createPodcastMutation.isLoading && <Spinner size="sm" color="white" />}
+                {!createPodcastMutation.isLoading && <FaPlus className="text-xs" />}
+                Create
+              </button>,
+            ]}
+          />
+        </form>
+      </div>
+
+      {/* Queue Panel - Suno Inspired List */}
+      <div className="flex flex-col flex-1 glass-panel p-0 overflow-hidden bg-surface/30 border-tertiary/20">
+        <div className="p-6 border-b border-tertiary/10 bg-surface/50 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex justify-between items-center">
+            <h2 className="font-heading text-xl font-semibold text-tertiary-foreground">
+              Queue
+            </h2>
+            <div className="flex gap-2">
+              <span className="text-xs font-medium text-tertiary px-2 py-1 rounded bg-surface border border-tertiary/10">
+                {queueData?.tasks.length} Podcasts
+              </span>
             </div>
           </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <PiSpinnerGap className="animate-spin text-4xl text-primary" />
+            </div>
+          ) : queueData?.tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 opacity-50">
+              <img src="/podcastplaceholdercover.png" className="w-24 h-24 rounded-2xl mb-4 grayscale opacity-50" />
+              <p className="text-tertiary text-center">
+                No podcasts yet. Start creating!
+              </p>
+            </div>
+          ) : (
+            queueData?.tasks.map((task: PodcastGenTask) => (
+              <HorizontalPodcastCard key={task.id} task={task} />
+            ))
+          )}
         </div>
       </div>
       <CreatePodcastModal
@@ -216,214 +180,137 @@ export default function Create() {
         onClose={() => setIsAutoFillModalOpen(false)}
         onCreate={(data) => {
           setIsAutoFillModalOpen(false);
-          console.log("Creating podcast with auto-filled data:", data);
-          // get the form
-          formRef.current?.reset(); // Reset the form fields
-          setDescription(data.description); // Set the description state
-
-          // TODO: Replace the manual input selection with React Hook Form -- Sairam July 2025
-
-          (formRef.current!.elements.namedItem(
-            "topic"
-          ) as HTMLInputElement)!.value = data.topic ?? ""; // Set the topic field
-
-          (formRef.current!.elements.namedItem(
-            "style"
-          ) as HTMLInputElement)!.value = data.style ?? ""; // Set the style field
-
-          (formRef.current!.elements.namedItem(
-            "language"
-          ) as HTMLInputElement)!.value = data.language ?? ""; // Set the language field
+          formRef.current?.reset();
+          setDescription(data.description);
+          (formRef.current!.elements.namedItem("topic") as HTMLInputElement)!.value = data.topic ?? "";
+          (formRef.current!.elements.namedItem("style") as HTMLInputElement)!.value = data.style ?? "";
+          (formRef.current!.elements.namedItem("language") as HTMLInputElement)!.value = data.language ?? "";
         }}
       />
-    </div>
+    </div >
   );
 }
 
 function HorizontalPodcastCard({ task }: { task?: PodcastGenTask }) {
-  console.log("Rendering HorizontalPodcastCard with task:", task);
-
-  const [trackedTask, setTrackedTask] = useState<PodcastGenTask | null>(
-    task ?? null
-  );
+  const [trackedTask, setTrackedTask] = useState<PodcastGenTask | null>(task ?? null);
+  const navigate = useNavigate();
+  const { imageUrl } = api.useGetImage({ podcastId: trackedTask?.podcast?.id ?? "" });
 
   useEffect(() => {
     async function setupSupabaseRealtime() {
-      if (task?.status === "completed" || task?.status === "failed") {
-        console.log(
-          "Task is already completed or failed, no need to subscribe to realtime updates."
-        );
-        return;
-      }
+      if (task?.status === "completed" || task?.status === "failed") return;
 
       await supabase.realtime.setAuth();
 
-      // supabase.channel(`topic:${task?.id}`, {
-      //     config: {
-      //         private: true,
-      //     }
-      // })
-
       supabase
-        .channel(`topic:${task?.id}`, {
-          config: {
-            private: true,
-          },
-        })
+        .channel(`topic:${task?.id}`, { config: { private: true } })
         .on("broadcast", { event: "update" }, (payload) => {
-          console.log("Received update for task:", payload);
           if (
             payload.payload.record.podcast_id !== trackedTask?.podcast?.id &&
             payload.payload.record.podcast_id
           ) {
-            console.log("Podcast metadata generated");
-            // fetch new podcast
             supabase
               .from("podcast")
               .select("*")
               .eq("id", payload.payload.record.podcast_id)
               .single()
               .then(({ data, error }) => {
-                if (error) {
-                  console.error("Error fetching podcast data:", error);
-                  return;
-                }
-                const updatedTask = {
-                  ...payload.payload.record,
-                  podcast: data,
-                } as PodcastGenTask;
-                setTrackedTask(updatedTask);
+                if (error) return;
+                setTrackedTask({ ...payload.payload.record, podcast: data } as PodcastGenTask);
               });
             return;
           }
-          setTrackedTask((trackedTaskPrev) => ({
-            ...trackedTaskPrev,
-            ...payload.payload.record,
-          }));
-          // You can handle the update here, e.g., refetch data or update state
+          setTrackedTask((prev) => ({ ...prev, ...payload.payload.record }));
         })
-        .subscribe((status) => {
-          if (status === "SUBSCRIBED") {
-            console.log("Subscribed to realtime updates for task:", task?.id);
-          } else {
-            console.error(
-              "Failed to subscribe to realtime updates for task:",
-              task?.id,
-              status
-            );
-          }
-        });
+        .subscribe();
     }
     setupSupabaseRealtime();
     return () => {
-      // Cleanup function to unsubscribe from the channel
       supabase.channel(`topic:${task?.id}`).unsubscribe();
     };
   }, [task?.id, task?.status, trackedTask?.podcast?.id]);
 
-  const navigate = useNavigate();
-  const { imageUrl } = api.useGetImage({
-    podcastId: trackedTask?.podcast?.id ?? "",
-  });
+
+  const statusConfig: Record<string, { bg: string, text: string, icon: React.ReactNode, label: string }> = {
+    pending: { bg: "bg-amber-500/10", text: "text-amber-500", icon: <FaClock />, label: "Pending" },
+    in_progress: { bg: "bg-blue-500/10", text: "text-blue-500", icon: <PiSpinnerGap className="animate-spin" />, label: "Processing" },
+    completed: { bg: "bg-emerald-500/10", text: "text-emerald-500", icon: <FaCheckCircle />, label: "Ready" },
+    failed: { bg: "bg-rose-500/10", text: "text-rose-500", icon: <FaExclamationCircle />, label: "Failed" },
+  };
+
+  const status = trackedTask?.status ?? "pending";
+  const config = statusConfig[status] ?? statusConfig.pending;
+
   return (
     <div
-      className="lg:h-32 h-38 w-full bg-linear-45 -from-30% from-sky-950 to-black to-130% via-50% via-sky-900/25 shadow-2xl border-sky-700 border shadow-black/30 hover:shadow-black/40 gap-2 rounded-lg hover:scale-102 transition-all ease-in-out hover:brightness-110 flex flex-row"
-      tabIndex={0}
+      className="group flex gap-3 p-2 rounded-lg bg-surface hover:bg-surface-highlight transition-all border border-tertiary/10 hover:border-tertiary/30 cursor-pointer items-center"
+      onClick={() => {
+        if (trackedTask?.status === "completed" && trackedTask?.podcast_id) {
+          navigate(`/podcast/${trackedTask.podcast_id}`);
+        }
+      }}
     >
-      <div className="p-1">
+      {/* Thumbnail */}
+      <div className="relative h-14 w-14 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
         <img
-          className={`${
-            !imageUrl && "animate-pulse"
-          } lg:h-30 h-24 min-w-24 lg:min-w-30 rounded-lg aspect-square mask-radial-from-91% mask-radial-fartest-side mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97%`}
+          className={`h-14 w-14 rounded-md object-cover shadow-sm ${!imageUrl && "animate-pulse bg-surface-highlight"}`}
           src={imageUrl ?? "/podcastplaceholdercover.png"}
-        ></img>
-      </div>
-      <div>
-        <div className="flex flex-col flex-grow">
-          <div>
-            <p className="text-lg font-bold text-gray-100">
-              <a
-                aria-disabled={
-                  trackedTask?.podcast_id === null ||
-                  trackedTask?.podcast_id === undefined
-                }
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (
-                    trackedTask?.podcast_id === null ||
-                    trackedTask?.podcast_id === undefined
-                  ) {
-                    console.warn(
-                      "Podcast ID is not available, cannot navigate."
-                    );
-                    return;
-                  }
-                  // Navigate to the podcast page
-                  navigate(`/podcast/${trackedTask?.podcast_id}`);
-                }}
-                href={`/podcast/${trackedTask?.podcast_id}`}
-                className="hover:underline text-base hover:text-sky-50 line-clamp-1 transition-all cursor-pointer duration-150 ease-in-out"
-              >
-                {!trackedTask?.podcast?.title ? (
-                  <ShimmerBlock className="w-24 mt-1 h-4" />
-                ) : (
-                  trackedTask?.podcast?.title
-                )}
-              </a>
-            </p>
-            <p className="cursor-default text-xs line-clamp-2 text-gray-300">
-              {!trackedTask?.podcast?.description ? (
-                <ShimmerBlock className="w-48 h-8 mt-1" />
-              ) : (
-                trackedTask?.podcast?.description
-              )}
-            </p>
-            {/* <p className="text-xs text-gray-400">{formatDuration(currentPodcast?.duration)}</p> */}
+          alt=""
+        />
+        {/* Play Overlay */}
+        {status === 'completed' && (
+          <div className="absolute inset-0 bg-black/30 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <FaPlay className="text-white text-xs drop-shadow-md" />
           </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex flex-col justify-center flex-1 min-w-0 pr-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-heading font-semibold text-tertiary-foreground text-sm line-clamp-1 group-hover:text-primary transition-colors">
+            {!trackedTask?.podcast?.title ? (
+              <span className="text-tertiary italic">Generating title...</span>
+            ) : (
+              trackedTask?.podcast?.title
+            )}
+          </h3>
+          {/* Status Badge */}
+          <span className={cn(
+            "text-[9px] font-medium px-1.5 py-0.5 rounded-full flex items-center gap-1 border border-transparent flex-shrink-0",
+            config.bg, config.text
+          )}>
+            {config.icon}
+            {status === "in_progress" && trackedTask?.progress ? `${trackedTask.progress}%` : config.label}
+          </span>
         </div>
-        <div className="flex flex-col gap-2 lg:flex-row mt-2 lg:items-center lg:justify-start items-start justify-center">
-          {/* <p className={`text-sm px-2 py-1 rounded-full bg-amber-900 text-gray-50 ${trackedTask?.status === "pending" ? "bg-amber-700 animate-pulse" : trackedTask?.status === "in_progress" ? "bg-blue-700" : trackedTask?.status === "completed" ? "bg-green-700" : trackedTask?.status === "failed" ? "bg-red-700" : "bg-gray-700"} transition-all duration-200`}>
-                {trackedTask?.status === "pending"
-                ? "Pending"
-                : trackedTask?.status === "in_progress"
-                ? "Processing"
-                : trackedTask?.status === "completed"
-                ? "Completed"
-                : trackedTask?.status === "failed"
-                ? "Failed"
-                : "Unknown Status"}
-            </p> */}
-          {trackedTask?.status === "pending" ? (
-            <ShimmerBlock className="bg-transparent rounded-full">
-              <p className="text-xs lg:text-sm w-fit h-fit rounded-full bg-amber-700 px-2 py-1 text-gray-200">
-                Pending
-              </p>
-            </ShimmerBlock>
-          ) : trackedTask?.status === "in_progress" ? (
-            <p className="text-xs lg:text-sm rounded-full bg-blue-700 px-2 py-1 text-gray-200">
-              Processing
-            </p>
-          ) : trackedTask?.status === "completed" ? (
-            <p className="text-xs lg:text-sm rounded-full bg-green-700 px-2 py-1 text-gray-200">
-              Completed
-            </p>
-          ) : trackedTask?.status === "failed" ? (
-            <p className="text-xs lg:text-sm rounded-full bg-red-700 px-2 py-1 text-gray-200">
-              Failed
-            </p>
+
+        <p className="text-[11px] text-tertiary line-clamp-1 mt-0.5">
+          {!trackedTask?.podcast?.description ? (
+            <span className="opacity-50">Generating description...</span>
           ) : (
-            <p className="text-xs lg:text-sm rounded-full bg-gray-700 px-2 py-1 text-gray-200">
-              Unknown Status
-            </p>
+            trackedTask?.podcast?.description
           )}
-          {trackedTask?.status === "in_progress" && (
-            <p className="text-xs lg:text-sm rounded-full bg-blue-700 px-2 py-1 text-gray-200">
-              {trackedTask?.progress !== undefined
-                ? `${trackedTask.progress}% - ${trackedTask?.progress_message}`
-                : "No progress available"}
-            </p>
-          )}
-        </div>
+        </p>
+
+        {/* Progress Bar for processing */}
+        {status === "in_progress" && (
+          <div className="w-full h-1 bg-surface-highlight rounded-full mt-1.5 overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-500 relative"
+              style={{ width: `${trackedTask?.progress ?? 5}%` }}
+            >
+              <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Actions / Meta */}
+      <div className="hidden sm:flex items-center gap-4 text-xs text-tertiary font-medium">
+        {trackedTask?.podcast?.duration && (
+          <span>{Math.floor(trackedTask.podcast.duration / 60)}m {trackedTask.podcast.duration % 60}s</span>
+        )}
       </div>
     </div>
   );

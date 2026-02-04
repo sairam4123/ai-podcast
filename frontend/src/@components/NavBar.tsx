@@ -14,7 +14,6 @@ import { AnimatePresence, motion } from "framer-motion";
 
 export function NavBar() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [signedIn, setIsSignedIn] = useState(false);
@@ -30,9 +29,6 @@ export function NavBar() {
     async function isSignedInAsync() {
       const signedIn = await isSignedIn();
       setIsSignedIn(signedIn);
-      // if (!signedIn) {
-      //     window.location.href = "/login";
-      // }
     }
 
     async function getUserAsync() {
@@ -51,53 +47,55 @@ export function NavBar() {
 
   return (
     <nav className="relative">
-      <ul className="flex text-base flex-row items-center space-x-4 p-4 from-sky-950/50 shadow-black/30 shadow-lg to-sky-900/50 bg-linear-330 text-white">
-        <li className="font-black flex flex-row gap-2 text-3xl text-shadow-md ">
+      {/* Main Nav Bar */}
+      <div className="flex items-center justify-between px-4 py-3 md:px-6 bg-surface/80 backdrop-blur-md border-b border-tertiary/20">
+        {/* Logo */}
+        <a
+          onClick={(e) => {
+            e.preventDefault();
+            navigate("/");
+          }}
+          href="/"
+          className="flex items-center gap-2 group"
+        >
           <img
-            className="h-10 w-auto object-cover scale-180"
+            className="h-8 w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity"
             src="/logo.png"
             alt="Podolli.AI Logo"
           />
-
-          <a
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/");
-            }}
-            className="lg:text-3xl text-lg my-auto"
-            href="/"
-          >
+          <span className="font-heading text-xl md:text-2xl font-bold text-tertiary-foreground group-hover:text-primary transition-colors">
             Podolli.AI
-          </a>
-        </li>
-        <li className="flex-grow hidden text-base md:flex justify-center">
+          </span>
+        </a>
+
+        {/* Search - Desktop */}
+        <div className="hidden md:flex flex-1 max-w-md mx-6">
           <SearchBox variant="xl" />
-        </li>
-        <li className="flex-grow md:hidden flex justify-center"></li>
-        <li className="bg-sky-700 cursor-pointer hover:bg-sky-500 transition-all duration-100 ease-out text-center flex flex-row items-center justify-center gap-2 p-3 rounded-full text-white md:hidden">
-          <FaSearch
-            className="md:hidden cursor-pointer"
-            onClick={() => {
-              setSearchFlyoutIsOpen(true);
-            }}
-          />
-        </li>
-        <li
-          onClick={() => {
-            // setIsCreateModalOpen(true);
-            navigate("/create");
-          }}
-          className="bg-sky-700 cursor-pointer hover:bg-sky-500 transition-all duration-100 ease-out text-center flex flex-row items-center justify-center gap-2 p-3 mr-4 rounded-full text-white"
-        >
-          <FaPlus className="text-lg" />
-          <p className="lg:flex hidden">Create</p>
-        </li>
-        {/* <li className=""><a href="/podcasts">Explore</a></li>
-            <li className=""><a href="/podcasts">Pricing</a></li> */}
-        <li className="">
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => setSearchFlyoutIsOpen(true)}
+            className="md:hidden p-2.5 rounded-full bg-surface hover:bg-surface-highlight text-tertiary hover:text-tertiary-foreground transition-all border border-tertiary/10"
+          >
+            <FaSearch className="text-lg" />
+          </button>
+
+          {/* Create Button */}
+          <button
+            onClick={() => navigate("/create")}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-all active:scale-95 shadow-sm shadow-primary/20"
+          >
+            <FaPlus className="text-sm" />
+            <span className="hidden lg:inline">Create</span>
+          </button>
+
+          {/* User Menu */}
           {!signedIn ? (
             <a
-              className="text-gray-200 hover:text-white transition-colors"
+              className="px-4 py-2 text-tertiary hover:text-tertiary-foreground font-medium transition-colors"
               href="/login"
             >
               Sign&nbsp;In
@@ -110,7 +108,6 @@ export function NavBar() {
                   value: "profile",
                   onSelect() {
                     navigate(`/user/${user?.id}`);
-                    // window.location.href = `/user/${user?.id}`;
                   },
                 },
                 { label: "Podcasts", value: "podcasts" },
@@ -120,71 +117,63 @@ export function NavBar() {
                   onSelect() {
                     supabase.auth.signOut();
                     toast.success("Signed out successfully");
-                    console.log("User signed out");
                     setUser(null);
                     setIsSignedIn(false);
-                    // window.location.href = "/logout";
                   },
                   isDangerous: true,
                 },
               ]}
             >
-              <div className="flex flex-row items-center gap-2">
+              <div className="flex items-center gap-2 p-1 rounded-full hover:bg-surface-highlight transition-colors">
                 <ProfileAvatarIcon id={user?.id} />
-                <p className="hidden lg:flex text-sm md:text-base text-shadow-md font-semibold text-gray-50">
+                <span className="hidden lg:block text-sm font-medium text-tertiary-foreground pr-2">
                   {data ? (
                     data.user?.display_name ?? "N/A"
                   ) : error ? (
-                    error.message
+                    <span className="text-rose-400">Error</span>
                   ) : (
-                    <Spinner
-                      isLoading={isLoading || loading}
-                      size="1.25rem"
-                      marginRight="0px"
-                    />
+                    (isLoading || loading) && <Spinner size="sm" />
                   )}
-                </p>
+                </span>
               </div>
             </MenuButton>
           )}
-        </li>
-      </ul>
+        </div>
+      </div>
+
       <CreatePodcastModal
         isOpen={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-        }}
+        onClose={() => setIsCreateModalOpen(false)}
         onCreate={(data) => {
           console.log("Podcast created", data);
           setIsCreateModalOpen(false);
         }}
       />
 
+      {/* Mobile Search Flyout */}
       <AnimatePresence>
         {searchFlyoutIsOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden absolute inset-0 bg-gradient-to-b from-sky-950 to-black z-20 p-4 h-screen w-screen"
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="md:hidden fixed inset-0 z-50 bg-surface/98 backdrop-blur-lg"
           >
-            <div className="w-full flex flex-row items-center px-2 py-1 justify-between">
-              <p className="text-xl text-white ">Search Podcasts</p>
+            <div className="flex items-center justify-between p-4 border-b border-tertiary/20">
+              <h2 className="text-lg font-heading font-semibold text-tertiary-foreground">Search</h2>
               <button
-                className=""
-                onClick={() => {
-                  setSearchFlyoutIsOpen(false);
-                }}
+                onClick={() => setSearchFlyoutIsOpen(false)}
+                className="p-2 rounded-full hover:bg-surface-highlight text-tertiary hover:text-tertiary-foreground transition-colors"
               >
-                <FaX className="text-red-500" />
+                <FaX />
               </button>
             </div>
-            <div className="mx-auto w-full flex flex-row items-center">
+            <div className="p-4">
               <SearchBox
                 onClose={() => setSearchFlyoutIsOpen(false)}
                 variant="lg"
-                contentClassName="flex flex-col md:h-48 h-96 overflow-y-auto"
+                contentClassName="flex flex-col h-[70vh] overflow-y-auto"
               />
             </div>
           </motion.div>

@@ -5,9 +5,8 @@ import { removeSSMLtags } from "../utils/removeSSMLtags";
 import { Conversation as ConversationType } from "../@types/Conversation";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
-import ReactMarkdown from "react-markdown";
-import { FaMicrophone, FaPaperPlane, FaSpinner } from "react-icons/fa";
 import { useRef, useState } from "react";
+import { FaMicrophone, FaPaperPlane, FaSpinner } from "react-icons/fa";
 import useSendLiveQuestion from "../api/sendLiveQuestion";
 import { ProfileAvatarIcon } from "./AvatarIcon";
 import { RecordModal } from "../modals/Record";
@@ -41,8 +40,8 @@ export function Conversation({
   console.log({ questions });
 
   return (
-    <div className="flex flex-col items-start justify-start w-full p-2 overflow-hidden">
-      <div className="flex flex-col items-start justify-start w-full p-2 px-4 overflow-y-scroll mt-4 space-y-4">
+    <div className="flex flex-col items-start justify-start w-full p-2 overflow-hidden h-full">
+      <div className="flex flex-col items-start justify-start w-full p-2 px-4 overflow-y-auto mt-4 space-y-6 scrollbar-thin scrollbar-track-surface scrollbar-thumb-tertiary">
         {conversation?.map((conv, index) => {
           const currentSpeaker = conv.speaker;
           const isCurrent =
@@ -86,7 +85,7 @@ export function Conversation({
               id={`question-${q.id}`}
               currentPosition={0}
               isPlaying={false}
-              onClick={() => {}}
+              onClick={() => { }}
               key={`question-${q.id}`}
               podcastId={podcastId}
               person={{
@@ -158,13 +157,13 @@ const ResponseCard = ({
   return (
     <>
       {isLoading && (
-        <div className="flex flex-row items-center text-gray-400 p-2">
+        <div className="flex flex-row items-center text-primary p-2 text-sm">
           <FaSpinner className="animate-spin mr-2" />
           <span>Loading response audio...</span>
         </div>
       )}
       {error && (
-        <div className="flex flex-row items-center text-red-400 p-2">
+        <div className="flex flex-row items-center text-rose-400 p-2 text-sm">
           <span>Error loading response audio: {error.message}</span>
         </div>
       )}
@@ -228,43 +227,32 @@ const MessageCard = ({
   isHost?: boolean;
 }) => {
   const { imageUrl, isLoading } = useGetAvatarImage({ personId: person.id });
-  // console.log(imageUrl)
-  if (isCurrent)
-    console.log(
-      ((currentPosition - (conv.start_time ?? 0)) /
-        ((conv.end_time ?? 0) - (conv.start_time ?? 0))) *
-        100,
-      conv.start_time,
-      conv.end_time,
-      currentPosition,
-      isPlaying
-    );
+
+  const cleanText = removeSSMLtags(conv.text);
+  const words = cleanText.split(/\s+/);
+  const startTime = conv.start_time ?? 0;
+  const endTime = conv.end_time ?? 0;
+  const duration = endTime - startTime;
+  const wordDuration = words.length > 0 ? duration / words.length : 0;
 
   return (
     <div
       id={id}
-      className={`flex ${
-        isHost
-          ? `bg-gradient-to-tl from-blue-600/70 to-blue-800/90 ml-auto rounded-t-3xl rounded-l-3xl md:rounded-l-2xl rounded-br-md md:rounded-br-lg`
-          : `bg-gradient-to-tr from-green-700/80 to-green-800/90 rounded-t-3xl rounded-bl-md md:rounded-bl-lg md:rounded-r-2xl rounded-r-3xl`
-      } text-white animate-slideInBottom max-w-6/7 md:max-w-4/7 lg:max-w-3/7 drop-shadow-lg transition-all ${
-        currentPosition > (conv.start_time ?? 0) &&
-        currentPosition < (conv.end_time ?? 0) &&
-        isPlaying &&
-        isCurrent
-          ? "outline-1 outline-white scale-105"
-          : ""
-      } hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`}
-      onClick={() => {
-        onClick();
-      }}
+      className={cn(
+        "flex max-w-[90%] md:max-w-[80%] transition-all duration-500 ease-out group",
+        isHost ? "ml-auto flex-row-reverse" : "mr-auto",
+        currentPosition > startTime && currentPosition < endTime && isPlaying && isCurrent
+          ? "scale-[1.01]"
+          : "hover:scale-[1.005] opacity-80 hover:opacity-100"
+      )}
+      onClick={onClick}
     >
-      <div className="flex flex-row items-start">
-        {/* <FaSpinner className={cn("text-4xl text-gray-200", isLoading ? "animate-spin" : "hidden")} /> */}
+      {/* Avatar */}
+      <div className={cn("flex-shrink-0 mt-auto mb-2", isHost ? "ml-4" : "mr-4")}>
         {imageUrl ? (
           <img
             className={cn(
-              "h-5 w-5 md:h-6 md:w-6 mr-2 aspect-square rounded-full",
+              "h-10 w-10 object-cover rounded-full shadow-sm ring-2 ring-white/5",
               isLoading && "hidden"
             )}
             src={imageUrl}
@@ -273,31 +261,67 @@ const MessageCard = ({
           <ProfileAvatarIcon
             imageUrl={imageUrl}
             id={person.id}
-            imageClassName="h-5 w-5 md:w-6 mr-2 aspect-square rounded-full"
-            className="h-5 w-5 md:h-6 md:w-6 mr-2 rounded-full"
+            imageClassName="h-10 w-10 object-cover rounded-full"
+            className="h-10 w-10 flex-shrink-0"
           />
         )}
-        <div className="">
-          <p className="text-sm md:text-base text-shadow-md font-bold text-gray-200">
-            {person?.name}
-          </p>
-          <p className="relative text-xs md:text-sm z-10">
-            <ReactMarkdown>{removeSSMLtags(conv.text)}</ReactMarkdown>
+      </div>
 
-            {isCurrent && (
-              <div
-                className={`absolute transition-all ease-out duration-75 inset-0 w-full h-full bg-yellow-400/30 z-0`}
-                style={{
-                  width: `${
-                    ((currentPosition - (conv.start_time ?? 0)) /
-                      ((conv.end_time ?? 0) - (conv.start_time ?? 0))) *
-                    100
-                  }%`,
-                }}
-              />
-            )}
-          </p>
-        </div>
+      {/* Bubble */}
+      <div
+        className={cn(
+          "relative p-5 md:p-6 rounded-3xl shadow-sm border transition-all duration-300",
+          isHost
+            ? "bg-secondary/60 border-primary/20 text-secondary-foreground rounded-br-lg"
+            : "bg-surface/60 border-tertiary/20 text-tertiary-foreground rounded-bl-lg",
+          isCurrent
+            ? "shadow-md ring-1 ring-white/10 bg-opacity-80 backdrop-blur-md"
+            : "backdrop-blur-sm"
+        )}
+      >
+        <p className={cn(
+          "text-xs font-semibold mb-2 opacity-80 tracking-wide uppercase",
+          isHost ? "text-right text-primary" : "text-left text-tertiary"
+        )}>
+          {person?.name}
+        </p>
+
+        <p className="text-[15px] leading-7 font-light tracking-wide text-pretty">
+          {words.map((word, i) => {
+            const wordStart = startTime + i * wordDuration;
+            const wordEnd = wordStart + wordDuration;
+
+            // Logic:
+            // Past: Fully visible
+            // Current: Highlighted/Popping
+            // Future: Dimmed
+
+            // const isPast = isPlaying && isCurrent && currentPosition >= wordEnd;
+            const isCurrentWord = isPlaying && isCurrent && currentPosition >= wordStart && currentPosition < wordEnd;
+            const isFuture = isPlaying && isCurrent && currentPosition < wordStart;
+
+            // If not actively playing this card, everything is normal (unless strictly playing mode, then maybe dim?)
+            // Let's assume non-active cards are full opacity but container is dimmed (handled by parent className).
+
+            // For active card:
+            const opacityClass = isCurrent
+              ? (isFuture ? "opacity-50 blur-[0.3px] transition-all duration-300" : "opacity-100")
+              : "opacity-100";
+
+            return (
+              <span
+                key={i}
+                className={cn(
+                  "inline-block mr-1.5 transition-all duration-200 rounded px-0.5",
+                  opacityClass,
+                  isCurrentWord && "text-white font-medium scale-105"
+                )}
+              >
+                {word}
+              </span>
+            );
+          })}
+        </p>
       </div>
     </div>
   );
@@ -329,7 +353,7 @@ const QuestionBox = ({
   const [recordingIsVisible, setRecordingModalIsVisible] = useState(false);
 
   return (
-    <div className="w-full flex flex-row justify-center items-center p-2 mt-4 text-center text-gray-200 border-2 border-dashed rounded-lg border-gray-600">
+    <div className="w-full flex flex-row justify-center items-center p-2 mt-4 text-center text-tertiary-foreground rounded-2xl bg-surface/60 border border-tertiary/30 shadow-inner">
       <RecordModal
         isVisible={recordingIsVisible}
         setIsVisible={setRecordingModalIsVisible}
@@ -339,7 +363,7 @@ const QuestionBox = ({
         value={question}
         onChange={(e) => onChange?.(e.target.value)}
         type="text"
-        className="flex grow p-2 bg-transparent border-none outline-none"
+        className="flex grow p-3 bg-transparent border-none outline-none placeholder:text-tertiary"
         placeholder="Ask a question..."
         onKeyDown={(event) => {
           if (event.key === "Enter") {
@@ -349,16 +373,16 @@ const QuestionBox = ({
           }
         }}
       />
-      <div className="text-xl gap-2 flex flex-row">
+      <div className="text-xl gap-3 flex flex-row px-2">
         <FaMicrophone
           onClick={() => {
             setRecordingModalIsVisible(true);
           }}
-          className="text-xl cursor-pointer pr-2 hover:text-gray-100 text-gray-400"
+          className="text-lg cursor-pointer hover:text-primary text-tertiary transition-colors"
         />
         {isMutationLoading ? (
-          <div className="pr-2">
-            <FaSpinner className="text-xl cursor-pointer animate-spin object-center origin-center text-gray-400" />
+          <div className="">
+            <FaSpinner className="text-lg cursor-pointer animate-spin object-center origin-center text-primary" />
           </div>
         ) : (
           <FaPaperPlane
@@ -366,7 +390,7 @@ const QuestionBox = ({
               if (!question || question.trim() === "") return;
               sendLiveQuestion({ question: question, podcast_id: podcastId });
             }}
-            className="text-xl cursor-pointer pr-2 hover:text-gray-100 text-gray-400"
+            className="text-lg cursor-pointer hover:text-primary text-tertiary transition-colors"
           />
         )}
       </div>
