@@ -56,7 +56,7 @@ export function MediaPlayer() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ ease: "easeOut", duration: 0.2 }}
-          className="fixed flex flex-col h-28 bottom-4 left-1/2 -translate-x-1/2 w-11/12 max-w-4xl rounded-2xl bg-cyan-950/95 backdrop-blur-md border border-cyan-500/20 shadow-2xl shadow-cyan-900/30 z-50"
+          className="fixed flex flex-col h-28 bottom-24 lg:bottom-4 left-1/2 -translate-x-1/2 w-11/12 max-w-4xl rounded-2xl bg-cyan-950/95 backdrop-blur-md border border-cyan-500/20 shadow-2xl shadow-cyan-900/30 z-50"
         >
           <div className="flex flex-row flex-grow items-center gap-3 p-2">
             <img
