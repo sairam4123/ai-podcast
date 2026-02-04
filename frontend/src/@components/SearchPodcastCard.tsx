@@ -7,37 +7,35 @@ export const SearchPodcastCard = ({ podcast }: { podcast: Podcast }) => {
   const navigate = useNavigate();
   return (
     <div
-      onClick={() => {
-        console.log(podcast.id);
-        navigate(`/podcast/${podcast.id}`);
-      }}
-      className="h-12 p-4 cursor-pointer hover:bg-gray-100 rounded-lg w-full flex items-center gap-2 justify-start flex-row"
+      onClick={() => navigate(`/podcast/${podcast.id}`)}
+      className="p-3 cursor-pointer hover:bg-cyan-800/30 w-full flex items-center gap-3 transition-colors"
     >
-      <div className="flex flex-col">
-        <h3 className="text-[16px] line-clamp-1 hover:underline font-semibold">
+      <div className="flex flex-col flex-1 min-w-0">
+        <h3 className="text-sm font-semibold text-white line-clamp-1 hover:text-cyan-300 transition-colors">
           {podcast.podcast_title}
         </h3>
-        <p className="text-xs line-clamp-1">{podcast.podcast_description}</p>
+        <p className="text-xs text-cyan-300/60 line-clamp-1">
+          {podcast.podcast_description}
+        </p>
       </div>
-      <div className="flex-grow" />
-      <div className="flex flex-row items-center text-xs justify-center gap-2">
-        <div className="flex flex-row items-center justify-center gap-1">
-          <FaPlay className="text-xs text-gray-500" />
+      <div className="flex items-center gap-3 text-xs text-cyan-400/60 flex-shrink-0">
+        <span className="flex items-center gap-1">
+          <FaPlay className="text-[10px]" />
           {podcast.view_count || 0}
-        </div>
-        <FaCircle className="text-[4px] text-gray-500" />
-        <div className="flex flex-row items-center justify-center gap-1">
-          <FaThumbsUp className="text-xs text-gray-500" />
+        </span>
+        <FaCircle className="text-[3px]" />
+        <span className="flex items-center gap-1">
+          <FaThumbsUp className="text-[10px]" />
           {podcast.like_count || 0}
-        </div>
-        <FaCircle className="text-[4px] text-gray-500" />
-        <div className="flex flex-row items-center justify-center gap-1">
-          <FaThumbsDown className="text-xs text-gray-500" />
+        </span>
+        <FaCircle className="text-[3px]" />
+        <span className="flex items-center gap-1">
+          <FaThumbsDown className="text-[10px]" />
           {podcast.dislike_count || 0}
-        </div>
-      </div>
-      <div className="text-xs font-semibold">
-        {formatDuration(podcast.duration)}
+        </span>
+        <span className="text-cyan-300/80 font-medium">
+          {formatDuration(podcast.duration)}
+        </span>
       </div>
     </div>
   );

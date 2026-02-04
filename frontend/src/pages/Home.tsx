@@ -5,6 +5,25 @@ import PodcastFeaturedCard, {
   PodcastFeaturedCardSkeleton,
 } from "../@components/PodcastFeaturedCard";
 
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="font-heading text-xl font-semibold text-white px-1">
+        {title}
+      </h2>
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+        {children}
+      </div>
+    </section>
+  );
+}
+
 export function Home() {
   const { data, error, isLoading } = api.useGetAllPodcast({
     limit: 10,
@@ -34,105 +53,73 @@ export function Home() {
     error: recommendationsError,
     isLoading: recommendationsIsLoading,
   } = api.useGetRecommendations();
-  console.log("Home page data", {
-    data,
-    error,
-    isLoading,
-    trendingData,
-    trendingError,
-    trendingIsLoading,
-    featuredData,
-    featuredError,
-    featuredIsLoading,
-    recommendationsData,
-    recommendationsError,
-    recommendationsIsLoading,
-  });
 
   return (
-    <main className="flex flex-col min-h-screen bg-radial pb-32 from-sky-950 to-black">
+    <main className="min-h-screen pb-32">
       <NavBar />
-      <div className="flex flex-col flex-grow gap-4 p-4">
-        <div className="flex flex-col bg-sky-800/20 border border-sky-600/50 space-y-2 p-2 rounded-lg">
-          <p className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
-            For you
-          </p>
-          <div className="flex flex-row space-x-2 overflow-auto">
-            {recommendationsData?.map((podcast) => {
-              return <PodcastCard key={podcast.id} podcast={podcast} />;
-            })}
-            {recommendationsIsLoading &&
-              Array.from({ length: 6 }).map((_, index) => (
-                <PodcastCardSkeleton key={index} />
-              ))}
-            {error && (
-              <div className="text-red-500 text-center w-full">
-                Error loading podcasts: {error.message}
-              </div>
-            )}
-            {/* <PodcastCard />
-                <PodcastCard />
-                <PodcastCard />
-                <PodcastCard />
-                <PodcastCard />
-                <PodcastCard /> */}
-          </div>
-        </div>
-        <div className="flex flex-col bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
-          <p className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
-            Recently Added
-          </p>
-          <div className="flex flex-row space-x-2 overflow-auto">
-            {isLoading && (
-              <div className="flex flex-row space-x-2 overflow-auto">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <PodcastCardSkeleton key={index} />
-                ))}
-              </div>
-            )}
-            {data?.results?.map((podcast) => {
-              return <PodcastCard key={podcast.id} podcast={podcast} />;
-            })}
-          </div>
-        </div>
-        <div className="flex flex-col bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
-          <p className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
-            Trending
-          </p>
-          <div className="flex flex-row space-x-2 overflow-auto">
-            {trendingData?.results.map((podcast) => {
-              return <PodcastCard key={podcast.id} podcast={podcast} />;
-            })}
-            {trendingIsLoading &&
-              Array.from({ length: 5 }).map((_, index) => (
-                <PodcastCardSkeleton key={index} />
-              ))}
-            {trendingError && (
-              <div className="text-red-500 text-center w-full">
-                Error loading trending podcasts: {trendingError.message}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
-          <p className="text-2xl ml-4 mt-2 font-black text-shadow-md text-white">
-            Featured
-          </p>
-          <div className="flex flex-row space-x-2 overflow-auto">
-            {featuredData?.results.map((podcast) => {
-              return <PodcastFeaturedCard key={podcast.id} podcast={podcast} />;
-            })}
-            {featuredIsLoading &&
-              Array.from({ length: 5 }).map((_, index) => (
-                <PodcastFeaturedCardSkeleton key={index} />
-              ))}
-            {featuredError && (
-              <div className="text-red-500 text-center w-full">
-                Error loading featured podcasts: {featuredError.message}
-              </div>
-            )}
-          </div>
-        </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+        {/* For You */}
+        <Section title="For You">
+          {recommendationsData?.map((podcast) => (
+            <PodcastCard key={podcast.id} podcast={podcast} />
+          ))}
+          {recommendationsIsLoading &&
+            Array.from({ length: 6 }).map((_, i) => (
+              <PodcastCardSkeleton key={i} />
+            ))}
+          {recommendationsError && (
+            <p className="text-red-400 text-sm">
+              Error: {recommendationsError.message}
+            </p>
+          )}
+        </Section>
+
+        {/* Recently Added */}
+        <Section title="Recently Added">
+          {data?.results?.map((podcast) => (
+            <PodcastCard key={podcast.id} podcast={podcast} />
+          ))}
+          {isLoading &&
+            Array.from({ length: 5 }).map((_, i) => (
+              <PodcastCardSkeleton key={i} />
+            ))}
+          {error && (
+            <p className="text-red-400 text-sm">Error: {error.message}</p>
+          )}
+        </Section>
+
+        {/* Trending */}
+        <Section title="Trending">
+          {trendingData?.results.map((podcast) => (
+            <PodcastCard key={podcast.id} podcast={podcast} />
+          ))}
+          {trendingIsLoading &&
+            Array.from({ length: 5 }).map((_, i) => (
+              <PodcastCardSkeleton key={i} />
+            ))}
+          {trendingError && (
+            <p className="text-red-400 text-sm">
+              Error: {trendingError.message}
+            </p>
+          )}
+        </Section>
+
+        {/* Featured */}
+        <Section title="Featured">
+          {featuredData?.results.map((podcast) => (
+            <PodcastFeaturedCard key={podcast.id} podcast={podcast} />
+          ))}
+          {featuredIsLoading &&
+            Array.from({ length: 5 }).map((_, i) => (
+              <PodcastFeaturedCardSkeleton key={i} />
+            ))}
+          {featuredError && (
+            <p className="text-red-400 text-sm">
+              Error: {featuredError.message}
+            </p>
+          )}
+        </Section>
       </div>
     </main>
   );

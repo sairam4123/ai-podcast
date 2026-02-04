@@ -86,7 +86,7 @@ export function Conversation({
               id={`question-${q.id}`}
               currentPosition={0}
               isPlaying={false}
-              onClick={() => {}}
+              onClick={() => { }}
               key={`question-${q.id}`}
               podcastId={podcastId}
               person={{
@@ -233,7 +233,7 @@ const MessageCard = ({
     console.log(
       ((currentPosition - (conv.start_time ?? 0)) /
         ((conv.end_time ?? 0) - (conv.start_time ?? 0))) *
-        100,
+      100,
       conv.start_time,
       conv.end_time,
       currentPosition,
@@ -243,18 +243,16 @@ const MessageCard = ({
   return (
     <div
       id={id}
-      className={`flex ${
-        isHost
-          ? `bg-gradient-to-tl from-blue-600/70 to-blue-800/90 ml-auto rounded-t-3xl rounded-l-3xl md:rounded-l-2xl rounded-br-md md:rounded-br-lg`
-          : `bg-gradient-to-tr from-green-700/80 to-green-800/90 rounded-t-3xl rounded-bl-md md:rounded-bl-lg md:rounded-r-2xl rounded-r-3xl`
-      } text-white animate-slideInBottom max-w-6/7 md:max-w-4/7 lg:max-w-3/7 drop-shadow-lg transition-all ${
-        currentPosition > (conv.start_time ?? 0) &&
-        currentPosition < (conv.end_time ?? 0) &&
-        isPlaying &&
-        isCurrent
+      className={`flex ${isHost
+        ? `bg-gradient-to-tl from-cyan-600/70 to-cyan-800/90 ml-auto rounded-t-2xl rounded-l-2xl rounded-br-md`
+        : `bg-gradient-to-tr from-cyan-900/80 to-cyan-950/90 rounded-t-2xl rounded-bl-md rounded-r-2xl`
+        } text-white max-w-6/7 md:max-w-4/7 lg:max-w-3/7 transition-all ${currentPosition > (conv.start_time ?? 0) &&
+          currentPosition < (conv.end_time ?? 0) &&
+          isPlaying &&
+          isCurrent
           ? "outline-1 outline-white scale-105"
           : ""
-      } hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`}
+        } hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`}
       onClick={() => {
         onClick();
       }}
@@ -286,13 +284,12 @@ const MessageCard = ({
 
             {isCurrent && (
               <div
-                className={`absolute transition-all ease-out duration-75 inset-0 w-full h-full bg-yellow-400/30 z-0`}
+                className={`absolute transition-all ease-out duration-75 inset-0 w-full h-full bg-cyan-400/30 z-0`}
                 style={{
-                  width: `${
-                    ((currentPosition - (conv.start_time ?? 0)) /
-                      ((conv.end_time ?? 0) - (conv.start_time ?? 0))) *
+                  width: `${((currentPosition - (conv.start_time ?? 0)) /
+                    ((conv.end_time ?? 0) - (conv.start_time ?? 0))) *
                     100
-                  }%`,
+                    }%`,
                 }}
               />
             )}
@@ -329,7 +326,7 @@ const QuestionBox = ({
   const [recordingIsVisible, setRecordingModalIsVisible] = useState(false);
 
   return (
-    <div className="w-full flex flex-row justify-center items-center p-2 mt-4 text-center text-gray-200 border-2 border-dashed rounded-lg border-gray-600">
+    <div className="w-full flex flex-row justify-center items-center p-3 mt-4 text-center text-cyan-200 rounded-xl bg-cyan-950/60 border border-cyan-500/20">
       <RecordModal
         isVisible={recordingIsVisible}
         setIsVisible={setRecordingModalIsVisible}
@@ -354,11 +351,11 @@ const QuestionBox = ({
           onClick={() => {
             setRecordingModalIsVisible(true);
           }}
-          className="text-xl cursor-pointer pr-2 hover:text-gray-100 text-gray-400"
+          className="text-xl cursor-pointer pr-2 hover:text-cyan-200 text-cyan-400/60"
         />
         {isMutationLoading ? (
           <div className="pr-2">
-            <FaSpinner className="text-xl cursor-pointer animate-spin object-center origin-center text-gray-400" />
+            <FaSpinner className="text-xl cursor-pointer animate-spin object-center origin-center text-cyan-400" />
           </div>
         ) : (
           <FaPaperPlane
@@ -366,7 +363,7 @@ const QuestionBox = ({
               if (!question || question.trim() === "") return;
               sendLiveQuestion({ question: question, podcast_id: podcastId });
             }}
-            className="text-xl cursor-pointer pr-2 hover:text-gray-100 text-gray-400"
+            className="text-xl cursor-pointer pr-2 hover:text-cyan-200 text-cyan-400/60"
           />
         )}
       </div>

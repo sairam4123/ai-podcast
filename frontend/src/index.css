@@ -1,182 +1,153 @@
 @import "tailwindcss";
 
 @theme {
+  /* Font families */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
 
-  --animate-popIn: popIn 0.5s ease-in-out;
-  --animate-popOut: popOut 0.5s ease-in-out;
-  --animate-flipIn: flipIn 0.5s ease-in-out;
-  --animate-flipOut: flipOut 0.5s ease-in-out;
-  --animate-fadeIn: fadeIn 0.5s ease-in-out;
-  --animate-fadeOut: fadeOut 0.5s ease-in-out;
-  --animate-slideInBottom: slideInBottom 0.5s ease-in-out;
-  --animate-slideInTop: slideInTop 0.5s ease-in-out;
-  --animate-slideOut: slideOut 0.5s ease-in-out;
+  /* Custom animations */
+  --animate-fadeIn: fadeIn 0.2s ease-out;
+  --animate-fadeOut: fadeOut 0.2s ease-out;
+  --animate-slideUp: slideUp 0.25s ease-out;
+  --animate-slideDown: slideDown 0.25s ease-out;
+  --animate-scaleIn: scaleIn 0.15s ease-out;
 
-
-  @keyframes highlightGrow {
-    0% {
-      width: 0%;
-      opacity: 0.3;
-    },
-    100% {
-      width: 100%;
-      opacity: 0.3;
-    }
-  }
-
-  @keyframes popIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    75% {
-        opacity: 0.95;
-        transform: scale(1.02);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-  }
-
-  @keyframes popOut {
-    0% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    75% {
-        opacity: 0.95;
-        transform: scale(1.02);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-  }
-  
-  @keyframes flipIn {
-    0% {
-        opacity: 0;
-        transform: rotateY(-120deg) scale(0.9, 0.9);
-    }
-    100% {
-        opacity: 1;
-        transform: rotateY(0deg) scale(1, 1);
-    }
-  }
-  
-  @keyframes flipOut {
-    0% {
-        opacity: 1;
-        transform: rotateY(0deg) scale(1, 1);
-    }
-    100% {
-        opacity: 0;
-        transform: rotateY(-120deg) scale(0.9, 0.9);
-    }
-  }
-  
-  @keyframes slideInBottom {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-  }
-
-  @keyframes slideInTop {
-    0% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-  }
-  @keyframes slideOut {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-  }
   @keyframes fadeIn {
     0% {
-        opacity: 0;
+      opacity: 0;
     }
+
     100% {
-        opacity: 1;
-      }
-    }
-  @keyframes fadeOut {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
+      opacity: 1;
     }
   }
-  
+
+  @keyframes fadeOut {
+    0% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes slideUp {
+    0% {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    0% {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
 }
 
+/* === Base Styles - Cyan/Blue Theme from Logo === */
+body {
+  font-family: var(--font-body);
+  /* Deep blue-cyan gradient matching the logo */
+  background: linear-gradient(135deg, #020617 0%, #0c4a6e 50%, #020617 100%);
+  color: #f8fafc;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+/* === Scrollbar - Cyan Theme === */
 ::-webkit-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-sky-900) var(--color-sky-950);
-  height: 8px;
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-sky-850); /* dark track */
+  background: rgba(8, 47, 73, 0.5);
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-sky-600); /* thumb */
+  background: rgba(6, 182, 212, 0.4);
   border-radius: 8px;
-  border: 2px solid var(--color-sky-300);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-sky-200); /* on hover */
+  background: rgba(6, 182, 212, 0.6);
 }
 
+/* === Glass Panel Utility - Blue Tint === */
 .glass-panel {
-  position: relative;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
+  background: rgba(8, 47, 73, 0.5);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow:
-    0 4px 30px rgba(0, 0, 0, 0.1),
-    inset 0 1px 1px rgba(255, 255, 255, 0.3); /* shiny top edge */
-  padding: 1.5rem;
-  color: white;
-  overflow: hidden;
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  border-radius: 16px;
 }
 
-/* Glossy gradient layer */
-.glass-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent);
-  pointer-events: none;
-  z-index: 1;
+/* === Shimmer Effect === */
+.shimmer {
+  background: linear-gradient(90deg,
+      rgba(6, 182, 212, 0.05) 0%,
+      rgba(6, 182, 212, 0.15) 50%,
+      rgba(6, 182, 212, 0.05) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
-/* Content stays on top */
-.glass-panel > * {
-  position: relative;
-  z-index: 2;
+/* === Focus States - Cyan === */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5);
+}
+
+/* === Selection - Cyan === */
+::selection {
+  background: rgba(6, 182, 212, 0.4);
+  color: #fff;
 }

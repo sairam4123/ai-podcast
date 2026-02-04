@@ -9,20 +9,12 @@ type MenuOption = {
   isDangerous?: boolean;
 };
 
-// const options: MenuOption[] = [
-//   { label: "Profile", value: "profile" },
-//   { label: "Settings", value: "settings" },
-//   { label: "Logout", value: "logout" },
-// ];
 export default function MenuButton({
-
-    // onSelect,
-    options,
-    children,
-    }: {
-    // onSelect?: (value: string) => void;
-    options: MenuOption[];
-    children?: React.ReactNode;
+  options,
+  children,
+}: {
+  options: MenuOption[];
+  children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState<boolean>(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
@@ -43,7 +35,6 @@ export default function MenuButton({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!open) return;
-
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
@@ -51,9 +42,7 @@ export default function MenuButton({
         break;
       case "ArrowUp":
         e.preventDefault();
-        setFocusedIndex((prev) =>
-          prev <= 0 ? options.length - 1 : prev - 1
-        );
+        setFocusedIndex((prev) => (prev <= 0 ? options.length - 1 : prev - 1));
         break;
       case "Escape":
         setOpen(false);
@@ -67,8 +56,6 @@ export default function MenuButton({
           handleSelect(options[focusedIndex]);
         }
         break;
-      default:
-        break;
     }
   };
 
@@ -79,16 +66,9 @@ export default function MenuButton({
   }, [focusedIndex]);
 
   const handleSelect = (value: MenuOption) => {
-    console.log("Selected:", value);
     setOpen(false);
     setFocusedIndex(-1);
-
     value.onSelect?.();
-
-    // onSelect?.(value);
-    // if (value === "logout") {
-    //   alert("Logging out...");
-    // }
   };
 
   return (
@@ -103,55 +83,48 @@ export default function MenuButton({
         tabIndex={0}
         aria-expanded={open}
         aria-controls="dropdown-menu"
-        className="bg-sky-800 text-white px-4 py-2 rounded hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-900"
+        className="bg-transparent hover:bg-white/5 text-white px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
       >
         {children}
       </button>
 
       <AnimatePresence>
-      {open && (
-        <motion.div
-          id="dropdown-menu"
-          role="menu"
-          initial={{
-            opacity: 0,
-            y: -10,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          exit={{
-            opacity: 0,
-            y: -10,
-          }}
-          transition={{ duration: 0.3 }}
-          aria-label="Options"
-          onKeyDown={handleKeyDown}
-          className="absolute right-0 mt-2 w-44 bg-sky-900 rounded-md shadow-lg border border-sky-100 z-10"
-        >
-          <ul className="py-1">
-            {options.map((opt, index) => (
-              <li key={opt.value} role="none">
-                <button
-                  ref={(el) => {
-                    itemRefs.current[index] = el;
-                  }}
-                  role="menuitem"
-                  tabIndex={0}
-                  onClick={() => handleSelect(opt)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-sky-800 focus:outline-none focus:bg-sky-700 ${
-                    opt.isDangerous ? "text-red-600 hover:bg-red-100" : opt.disabled ? "text-gray-600/40" : ""
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        {open && (
+          <motion.div
+            id="dropdown-menu"
+            role="menu"
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.15 }}
+            aria-label="Options"
+            onKeyDown={handleKeyDown}
+            className="absolute right-0 mt-2 w-44 bg-cyan-950/95 backdrop-blur-md rounded-xl shadow-xl border border-cyan-500/20 z-50 overflow-hidden"
+          >
+            <ul className="py-1">
+              {options.map((opt, index) => (
+                <li key={opt.value} role="none">
+                  <button
+                    ref={(el) => { itemRefs.current[index] = el; }}
+                    role="menuitem"
+                    tabIndex={0}
+                    onClick={() => handleSelect(opt)}
+                    disabled={opt.disabled}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors focus:outline-none ${opt.isDangerous
+                      ? "text-red-400 hover:bg-red-500/10 focus:bg-red-500/10"
+                      : opt.disabled
+                        ? "text-cyan-700 cursor-not-allowed"
+                        : "text-cyan-100 hover:bg-cyan-800/50 focus:bg-cyan-800/50"
+                      }`}
+                  >
+                    {opt.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

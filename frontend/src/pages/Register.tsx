@@ -8,163 +8,170 @@ export default function Register() {
 
   const registerMutation = api.useUserRegister({
     onSuccess: (data) => {
-      console.log("Registration successful", data);
+      if (Array.isArray(data)) {
+        if (data.length === 0) {
+          toast.error("Registration failed. Please try again.");
+          return;
+        }
+        if ("emsg" in data[0]) {
+          toast.error(data[0].emsg as string);
+          return;
+        }
+      }
 
-            if (Array.isArray(data)) {
-                if (data.length === 0) {
-                    toast.error("Login failed. Please check your credentials and try again.");
-                    return;
-                }
-                if ("emsg" in data[0]) {
-                    toast.error(data[0].emsg as string);
-                    return;
-                }
-            }
-
-      toast.success("Registration successful!", {
-        duration: 8000,
-      });
-      toast.success("Check your email for verification link!", {
-        duration: 8000,
-      });
-      navigate("/login"); // Redirect to login page after successful registration
+      toast.success("Registration successful!", { duration: 8000 });
+      toast.success("Check your email for verification!", { duration: 8000 });
+      navigate("/login");
     },
     onFailure: (error) => {
-      toast.error(
-        "Registration failed. Please try again. Error: " + error.message
-      );
+      toast.error("Registration failed: " + error.message);
       console.error("Error registering user", error);
-      // Handle registration error, e.g., show an error message
     },
   });
 
+  const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget.closest("form") as HTMLFormElement;
+    const formData = new FormData(form);
+    const data = {
+      email: formData.get("email") as string,
+      user_name: formData.get("username") as string,
+      full_name: formData.get("full_name") as string,
+      password: formData.get("password") as string,
+      confirm_password: formData.get("confirmPassword") as string,
+    };
+
+    if (
+      !data.email ||
+      !data.user_name ||
+      !data.full_name ||
+      !data.password ||
+      !data.confirm_password
+    ) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+
+    if (data.password !== data.confirm_password) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    registerMutation.mutate(data);
+  };
+
   return (
-    <div className="h-screen items-center justify-center flex flex-col min-h-screen bg-radial from-sky-950 to-black">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center">Register</h2>
+    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-sm glass-panel p-8 space-y-6">
+        <div className="text-center">
+          <h1 className="font-heading text-2xl font-bold text-white">
+            Create account
+          </h1>
+          <p className="text-cyan-300/70 text-sm mt-1">
+            Join Podolli.AI today
+          </p>
+        </div>
+
         <form className="space-y-4">
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-cyan-200 mb-1"
             >
               Email
             </label>
             <input
               type="email"
               name="email"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              id="email"
               required
-              placeholder="Enter your email"
+              placeholder="you@example.com"
+              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
             />
           </div>
+
           <div>
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-cyan-200 mb-1"
             >
               Username
             </label>
             <input
               type="text"
               name="username"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              id="username"
               required
-              placeholder="Enter your username"
+              placeholder="Choose a username"
+              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
             />
           </div>
+
           <div>
             <label
               htmlFor="full_name"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-cyan-200 mb-1"
             >
               Display Name
             </label>
             <input
               type="text"
               name="full_name"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              id="full_name"
               required
-              placeholder="Enter your full name"
+              placeholder="Your display name"
+              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
             />
           </div>
+
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-cyan-200 mb-1"
             >
               Password
             </label>
             <input
               type="password"
               name="password"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              id="password"
               required
-              placeholder="*******"
+              placeholder="••••••••"
+              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
             />
           </div>
+
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-cyan-200 mb-1"
             >
               Confirm Password
             </label>
             <input
               type="password"
               name="confirmPassword"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              id="confirmPassword"
               required
-              placeholder="Confirm your password"
+              placeholder="••••••••"
+              className="w-full px-4 py-2.5 rounded-lg bg-cyan-950/50 border border-cyan-500/20 text-white placeholder-cyan-600/50 focus:border-cyan-400 transition-colors"
             />
           </div>
-          <p className="text-sm text-gray-600 text-center">
-            Got an account?{" "}
-            <Link to="/login" className="text-blue-600 hover:underline">
-              Login!
+
+          <p className="text-sm text-cyan-300/60 text-center pt-2">
+            Already have an account?{" "}
+            <Link to="/login" className="text-cyan-400 hover:underline">
+              Sign in
             </Link>
           </p>
+
           <Button
             type="submit"
             isLoading={registerMutation.isLoading}
-            onClick={(e) => {
-              e.preventDefault();
-              const form = e.currentTarget.closest("form") as HTMLFormElement;
-              const formData = new FormData(form);
-              const data = {
-                email: formData.get("email") as string,
-                user_name: formData.get("username") as string,
-                full_name: formData.get("full_name") as string,
-                password: formData.get("password") as string,
-                confirm_password: formData.get("confirmPassword") as string,
-              };
-
-              if (
-                !data.email ||
-                !data.user_name ||
-                !data.full_name ||
-                !data.password ||
-                !data.confirm_password
-              ) {
-                toast.error("Please fill in all fields.");
-                return;
-              }
-
-              if (data.password !== data.confirm_password) {
-                toast.error("Passwords do not match. Please try again.");
-                return;
-              }
-
-              console.log("Creating podcast with data:", data);
-              registerMutation.mutate(data);
-              // Handle login logic here
-              console.log("Login form submitted");
-            }}
-            className="w-full py-2 px-4 mt-8 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            onClick={handleSubmit}
+            className="w-full"
           >
-            <p className="flex items-center mx-auto uppercase justify-center">
-              Register
-            </p>
+            Create Account
           </Button>
         </form>
       </div>

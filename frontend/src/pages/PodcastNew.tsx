@@ -14,7 +14,6 @@ import {
 } from "react-icons/fa";
 import { Podcast } from "../@types/Podcast";
 import { useGetImage } from "../api/getImage";
-// import { formatDuration } from "../utils/formatDuration";
 import { Conversation } from "../@components/Conversation";
 import Button from "../@components/Button";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
@@ -30,12 +29,12 @@ export function PodcastNew() {
   });
 
   return (
-    <main className="flex flex-col lg:h-screen min-h-screen bg-radial from-sky-950 to-black">
+    <main className="flex flex-col lg:h-screen min-h-screen">
       <NavBar />
-      <div className="flex flex-col flex-grow gap-4 overflow-hidden p-4">
+      <div className="flex flex-col flex-grow gap-4 overflow-hidden p-4 max-w-7xl mx-auto w-full">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center flex-grow">
-            <FaSpinner className="animate-spin text-4xl text-gray-200" />
+            <FaSpinner className="animate-spin text-4xl text-slate-400" />
           </div>
         ) : (data as unknown as number[])?.[1] === 404 ? (
           <NotFound />
@@ -43,7 +42,7 @@ export function PodcastNew() {
           <PodcastCard refetch={refetch} podcast={data?.podcast} />
         )}
         {error && (
-          <div className="text-red-500 text-center w-full">
+          <div className="text-red-400 text-center w-full">
             Error loading podcast: {error.message}
           </div>
         )}
@@ -80,8 +79,6 @@ export function PodcastCard({
       { enabled: !!podcast?.id }
     );
 
-  console.log({ liveQuestions });
-
   const { mutate: likePodcast, isLoading: likeLoading } = api.useLikePodcast({
     onSuccess: () => {
       toast.success("Podcast liked successfully");
@@ -108,7 +105,6 @@ export function PodcastCard({
           toast.error(data[0].emsg);
           return;
         }
-        console.log("Podcast visibility updated successfully", data);
         toast.success("Podcast visibility updated successfully");
         refetch?.();
       },
@@ -124,172 +120,124 @@ export function PodcastCard({
       <>
         <title>{podcast?.podcast_title}</title>
         <link rel="icon" href={`${imageUrl}`} precedence="high" />
-        <meta
-          name="description"
-          content={podcast?.podcast_description || "Podcast details"}
-        />
-        <meta
-          name="og:title"
-          content={podcast?.podcast_title || "Podcast details"}
-        />
-        <meta
-          name="og:description"
-          content={podcast?.podcast_description || "Podcast details"}
-        />
-        <meta
-          name="og:image"
-          content={imageUrl || "/podcastplaceholdercover.png"}
-        />
+        <meta name="description" content={podcast?.podcast_description || "Podcast details"} />
+        <meta name="og:title" content={podcast?.podcast_title || "Podcast details"} />
+        <meta name="og:description" content={podcast?.podcast_description || "Podcast details"} />
+        <meta name="og:image" content={imageUrl || "/podcastplaceholdercover.png"} />
         <meta name="og:type" content="audio" />
-        <meta
-          name="og:url"
-          content={`https://podolli-ai.co.in/podcast/${podcast?.id}`}
-        />
+        <meta name="og:url" content={`https://podolli-ai.co.in/podcast/${podcast?.id}`} />
       </>
-      <div className="flex flex-col flex-1/5 bg-sky-500/20 border overflow-y-auto border-sky-300/50 space-y-2 p-2 rounded-lg">
+
+      {/* Sidebar */}
+      <div className="flex flex-col lg:w-80 glass-panel p-4 space-y-4 overflow-y-auto">
         <img
           src={imageUrl ?? "/podcastplaceholdercover.png"}
           alt={podcast?.podcast_title}
-          className="w-32 aspect-square mx-auto h-auto object-cover rounded-lg"
+          className="w-32 aspect-square mx-auto h-auto object-cover rounded-xl"
         />
-        <h2 className="text-xl font-bold text-white">
+        <h2 className="font-heading text-xl font-bold text-white text-center">
           {podcast?.podcast_title}
         </h2>
-        <p className="text-gray-200">{podcast?.podcast_description}</p>
-        {/* <p className="text-gray-400 text-sm">
-          {podcast?.duration ? formatDuration(podcast?.duration) : "N/A"}
-        </p> */}
-        <div className="flex flex-row items-center flex-wrap justify-start gap-2">
+        <p className="text-slate-300 text-sm">{podcast?.podcast_description}</p>
+
+        <div className="flex flex-wrap gap-2">
           {podcast?.tags?.map((tag, index) => (
             <span
               key={index}
-              className="bg-sky-300 text-nowrap text-black px-2 py-1 rounded-full text-xs"
+              className="bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full text-xs"
             >
               {tag}
             </span>
           ))}
         </div>
-        <div className="flex flex-row gap-2 items-center mt-2 flex-wrap">
-          <Button
-            className="py-3 px-4"
-            isLoading={audioLoading}
-            onClick={() => {
-              if (isPlaying) {
-                pause();
-              } else {
-                setSourceUrl(audioUrl ?? "");
-                setCurrentPodcast(podcast!);
-                play();
-              }
-            }}
-          >
+
+        <div className="flex flex-wrap gap-2">
+          <Button isLoading={audioLoading} onClick={() => {
+            if (isPlaying) {
+              pause();
+            } else {
+              setSourceUrl(audioUrl ?? "");
+              setCurrentPodcast(podcast!);
+              play();
+            }
+          }}>
             <FaPlay className="inline" />
           </Button>
-          <Button
-            onClick={() => {
-              mutate({
-                podcast_id: podcast?.id ?? "",
-                is_public: !podcast?.is_public,
-              });
-            }}
-          >
+
+          <Button variant="secondary" onClick={() => {
+            mutate({
+              podcast_id: podcast?.id ?? "",
+              is_public: !podcast?.is_public,
+            });
+          }}>
             {updateVisibilityLoading ? (
-              <>
-                <Spinner className="inline mr-2" />
-              </>
+              <Spinner className="inline" />
             ) : podcast?.is_public ? (
-              <>
-                <FaEye className="inline mr-2" />
-                Public
-              </>
+              <><FaEye className="inline mr-1" /> Public</>
             ) : (
-              <>
-                <FaEyeSlash className="inline mr-2" />
-                Private
-              </>
+              <><FaEyeSlash className="inline mr-1" /> Private</>
             )}
           </Button>
 
-          <Button
-            isLoading={likeLoading}
-            onClick={() => {
-              likePodcast({
-                podcast_id: podcast?.id ?? "",
-                liked: !(podcast?.liked_by_user ?? false),
-              });
-            }}
-            className="py-3 px-4"
-          >
-            {/* {<FaThumbsUp className="inline mr-2" />} */}
-            {podcast?.liked_by_user ? (
-              <FaThumbsUp className="inline" />
-            ) : (
-              <FaRegThumbsUp className="inline" />
-            )}
+          <Button variant="secondary" isLoading={likeLoading} onClick={() => {
+            likePodcast({
+              podcast_id: podcast?.id ?? "",
+              liked: !(podcast?.liked_by_user ?? false),
+            });
+          }}>
+            {podcast?.liked_by_user ? <FaThumbsUp /> : <FaRegThumbsUp />}
           </Button>
-          <Button
-            isLoading={dislikeLoading}
-            onClick={() => {
-              dislikePodcast({
-                podcast_id: podcast?.id ?? "",
-                disliked: !(podcast?.disliked_by_user ?? false),
-              });
-            }}
-            className="py-3 px-4"
-          >
-            {podcast?.disliked_by_user ? (
-              <FaThumbsDown className="inline" />
-            ) : (
-              <FaRegThumbsDown className="inline" />
-            )}
+
+          <Button variant="secondary" isLoading={dislikeLoading} onClick={() => {
+            dislikePodcast({
+              podcast_id: podcast?.id ?? "",
+              disliked: !(podcast?.disliked_by_user ?? false),
+            });
+          }}>
+            {podcast?.disliked_by_user ? <FaThumbsDown /> : <FaRegThumbsDown />}
           </Button>
-          <Button
-            className="py-3 px-4"
-            onClick={() => {
-              const podcastUrl = `${window.location.origin}/podcast/${podcast?.id}`;
-              navigator.clipboard.writeText(podcastUrl).then(() => {
-                toast.success("Podcast link copied to clipboard");
-              });
-            }}
-          >
-            {<FaShare className="inline" />}
+
+          <Button variant="secondary" onClick={() => {
+            const podcastUrl = `${window.location.origin}/podcast/${podcast?.id}`;
+            navigator.clipboard.writeText(podcastUrl).then(() => {
+              toast.success("Link copied to clipboard");
+            });
+          }}>
+            <FaShare />
           </Button>
         </div>
-        <div className="flex flex-col">
-          <p className="text-gray-200">People</p>
-          <div className="flex flex-row mt-2">
+
+        <div>
+          <p className="text-slate-400 text-sm mb-2">People</p>
+          <div className="flex">
             {people?.map((person, index) => (
               <PersonAvatarImage key={index} personId={person.id} />
             ))}
           </div>
         </div>
       </div>
-      <div className="flex flex-col flex-2/3 max-h-[32rem] lg:max-h-full bg-sky-500/20 border overflow-hidden border-sky-300/50 space-y-2 p-2 rounded-lg">
-        <h2 className="text-xl font-bold text-white">Transcript</h2>
+
+      {/* Transcript */}
+      <div className="flex flex-col flex-1 glass-panel p-4 overflow-hidden">
+        <h2 className="font-heading text-xl font-semibold text-white mb-3">Transcript</h2>
 
         {(data as unknown as number[])?.[1] === 404 ||
-        (data?.conversations?.length === 0 && !isLoading) ? (
+          (data?.conversations?.length === 0 && !isLoading) ? (
           <TranscriptMissing />
         ) : isLoading ? (
           <div className="flex flex-col items-center justify-center flex-grow">
-            <FaSpinner className="animate-spin text-4xl text-gray-200" />
+            <FaSpinner className="animate-spin text-4xl text-slate-400" />
           </div>
         ) : error ? (
-          <p className="text-red-500">
-            Error loading transcript: {error.message}
-          </p>
-        ) : (
-          <p className="text-gray-200 hidden"></p>
-        )}
+          <p className="text-red-400">Error loading transcript: {error.message}</p>
+        ) : null}
 
         {data?.conversations && (
           <Conversation
             podcastId={podcast?.id ?? ""}
             conversation={data?.conversations ?? []}
             questions={liveQuestions?.questions || []}
-            refreshQuestions={() => {
-              refreshQuestions?.();
-            }}
+            refreshQuestions={() => refreshQuestions?.()}
           />
         )}
       </div>
@@ -299,18 +247,10 @@ export function PodcastCard({
 
 export function TranscriptMissing() {
   return (
-    <div className="flex flex-col flex-grow justify-center items-center space-y-2 p-2 rounded-lg">
-      <img
-        src="/transcriptmissing.png"
-        alt="Transcript Missing"
-        className="aspect-square h-64 mb-4"
-      />
-      <h1 className="text-4xl ml-4 mt-2 font-black text-shadow-md text-white">
-        Transcript Missing
-      </h1>
-      <p className="text-lg text-gray-200">
-        This podcast does not have a transcript available.
-      </p>
+    <div className="flex flex-col flex-grow justify-center items-center space-y-4 p-4">
+      <img src="/transcriptmissing.png" alt="Transcript Missing" className="h-48 opacity-60" />
+      <h1 className="font-heading text-2xl font-bold text-white">Transcript Missing</h1>
+      <p className="text-slate-400">This podcast does not have a transcript available.</p>
     </div>
   );
 }
@@ -318,38 +258,21 @@ export function TranscriptMissing() {
 export function NotFound() {
   const { podcast_id } = useParams<{ podcast_id: string }>();
   return (
-    <div className="flex flex-col flex-grow justify-center items-center bg-sky-500/20 border border-sky-300/50 space-y-2 p-2 rounded-lg">
-      <img
-        src="/notfound.png"
-        alt="Podcast Not Found"
-        className="aspect-square h-64 mb-4"
-      />
-      <h1 className="text-4xl ml-4 mt-2 font-black text-shadow-md text-white">
-        404 - Podcast Not Found
-      </h1>
-      <p className="text-lg text-gray-200">
-        The podcast with ID <span className="font-bold">{podcast_id}</span> does
-        not exist or has been removed.
+    <div className="flex flex-col flex-grow justify-center items-center glass-panel p-8 space-y-4">
+      <img src="/notfound.png" alt="Podcast Not Found" className="h-48 opacity-60" />
+      <h1 className="font-heading text-3xl font-bold text-white">404 - Not Found</h1>
+      <p className="text-slate-400">
+        Podcast <span className="font-semibold text-white">{podcast_id}</span> does not exist.
       </p>
     </div>
   );
 }
 
-function PersonAvatarImage({
-  personId,
-  first,
-}: {
-  personId: string;
-  first?: boolean;
-}) {
+function PersonAvatarImage({ personId, first }: { personId: string; first?: boolean }) {
   const { imageUrl, isLoading } = useGetAvatarImage({ personId });
   return (
     <img
-      className={`h-10 w-10 ${
-        first ? "" : "mr-2"
-      } aspect-square rounded-full border-2 border-sky-500 ${
-        isLoading ? "hidden" : ""
-      }`}
+      className={`h-10 w-10 ${first ? "" : "-ml-2"} rounded-full border-2 border-slate-700 ${isLoading ? "hidden" : ""}`}
       src={imageUrl || "/userplaceholder.png"}
       alt="Person Avatar"
     />

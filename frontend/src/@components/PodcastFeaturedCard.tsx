@@ -1,119 +1,124 @@
-import { FaPlay } from "react-icons/fa"
-import { Podcast } from "../@types/Podcast"
-import { api } from "../api/api"
-import { usePodcastContext } from "../contexts/podcast.context"
-import { useMediaPlayerContext } from "../contexts/mediaPlayer.context"
-import clsx from "clsx"
-import { motion } from "framer-motion"
-import { cn } from "../lib/cn"
+import { FaPlay, FaHeadphones, FaThumbsUp } from "react-icons/fa";
+import { motion } from "framer-motion";
+import { Podcast } from "../@types/Podcast";
+import { api } from "../api/api";
+import { usePodcastContext } from "../contexts/podcast.context";
+import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
+import { cn } from "../lib/cn";
+import { formatNumber } from "../utils/formatNumber";
+import { formatDuration } from "../utils/formatDuration";
+import { useNavigate } from "react-router";
 
+export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
+  const { setCurrentPodcast, setIsPodcastPlaying } = usePodcastContext();
+  const { play, setSourceUrl } = useMediaPlayerContext();
+  const navigate = useNavigate();
 
-export default function PodcastFeaturedCard({
-    podcast
-}: {
-    podcast: Podcast
-}) {
-
-    const {setCurrentPodcast, setIsPodcastPlaying} = usePodcastContext()
-    const {play, setSourceUrl} = useMediaPlayerContext()
-    
-    const { audioUrl, isLoading: audioLoading } = api.useGetAudio(
+  const { audioUrl, isLoading: audioLoading } = api.useGetAudio(
     { podcast_id: podcast?.id ?? "" },
     { enabled: !!podcast?.id }
   );
 
-    const {imageUrl} = api.useGetImage({
-        podcastId: podcast?.id ?? "",
-    })
-    const image = imageUrl ?? "/podcastplaceholdercover.png"
+  const { imageUrl } = api.useGetImage({
+    podcastId: podcast?.id ?? "",
+  });
+  const image = imageUrl ?? "/podcastplaceholdercover.png";
 
-    return <div className="relative flex flex-row group/card cursor-pointer z-1 min-w-80 h-48 border border-sky-800/20 transition-all ease-out shadow-md shadow-black/60 m-3 w-80 bg-sky-500/30 rounded-lg overflow-hidden select-none">
-        <img
-            src={image}
-            alt="Podcast"
-            className="flex w-full h-full blur-xs group-hover/card:blur-[1px] transition ease-in-out group-hover/card:scale-120 scale-105 object-cover object-center aspect-square mask-r-from-97% mask-t-from-97% mask-b-from-97% mask-l-from-97% rounded-lg"
-        />
-        <div className="absolute inset-0 flex justify-end flex-col bg-linear-20 from-black/80 from-45% via-70% via-black/40 p-2 to-transparent rounded-lg">
-            <p className="text-white text-2xl w-fit hover:underline font-bold select-none">
-                {podcast?.podcast_title ?? "Podcast Title.."}
-            </p>
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (audioLoading) return;
+    setSourceUrl(audioUrl ?? "");
+    setCurrentPodcast(podcast);
+    setIsPodcastPlaying(true);
+    play();
+  };
 
-            <div className="flex flex-row">
+  return (
+    <motion.div
+      whileHover={{ scale: 1.02, y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      onClick={() => navigate(`/podcast/${podcast?.id}`)}
+      className="relative cursor-pointer min-w-80 w-80 h-52 m-3 rounded-2xl overflow-hidden group shadow-lg shadow-black/30"
+    >
+      {/* Background Image */}
+      <img
+        src={image}
+        alt={podcast?.podcast_title}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+      />
 
-            <p className="text-white text-sm line-clamp-2 font-sm w-6/7 select-none mt-1 group-hover/card:line-clamp-3 mask-b-from-0.5">
-                {podcast?.podcast_description ?? "Description..."}
-            </p>
+      {/* Dark Gradient Overlay - stronger for better readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/20" />
 
-            <p onClick={() => {
-              if (audioLoading) return; // Prevent play if audio is still loading
-                setSourceUrl(audioUrl ?? "");
-                setCurrentPodcast(podcast);
-                setIsPodcastPlaying(true);
-                play();
-            }} className={cn("text-white mt-auto text-sm flex w-fit ml-auto items-center justify-center gap-2 text-center rounded-full bg-sky-600 px-4 py-2 hover:bg-sky-500 font-light select-none", audioLoading && "cursor-wait opacity-60")}>
-                <FaPlay></FaPlay>
-            </p>
-            </div>
+      {/* Cyan accent glow on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-blue-600/0 group-hover:from-cyan-500/10 group-hover:to-blue-600/20 transition-all duration-300" />
 
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col justify-end p-5">
+        {/* Title and Description */}
+        <h3 className="font-heading text-lg font-bold text-white line-clamp-1 drop-shadow-lg">
+          {podcast?.podcast_title ?? "Podcast Title"}
+        </h3>
+        <p className="text-sm text-white/80 line-clamp-2 mt-1 drop-shadow-md">
+          {podcast?.podcast_description ?? "Description..."}
+        </p>
+
+        {/* Stats Row */}
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center gap-3 text-xs text-white/70">
+            <span className="flex items-center gap-1">
+              <FaHeadphones className="text-cyan-400" />
+              {formatNumber(podcast?.view_count ?? 0)}
+            </span>
+            <span className="flex items-center gap-1">
+              <FaThumbsUp className="text-cyan-400" />
+              {formatNumber(podcast?.like_count ?? 0)}
+            </span>
+            <span className="text-white/60">
+              {formatDuration(podcast?.duration)}
+            </span>
+          </div>
+
+          {/* Play Button */}
+          <button
+            onClick={handlePlay}
+            className={cn(
+              "w-11 h-11 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 flex items-center justify-center transition-all shadow-lg shadow-cyan-500/30 active:scale-95",
+              audioLoading && "opacity-50 cursor-wait"
+            )}
+          >
+            <FaPlay className="text-white text-sm ml-0.5" />
+          </button>
         </div>
-    </div>
-
+      </div>
+    </motion.div>
+  );
 }
-
-const shimmerStyle = {
-  backgroundImage:
-    "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
-};
 
 function ShimmerBlock({ className = "" }: { className?: string }) {
   return (
-    <div
-      className={clsx(
-        "relative overflow-hidden bg-slate-300/50",
-        className,
-        "rounded-md"
-      )}
-    >
-      <motion.div
-        className="absolute inset-0"
-        initial={{ x: "-100%" }}
-        animate={{ x: "100%" }}
-        transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
-        style={{ ...shimmerStyle }}
-      />
-    </div>
+    <div className={cn("relative overflow-hidden bg-white/10 rounded-md shimmer", className)} />
   );
 }
 
-
-
 export function PodcastFeaturedCardSkeleton() {
   return (
-    <div className="relative flex flex-row group/card cursor-wait z-1 min-w-80 h-48 border border-sky-800/20 shadow-md shadow-black/60 m-3 w-80 bg-sky-500/30 rounded-lg overflow-hidden select-none">
-      {/* Image Layer + shimmer */}
-      <div className="w-full h-full bg-sky-500/30">
-        <ShimmerBlock className="w-full h-full rounded-lg" />
-      </div>
-
-      {/* Optional dark overlay */}
-      <div className="absolute inset-0 bg-black/10" />
-
-      {/* Text shimmer layer */}
-      <div className="absolute inset-0 flex flex-col justify-end p-2 gap-1">
-        <ShimmerBlock className="h-5 w-2/3 rounded-md" /> {/* Title */}
-        <ShimmerBlock className="h-3 w-5/6 rounded-sm" />
-        <ShimmerBlock className="h-3 w-4/5 rounded-sm" />
-
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex gap-2">
-            <ShimmerBlock className="h-3 w-10 rounded-sm" />
-            <ShimmerBlock className="h-3 w-16 rounded-sm" />
+    <div className="relative min-w-80 w-80 h-52 m-3 rounded-2xl overflow-hidden bg-cyan-950/60 shadow-lg">
+      <ShimmerBlock className="absolute inset-0 w-full h-full" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
+      <div className="absolute inset-0 flex flex-col justify-end p-5 gap-2">
+        <ShimmerBlock className="h-5 w-3/4" />
+        <ShimmerBlock className="h-4 w-full" />
+        <ShimmerBlock className="h-4 w-5/6" />
+        <div className="flex justify-between items-center mt-2">
+          <div className="flex gap-3">
+            <ShimmerBlock className="h-4 w-12" />
+            <ShimmerBlock className="h-4 w-12" />
           </div>
-          <ShimmerBlock className="w-10 h-10 rounded-full bg-sky-600" />
+          <ShimmerBlock className="w-11 h-11 rounded-full" />
         </div>
       </div>
     </div>
   );
 }
-
-
