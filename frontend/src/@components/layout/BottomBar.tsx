@@ -3,6 +3,8 @@ import { FaHome, FaPlus, FaSearch, FaUser, FaMusic } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router";
 import { cn } from "../../lib/cn";
 import { getUser } from "../../lib/supabase";
+import { useGetAvatarImage } from "../../api/getAvatarImage";
+import { ProfileAvatarIcon } from "../../@components/AvatarIcon";
 
 interface NavItem {
     icon: typeof FaHome;
@@ -29,6 +31,10 @@ export function BottomBar() {
             if (user) setUserId(user.id);
         });
     }, []);
+
+    const { imageUrl } = useGetAvatarImage({
+        personId: userId ?? "",
+    });
 
     const handleNavClick = (item: NavItem) => {
         if (item.isDynamic && item.label === "Profile") {
@@ -64,6 +70,8 @@ export function BottomBar() {
                 <div className="flex items-center justify-around px-2 py-2">
                     {navItems.map((item) => {
                         const active = isActive(item);
+                        const isProfile = item.label === "Profile";
+
                         return (
                             <button
                                 key={item.path}
@@ -75,15 +83,27 @@ export function BottomBar() {
                                         : "text-cyan-200/60 active:text-white"
                                 )}
                             >
-                                <item.icon className={cn(
-                                    "text-xl transition-transform",
-                                    active && "scale-110"
-                                )} />
+                                {isProfile && userId ? (
+                                    <ProfileAvatarIcon
+                                        imageUrl={imageUrl}
+                                        id={userId}
+                                        className={cn(
+                                            "w-6 h-6 flex-shrink-0",
+                                            active && "scale-110 ring-2 ring-cyan-500/50 rounded-full"
+                                        )}
+                                        imageClassName="w-6 h-6 rounded-full object-cover border border-cyan-500/30"
+                                    />
+                                ) : (
+                                    <item.icon className={cn(
+                                        "text-xl transition-transform",
+                                        active && "scale-110"
+                                    )} />
+                                )}
                                 <span className={cn(
                                     "text-[10px] font-medium",
                                     active ? "text-cyan-400" : "text-cyan-200/60"
                                 )}>
-                                    {item.label}
+                                    {isProfile && !userId ? "Sign In" : item.label}
                                 </span>
                             </button>
                         );

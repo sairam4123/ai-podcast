@@ -46,7 +46,7 @@ export default function Button({
         className
       )}
     >
-      {isLoading && <Spinner size="sm" />}
+      {isLoading && <Spinner size="sm" color={variant === 'primary' ? 'white' : 'cyan'} />}
       {children}
     </button>
   );

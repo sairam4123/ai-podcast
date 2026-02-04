@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { cn } from "../../lib/cn";
 import { getUser, supabase } from "../../lib/supabase";
 import toast from "react-hot-toast";
+import { api } from "../../api/api";
+import { useGetAvatarImage } from "../../api/getAvatarImage";
+import { ProfileAvatarIcon } from "../../@components/AvatarIcon";
 
 interface NavItem {
     icon: typeof FaHome;
@@ -29,6 +32,14 @@ export function Sidebar() {
             if (user) setUserId(user.id);
         });
     }, []);
+
+    const { data: userProfile } = api.useGetUserProfile({
+        userId: userId ?? "",
+    });
+
+    const { imageUrl } = useGetAvatarImage({
+        personId: userId ?? "",
+    });
 
     const handleProfileClick = () => {
         if (userId) {
@@ -103,10 +114,26 @@ export function Sidebar() {
             <div className="p-3 border-t border-cyan-500/10 space-y-1">
                 <button
                     onClick={handleProfileClick}
-                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-cyan-200/70 hover:bg-cyan-800/30 hover:text-white transition-all"
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-cyan-200/70 hover:bg-cyan-800/30 hover:text-white transition-all text-left"
                 >
-                    <FaUser className="text-lg flex-shrink-0 text-cyan-400/60" />
-                    <span className="font-medium text-sm">Profile</span>
+                    {userId ? (
+                        <>
+                            <ProfileAvatarIcon
+                                imageUrl={imageUrl}
+                                id={userId}
+                                className="w-5 h-5 flex-shrink-0"
+                                imageClassName="w-5 h-5 rounded-full object-cover border border-cyan-500/30"
+                            />
+                            <span className="font-medium text-sm line-clamp-1 flex-1">
+                                {userProfile?.user?.display_name || "Profile"}
+                            </span>
+                        </>
+                    ) : (
+                        <>
+                            <FaUser className="text-lg flex-shrink-0 text-cyan-400/60" />
+                            <span className="font-medium text-sm">Sign In</span>
+                        </>
+                    )}
                 </button>
                 <button
                     onClick={() => navigate("/settings")}

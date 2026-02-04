@@ -1,15 +1,18 @@
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
+import { supabase } from "../lib/supabase";
+import toast from "react-hot-toast";
 import { api } from "../api/api";
 import { ProfileAvatarIcon } from "../@components/AvatarIcon";
 import PodcastCardSkeleton, {
   HorizontalPodcastCard,
 } from "../@components/PodcastCard";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaSignOutAlt } from "react-icons/fa";
 import { FaEye, FaPodcast, FaScaleBalanced } from "react-icons/fa6";
 import { formatNumber } from "../utils/formatNumber";
 
 export default function UserProfile() {
   const { user_id } = useParams<{ user_id: string }>();
+  const navigate = useNavigate();
 
   const { data: userData } = api.useGetUserProfile({
     userId: user_id ?? "",
@@ -94,6 +97,23 @@ export default function UserProfile() {
             </p>
           )}
         </section>
+      </div>
+      <div className="lg:hidden mt-6">
+        <button
+          onClick={async () => {
+            try {
+              await supabase.auth.signOut();
+              toast.success("Logged out successfully");
+              navigate("/login");
+            } catch (error) {
+              toast.error("Failed to logout");
+            }
+          }}
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all font-medium border border-red-500/20"
+        >
+          <FaSignOutAlt />
+          <span>Sign Out</span>
+        </button>
       </div>
     </div>
   );

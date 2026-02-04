@@ -5,9 +5,8 @@ import { removeSSMLtags } from "../utils/removeSSMLtags";
 import { Conversation as ConversationType } from "../@types/Conversation";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
-import ReactMarkdown from "react-markdown";
-import { FaMicrophone, FaPaperPlane, FaSpinner } from "react-icons/fa";
 import { useRef, useState } from "react";
+import { FaMicrophone, FaPaperPlane, FaSpinner } from "react-icons/fa";
 import useSendLiveQuestion from "../api/sendLiveQuestion";
 import { ProfileAvatarIcon } from "./AvatarIcon";
 import { RecordModal } from "../modals/Record";
@@ -228,17 +227,13 @@ const MessageCard = ({
   isHost?: boolean;
 }) => {
   const { imageUrl, isLoading } = useGetAvatarImage({ personId: person.id });
-  // console.log(imageUrl)
-  if (isCurrent)
-    console.log(
-      ((currentPosition - (conv.start_time ?? 0)) /
-        ((conv.end_time ?? 0) - (conv.start_time ?? 0))) *
-      100,
-      conv.start_time,
-      conv.end_time,
-      currentPosition,
-      isPlaying
-    );
+
+  const cleanText = removeSSMLtags(conv.text);
+  const words = cleanText.split(/\s+/);
+  const startTime = conv.start_time ?? 0;
+  const endTime = conv.end_time ?? 0;
+  const duration = endTime - startTime;
+  const wordDuration = words.length > 0 ? duration / words.length : 0;
 
   return (
     <div
@@ -246,23 +241,22 @@ const MessageCard = ({
       className={`flex ${isHost
         ? `bg-gradient-to-tl from-cyan-600/70 to-cyan-800/90 ml-auto rounded-t-2xl rounded-l-2xl rounded-br-md`
         : `bg-gradient-to-tr from-cyan-900/80 to-cyan-950/90 rounded-t-2xl rounded-bl-md rounded-r-2xl`
-        } text-white max-w-6/7 md:max-w-4/7 lg:max-w-3/7 transition-all ${currentPosition > (conv.start_time ?? 0) &&
-          currentPosition < (conv.end_time ?? 0) &&
+        } text-white max-w-6/7 md:max-w-4/7 lg:max-w-3/7 transition-all ${currentPosition > startTime &&
+          currentPosition < endTime &&
           isPlaying &&
           isCurrent
-          ? "outline-1 outline-white scale-105"
+          ? "outline-1 outline-white scale-105 shadow-lg shadow-cyan-500/20"
           : ""
         } hover:drop-shadow-xl cursor-pointer hover:scale-[1.02] p-3`}
       onClick={() => {
         onClick();
       }}
     >
-      <div className="flex flex-row items-start">
-        {/* <FaSpinner className={cn("text-4xl text-gray-200", isLoading ? "animate-spin" : "hidden")} /> */}
+      <div className="flex flex-row items-start gap-2">
         {imageUrl ? (
           <img
             className={cn(
-              "h-5 w-5 md:h-6 md:w-6 mr-2 aspect-square rounded-full",
+              "h-8 w-8 object-cover rounded-full border border-white/20",
               isLoading && "hidden"
             )}
             src={imageUrl}
@@ -271,28 +265,38 @@ const MessageCard = ({
           <ProfileAvatarIcon
             imageUrl={imageUrl}
             id={person.id}
-            imageClassName="h-5 w-5 md:w-6 mr-2 aspect-square rounded-full"
-            className="h-5 w-5 md:h-6 md:w-6 mr-2 rounded-full"
+            imageClassName="h-8 w-8 object-cover rounded-full"
+            className="h-8 w-8 flex-shrink-0"
           />
         )}
-        <div className="">
-          <p className="text-sm md:text-base text-shadow-md font-bold text-gray-200">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs md:text-sm font-bold text-gray-200 mb-1 opacity-80">
             {person?.name}
           </p>
-          <p className="relative text-xs md:text-sm z-10">
-            <ReactMarkdown>{removeSSMLtags(conv.text)}</ReactMarkdown>
+          <p className="text-sm md:text-base leading-relaxed break-words">
+            {words.map((word, i) => {
+              const wordStart = startTime + i * wordDuration;
+              const wordEnd = wordStart + wordDuration;
+              // If we are currently playing this segment, highlight words up to current position
+              const isPast = isPlaying && isCurrent && currentPosition >= wordEnd;
+              const isCurrentWord = isPlaying && isCurrent && currentPosition >= wordStart && currentPosition < wordEnd;
+              const isActive = (isPlaying && isCurrent && currentPosition >= wordStart) || (currentPosition > endTime);
 
-            {isCurrent && (
-              <div
-                className={`absolute transition-all ease-out duration-75 inset-0 w-full h-full bg-cyan-400/30 z-0`}
-                style={{
-                  width: `${((currentPosition - (conv.start_time ?? 0)) /
-                    ((conv.end_time ?? 0) - (conv.start_time ?? 0))) *
-                    100
-                    }%`,
-                }}
-              />
-            )}
+              return (
+                <span
+                  key={i}
+                  className={cn(
+                    "transition-colors duration-200 inline-block mr-1",
+                    isActive
+                      ? "text-white font-medium drop-shadow-sm"
+                      : "text-gray-300/80",
+                    isCurrentWord && "text-cyan-200 scale-105 origin-bottom"
+                  )}
+                >
+                  {word}
+                </span>
+              );
+            })}
           </p>
         </div>
       </div>

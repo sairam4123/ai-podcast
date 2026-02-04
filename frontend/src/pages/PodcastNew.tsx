@@ -7,7 +7,6 @@ import {
   FaRegThumbsDown,
   FaRegThumbsUp,
   FaShare,
-  FaSpinner,
   FaThumbsDown,
   FaThumbsUp,
 } from "react-icons/fa";
@@ -18,7 +17,7 @@ import Button from "../@components/Button";
 import { useMediaPlayerContext } from "../contexts/mediaPlayer.context";
 import { usePodcastContext } from "../contexts/podcast.context";
 import toast from "react-hot-toast";
-import Spinner from "../@components/Spinner";
+import Spinner, { PageLoader } from "../@components/Spinner";
 import { useGetAvatarImage } from "../api/getAvatarImage";
 
 export function PodcastNew() {
@@ -30,9 +29,7 @@ export function PodcastNew() {
   return (
     <div className="flex flex-col gap-4 p-4 lg:p-6 max-w-7xl mx-auto w-full">
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <FaSpinner className="animate-spin text-4xl text-cyan-400" />
-        </div>
+        <PageLoader message="Loading podcast..." />
       ) : (data as unknown as number[])?.[1] === 404 ? (
         <NotFound />
       ) : (
@@ -160,15 +157,17 @@ export function PodcastCard({
             <FaPlay className="inline" />
           </Button>
 
-          <Button variant="secondary" onClick={() => {
-            mutate({
-              podcast_id: podcast?.id ?? "",
-              is_public: !podcast?.is_public,
-            });
-          }}>
-            {updateVisibilityLoading ? (
-              <Spinner className="inline" />
-            ) : podcast?.is_public ? (
+          <Button
+            variant="secondary"
+            isLoading={updateVisibilityLoading}
+            onClick={() => {
+              mutate({
+                podcast_id: podcast?.id ?? "",
+                is_public: !podcast?.is_public,
+              });
+            }}
+          >
+            {podcast?.is_public ? (
               <><FaEye className="inline mr-1" /> Public</>
             ) : (
               <><FaEyeSlash className="inline mr-1" /> Private</>
@@ -222,7 +221,7 @@ export function PodcastCard({
           <TranscriptMissing />
         ) : isLoading ? (
           <div className="flex flex-col items-center justify-center flex-grow">
-            <FaSpinner className="animate-spin text-4xl text-slate-400" />
+            <Spinner size="xl" />
           </div>
         ) : error ? (
           <p className="text-red-400">Error loading transcript: {error.message}</p>

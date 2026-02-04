@@ -1,6 +1,7 @@
 import { PiSpinnerGap } from "react-icons/pi";
 import { ActionModalActionRow } from "../@components/ActionModal";
 import { api } from "../api/api";
+import Spinner from "../@components/Spinner";
 import { useEffect, useRef, useState } from "react";
 import { PodcastGenTask } from "../@types/PodcastGenTask";
 import { supabase } from "../lib/supabase";
@@ -136,18 +137,10 @@ export default function Create() {
                   };
                   createPodcastMutation.mutate(data);
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={createPodcastMutation.isLoading}
               >
-                <div
-                  className="transition-all duration-300 overflow-hidden"
-                  style={{
-                    width: createPodcastMutation.isLoading ? "1.25rem" : "0px",
-                    height: createPodcastMutation.isLoading ? "1.25rem" : "0px",
-                    marginRight: createPodcastMutation.isLoading ? "0.5rem" : "0px",
-                  }}
-                >
-                  <PiSpinnerGap className="animate-spin text-xl" />
-                </div>
+                {createPodcastMutation.isLoading && <Spinner size="sm" color="white" />}
                 <FaPlus className="text-sm" />
                 Create
               </button>,
@@ -190,7 +183,7 @@ export default function Create() {
           (formRef.current!.elements.namedItem("language") as HTMLInputElement)!.value = data.language ?? "";
         }}
       />
-    </div>
+    </div >
   );
 }
 
