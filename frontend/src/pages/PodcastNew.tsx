@@ -48,10 +48,8 @@ export function PodcastNew() {
 
 export function PodcastCard({
   podcast,
-  refetch,
 }: {
   podcast?: Podcast;
-  refetch?: () => void;
 }) {
   const { audioUrl, isLoading: audioLoading } = api.useGetAudio(
     { podcast_id: podcast?.id ?? "" },
