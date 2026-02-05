@@ -12,13 +12,19 @@ export function useLikePodcast({
     { success: boolean },
     { podcast_id: string; liked: boolean }
   >({
-    url: `${API_URL}/podcasts/{podcast_id}/like`,
+    url: (body) => `${API_URL}/podcasts/${body.podcast_id}/like`,
     method: "POST",
     onSuccess(data) {
       console.log("Podcast liked/unliked successfully", data);
       onSuccess?.(data);
     },
     onFailure,
-    useQuery: true,
+    useQuery: true, // This appends body params as query string? If liked status needs to be query param.
+    // Checking original: yes useQuery: true. 
+    // And body is {podcast_id, liked}. 
+    // If useQuery is true, params are appended. 
+    // The previous implementation replaced {podcast_id} but also appended params?
+    // "if (useQuery) newUrl += ...params"
+    // So yes.
   });
 }

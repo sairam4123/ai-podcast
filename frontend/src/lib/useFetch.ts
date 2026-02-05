@@ -1,96 +1,84 @@
-import { useCallback, useEffect, useState } from "react";
-import { getToken } from "./supabase";
+import { useQuery } from "./query-client";
+import { useCallback } from "react";
 
 type FetchOpts = {
-    enabled: boolean;
+  enabled?: boolean;
+  staleTime?: number; // New option
+  cacheTime?: number; // New option
+  onSuccess?: (data: any) => void; // New option
+  onError?: (err: Error) => void;  // New option
+};
+
+export default function useFetch<T>(
+  url: string,
+  opts: FetchOpts = { enabled: true }
+): {
+  loading: boolean;
+  data: T | null;
+  error: Error | null;
+  resetData: () => void;
+  refetch: () => Promise<void>;
+} {
+  const fetcher = useCallback(async () => {
+    const res = await fetch(url);
+    const json = await res.json();
+    if (res.ok) {
+      if ("success" in json && !json.success) {
+        throw new Error(json.message);
+      }
+      return json;
+    } else {
+      throw new Error(json.message || JSON.stringify(json));
+    }
+  }, [url]);
+
+  const { data, isFetching, error, refetch, setData } = useQuery<T>(url, {
+    enabled: opts.enabled,
+    staleTime: opts.staleTime,
+    cacheTime: opts.cacheTime,
+    onSuccess: opts.onSuccess,
+    onError: opts.onError,
+    fetcher,
+  });
+
+  const resetData = () => {
+    setData(null);
+  };
+
+  const refetchWrapper = async () => {
+    await refetch();
+  };
+
+  return { loading: isFetching, data, error, resetData, refetch: refetchWrapper };
 }
 
-export default function useFetch<T>(url: string, opts: FetchOpts = {enabled: true}): {loading: boolean, data: T | null, error: Error | null, resetData: () => void; refetch: () => void} {
-   const [loading, setLoading] = useState(false);
-   const [data, setData] = useState<T | null>(null);
-   const [error, setError] = useState<Error | null>(null);
+export function useFetchWithAuth<T>(
+  url: string,
+  opts: FetchOpts = { enabled: true }
+): {
+  loading: boolean;
+  data: T | null;
+  error: Error | null;
+  resetData: () => void;
+  refetch: () => Promise<void>;
+} {
+  // QueryClient's defaultFetcher already creates authenticated requests using existing logic
+  // So we can reuse useQuery directly.
+  const { data, isFetching, error, refetch, setData } = useQuery<T>(url, {
+    enabled: opts.enabled,
+    staleTime: opts.staleTime,
+    cacheTime: opts.cacheTime,
+    onSuccess: opts.onSuccess,
+    onError: opts.onError,
+  });
 
-   const fetchData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await fetch(url)
-      const json = await res.json()
-      if (res.ok) {
-        if ("success" in json && !json.success) {
-          throw new Error(json.message)
-        }
-        setData(json)
-      } else {
-        setError(new Error(json))
-      }
-    } catch (e) {
-      setError(e as Error)
-    }
-    finally {
-      setLoading(false)
-    }
-   }, [url]);
+  const resetData = () => {
+    setData(null);
+  };
 
-   useEffect(() => {
-    if (opts.enabled) {
-        fetchData();
-    }
-   }, [url, fetchData, opts.enabled])
+  const refetchWrapper = async () => {
+    await refetch();
+  };
 
-   const resetData = () => {
-    setData(null)
-   }
-
-   const refetch = () => {
-    fetchData()
-   }
-
-    return {loading, data, error, resetData, refetch}
-} 
-
-export function useFetchWithAuth<T>(url: string, opts: FetchOpts = {enabled: true}): {loading: boolean, data: T | null, error: Error | null, resetData: () => void; refetch: () => void} {
-   const [loading, setLoading] = useState(false);
-   const [data, setData] = useState<T | null>(null);
-   const [error, setError] = useState<Error | null>(null);
-
-   const fetchData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const token = await getToken();
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const json = await res.json();
-      if (res.ok) {
-        if ("success" in json && !json.success) {
-          throw new Error(json.message)
-        }
-        setData(json);
-      } else {
-        setError(new Error(json));
-      }
-    } catch (e) {
-      setError(e as Error);
-    } finally {
-      setLoading(false);
-    }
-   }, [url]);
-
-   useEffect(() => {
-    if (opts.enabled) {
-        fetchData();
-    }
-   }, [url, fetchData, opts.enabled])
-
-   const resetData = () => {
-    setData(null)
-   }
-
-   const refetch = () => {
-    fetchData()
-   }
-
-    return {loading, data, error, resetData, refetch}
+  return { loading: isFetching, data, error, resetData, refetch: refetchWrapper };
 }

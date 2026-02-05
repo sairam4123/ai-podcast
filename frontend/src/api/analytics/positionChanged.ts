@@ -11,7 +11,7 @@ export function useCurrentPositionChanged() {
     },
     { podcast_id: string; position: number }
   >({
-    url: `${API_URL}/analytics/podcasts/position/{podcast_id}`,
+    url: (body) => `${API_URL}/analytics/podcasts/position/${body.podcast_id}`,
     method: "POST",
     onSuccess: (data) => {
       console.log("Play pressed analytics recorded successfully", data);

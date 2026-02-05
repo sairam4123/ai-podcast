@@ -29,7 +29,7 @@ export function PodcastNew() {
   });
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6 max-w-7xl mx-auto w-full lg:h-[calc(100vh-6rem)]">
+    <div className="flex flex-col gap-4 p-2 lg:p-4 max-w-7xl mx-auto w-full lg:h-[calc(100vh-6rem)]">
       {isLoading ? (
         <PageLoader message="Loading podcast..." />
       ) : (data as unknown as number[])?.[1] === 404 ? (
@@ -74,10 +74,20 @@ export function PodcastCard({
       { enabled: !!podcast?.id }
     );
 
+  const [liked, setLiked] = useState(podcast?.liked_by_user ?? false);
+  const [disliked, setDisliked] = useState(podcast?.disliked_by_user ?? false);
+  const [isPublic, setIsPublic] = useState(podcast?.is_public ?? false);
+
+  // Sync with props if they change (e.g. initial load or refetch)
+  useState(() => {
+    setLiked(podcast?.liked_by_user ?? false);
+    setDisliked(podcast?.disliked_by_user ?? false);
+    setIsPublic(podcast?.is_public ?? false);
+  });
+
   const { mutate: likePodcast, isLoading: likeLoading } = api.useLikePodcast({
     onSuccess: () => {
       toast.success("Podcast liked successfully");
-      refetch?.();
     },
   });
 
@@ -85,7 +95,6 @@ export function PodcastCard({
     api.useDislikePodcast({
       onSuccess: () => {
         toast.success("Podcast disliked successfully");
-        refetch?.();
       },
     });
 
@@ -101,7 +110,6 @@ export function PodcastCard({
           return;
         }
         toast.success("Podcast visibility updated successfully");
-        refetch?.();
       },
     });
 
@@ -113,7 +121,7 @@ export function PodcastCard({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className="flex flex-col flex-1 gap-4 md:gap-0 p-2 md:p-0 w-full h-full md:h-[calc(100vh-5rem)] overflow-hidden relative">
+    <div className="flex flex-col flex-1 gap-4 md:gap-0 p-0 md:p-0 w-full h-full md:h-[calc(100vh-5rem)] overflow-hidden relative">
       <>
         <title>{podcast?.podcast_title}</title>
         <link rel="icon" href={`${imageUrl}`} precedence="high" />
@@ -128,7 +136,7 @@ export function PodcastCard({
       <div className="flex flex-col-reverse md:flex-row flex-1 overflow-hidden relative">
         {/* Transcript - Left Side (Desktop) / Bottom (Mobile) */}
         <div className="flex flex-col flex-1 bg-surface/30 backdrop-blur-xl border-0 md:border-r border-tertiary/20 rounded-3xl md:rounded-r-none overflow-hidden relative">
-          <div className="p-4 border-b border-tertiary/10 bg-surface/40 backdrop-blur-sm sticky top-0 z-10 flex justify-between items-center h-16 shrink-0">
+          <div className="px-6 py-4 border-b border-tertiary/10 bg-surface/40 backdrop-blur-sm sticky top-0 z-10 flex justify-between items-center h-16 shrink-0">
             <h2 className="font-heading text-lg font-semibold text-tertiary-foreground flex items-center gap-3">
               Transcript
               {!isSidebarOpen && (
@@ -166,12 +174,14 @@ export function PodcastCard({
           ) : null}
 
           {data?.conversations && (
-            <Conversation
-              podcastId={podcast?.id ?? ""}
-              conversation={data?.conversations ?? []}
-              questions={liveQuestions?.questions || []}
-              refreshQuestions={() => refreshQuestions?.()}
-            />
+            <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar h-full">
+              <Conversation
+                podcastId={podcast?.id ?? ""}
+                conversation={data?.conversations ?? []}
+                questions={liveQuestions?.questions || []}
+                refreshQuestions={() => refreshQuestions?.()}
+              />
+            </div>
           )}
         </div>
 
@@ -238,13 +248,15 @@ export function PodcastCard({
                 variant="secondary"
                 isLoading={updateVisibilityLoading}
                 onClick={() => {
+                  const newStatus = !isPublic;
+                  setIsPublic(newStatus);
                   mutate({
                     podcast_id: podcast?.id ?? "",
-                    is_public: !podcast?.is_public,
+                    is_public: newStatus,
                   });
                 }}
               >
-                {podcast?.is_public ? (
+                {isPublic ? (
                   <><FaEye className="inline mr-1" /> Public</>
                 ) : (
                   <><FaEyeSlash className="inline mr-1" /> Private</>
@@ -254,21 +266,29 @@ export function PodcastCard({
 
             <div className="flex flex-wrap gap-2 justify-start">
               <Button variant="ghost" isLoading={likeLoading} onClick={() => {
+                // Optimistic Update
+                setLiked(!liked);
+                if (!liked) setDisliked(false);
+
                 likePodcast({
                   podcast_id: podcast?.id ?? "",
-                  liked: !(podcast?.liked_by_user ?? false),
+                  liked: !liked,
                 });
               }}>
-                {podcast?.liked_by_user ? <FaThumbsUp className="text-primary text-lg" /> : <FaRegThumbsUp className="text-tertiary text-lg" />}
+                {liked ? <FaThumbsUp className="text-primary text-lg" /> : <FaRegThumbsUp className="text-tertiary text-lg" />}
               </Button>
 
               <Button variant="ghost" isLoading={dislikeLoading} onClick={() => {
+                // Optimistic Update
+                setDisliked(!disliked);
+                if (!disliked) setLiked(false);
+
                 dislikePodcast({
                   podcast_id: podcast?.id ?? "",
-                  disliked: !(podcast?.disliked_by_user ?? false),
+                  disliked: !disliked,
                 });
               }}>
-                {podcast?.disliked_by_user ? <FaThumbsDown className="text-primary text-lg" /> : <FaRegThumbsDown className="text-tertiary text-lg" />}
+                {disliked ? <FaThumbsDown className="text-primary text-lg" /> : <FaRegThumbsDown className="text-tertiary text-lg" />}
               </Button>
 
               <Button variant="ghost" onClick={() => {

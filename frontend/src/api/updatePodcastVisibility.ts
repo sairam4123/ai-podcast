@@ -22,7 +22,7 @@ export function useUpdatePodcastVisibility({
     },
     { podcast_id: string; is_public: boolean }
   >({
-    url: API_URL + `/podcasts/{podcast_id}/visibility`,
+    url: (body) => `${API_URL}/podcasts/${body.podcast_id}/visibility`,
     method: "PATCH",
     onSuccess: (data) => {
       onSuccess?.(data);

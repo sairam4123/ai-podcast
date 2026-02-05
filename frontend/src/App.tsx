@@ -10,6 +10,7 @@ import Create from "./pages/Create";
 import Register from "./pages/Register";
 import UserProfile from "./pages/UserProfile";
 import Search from "./pages/Search";
+import Library from "./pages/Library";
 import NotFound from "./pages/NotFound";
 import { AnalyticsProvider } from "./contexts/analytics.context";
 import { AppShell } from "./@components/layout/AppShell";
@@ -68,6 +69,14 @@ export function App() {
                 element={
                   <MainLayout>
                     <Search />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/library"
+                element={
+                  <MainLayout>
+                    <Library />
                   </MainLayout>
                 }
               />

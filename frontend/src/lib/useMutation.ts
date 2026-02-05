@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getToken } from "./supabase";
+// import { useQueryClient } from "./query-client";
 
 type Status = "IDLE" | "LOADING" | "SUCCESS" | "FAILURE";
 
@@ -12,29 +13,29 @@ export default function useMutation<
   method,
   onSuccess,
   onFailure,
+  onSettled,
   useQuery = false,
 }: {
-  url: string;
+  url: string | ((body: TBody) => string);
   method: "POST" | "PUT" | "DELETE";
   onSuccess?: (data: TResult) => void;
   onFailure?: (error: TError) => void;
+  onSettled?: () => void;
   useQuery?: boolean;
 }) {
   const [result, setResult] = useState<TResult | null>(null);
   const [error, setError] = useState<TError | null>(null);
   const [status, setStatus] = useState<Status>("IDLE");
   const isLoading = status === "LOADING";
+  // const client = useQueryClient();
+
   const mutate = async (body: TBody) => {
     setStatus("LOADING");
-    console.log(JSON.stringify(body));
-    let newUrl = url;
-    if (url && url.includes("{podcast_id}") && "podcast_id" in body) {
-      newUrl = url.replace("{podcast_id}", body.podcast_id as string);
-    } else {
-      console.warn(
-        "URL does not contain {podcast_id} or body does not have podcast_id"
-      );
-    }
+    let newUrl = typeof url === "function" ? url(body) : url;
+
+    // DEPRECATED: {podcast_id} replacement logic removed.
+    // Callers must provide full URL.
+
     if (useQuery) {
       newUrl += `?${new URLSearchParams(
         body as Record<string, string>
@@ -49,8 +50,6 @@ export default function useMutation<
         body: JSON.stringify(body),
       });
       const data = await response.json();
-      console.log("Data received: ", data);
-      console.log("Data set: ", data, "response OK?", response.ok);
       if (response.ok) {
         if ("success" in data && !data.success) {
           throw new Error(data.message);
@@ -67,6 +66,8 @@ export default function useMutation<
       setStatus("FAILURE");
       setError(error as TError);
       onFailure?.(error as TError);
+    } finally {
+      onSettled?.();
     }
   };
   return { result, error, isLoading, status, mutate };
@@ -81,29 +82,28 @@ export function useMutationWithAuth<
   method,
   onSuccess,
   onFailure,
+  onSettled,
   useQuery = false,
 }: {
-  url: string;
+  url: string | ((body: TBody) => string);
   method: "POST" | "PUT" | "DELETE" | "PATCH";
   useQuery?: boolean;
   onSuccess?: (data: TResult) => void;
   onFailure?: (error: TError) => void;
+  onSettled?: () => void;
 }) {
   const [result, setResult] = useState<TResult | null>(null);
   const [error, setError] = useState<TError | null>(null);
   const [status, setStatus] = useState<Status>("IDLE");
   const isLoading = status === "LOADING";
+  // const client = useQueryClient();
+
   const mutate = async (body: TBody) => {
     setStatus("LOADING");
-    console.log(JSON.stringify(body));
-    let newUrl = url;
-    if (url && url.includes("{podcast_id}") && "podcast_id" in body) {
-      newUrl = url.replace("{podcast_id}", body.podcast_id as string);
-    } else {
-      console.warn(
-        "URL does not contain {podcast_id} or body does not have podcast_id"
-      );
-    }
+    let newUrl = typeof url === "function" ? url(body) : url;
+
+    // DEPRECATED: {podcast_id} replacement logic removed.
+
     if (useQuery) {
       newUrl += `?${new URLSearchParams(
         body as Record<string, string>
@@ -111,17 +111,19 @@ export function useMutationWithAuth<
     }
     try {
       const token = await getToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(newUrl, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Assuming token is stored in localStorage
-        },
+        headers,
         body: JSON.stringify(body),
       });
       const data = await response.json();
-      console.log("Data received: ", data);
-      console.log("Data set: ", data, "response OK?", response.ok);
       if (response.ok) {
         if ("success" in data && !data.success) {
           throw new Error(data.message);
@@ -138,6 +140,8 @@ export function useMutationWithAuth<
       setStatus("FAILURE");
       setError(error as TError);
       onFailure?.(error as TError);
+    } finally {
+      onSettled?.();
     }
   };
   return { result, error, isLoading, status, mutate };

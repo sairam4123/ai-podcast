@@ -12,7 +12,7 @@ export function useDislikePodcast({
     { success: boolean },
     { podcast_id: string; disliked: boolean }
   >({
-    url: `${API_URL}/podcasts/{podcast_id}/dislike`,
+    url: (body) => `${API_URL}/podcasts/${body.podcast_id}/dislike`,
     method: "POST",
     onSuccess(data) {
       console.log("Podcast disliked/undisliked successfully", data);

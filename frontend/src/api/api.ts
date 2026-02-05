@@ -19,6 +19,7 @@ import { useGetListenHistory } from "./getListenHistory";
 import { useGetRecommendations } from "./getRecommendations";
 import { useLikePodcast } from "./likePodcast";
 import { useDislikePodcast } from "./dislikePodcast";
+import { useGetLikedPodcasts } from "./getLikedPodcasts";
 
 import useUserLogin from "./userLogin";
 import useUserRegister from "./userRegister";
@@ -43,9 +44,8 @@ const VITE_API_URL = import.meta.env.VITE_APP_API_URL;
 
 export const API_URL = VITE_API_URL
   ? VITE_API_URL
-  : `http${isLocalhost || isLocalNetwork ? "" : "s"}://${
-      window.location.hostname
-    }:8000/api`;
+  : `http${isLocalhost || isLocalNetwork ? "" : "s"}://${window.location.hostname
+  }:8000/api`;
 
 export const api = {
   useSearchPodcast,
@@ -70,4 +70,5 @@ export const api = {
   useDislikePodcast,
   useSendLiveQuestion,
   useGetPodcastQuestions,
+  useGetLikedPodcasts,
 };

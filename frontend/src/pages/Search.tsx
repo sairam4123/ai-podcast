@@ -18,20 +18,20 @@ export default function Search() {
     return (
         <div className="max-w-[1800px] mx-auto px-4 lg:px-8 py-8 space-y-8">
             {/* Search Header */}
-            <div className="space-y-4">
-                <h1 className="font-heading text-3xl font-bold text-tertiary-foreground">Search</h1>
+            <div className="space-y-4 max-w-4xl mx-auto text-center">
+                <h1 className="font-heading text-3xl md:text-4xl font-bold text-tertiary-foreground">Search</h1>
 
                 {/* Search Input */}
-                <div className="relative max-w-2xl">
+                <div className="relative max-w-2xl mx-auto w-full">
                     <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <FaSearch className="text-tertiary" />
+                        <FaSearch className="text-tertiary text-lg" />
                     </div>
                     <input
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="What do you want to listen to?"
-                        className="w-full pl-12 pr-4 py-4 rounded-full bg-surface border border-tertiary/20 text-tertiary-foreground placeholder:text-tertiary focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-lg"
+                        className="w-full pl-12 pr-4 py-4 rounded-full bg-surface-highlight/50 border border-tertiary/10 text-tertiary-foreground placeholder:text-tertiary focus:bg-surface-highlight focus:border-primary/50 focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-lg shadow-sm"
                         autoFocus
                     />
                 </div>

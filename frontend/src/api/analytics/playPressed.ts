@@ -11,7 +11,7 @@ export function usePlayPressed() {
     },
     { podcast_id: string }
   >({
-    url: `${API_URL}/analytics/podcasts/play/{podcast_id}`,
+    url: (body) => `${API_URL}/analytics/podcasts/play/${body.podcast_id}`,
     method: "POST",
     onSuccess: (data) => {
       console.log("Play pressed analytics recorded successfully", data);

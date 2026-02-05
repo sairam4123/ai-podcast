@@ -194,7 +194,49 @@ async def get_my_podcasts(offset: int = 0, limit: int = 10, user: UserProfile = 
             "duration": p.duration,
         } for p in podcasts_db]
 
+
         return {"results": new_podcasts[offset:offset + limit]}
+
+
+@app.get("/podcasts/liked/@me")
+async def get_liked_podcasts(offset: int = 0, limit: int = 10, user: UserProfile = fastapi.Depends(get_current_user)):
+    async with session_maker() as sess:
+        # Fetch liked podcasts ordered by liked_at desc
+        stmt = (
+            select(Podcast, UserLikeHistory.liked_at)
+            .join(UserLikeHistory, Podcast.id == UserLikeHistory.podcast_id)
+            .where(
+                and_(
+                    UserLikeHistory.user_id == user.id,
+                    UserLikeHistory.is_like == True
+                )
+            )
+            .order_by(desc(UserLikeHistory.liked_at))
+            .offset(offset)
+            .limit(limit)
+        )
+        
+        results = (await sess.execute(stmt)).all()
+        
+        if not results:
+             return {"results": []}
+
+        new_podcasts = [{
+            "id": str(p.id),
+            "podcast_title": p.title,
+            "podcast_description": p.description,
+            "type": p.type,
+            "language": p.language,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+            "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+            "view_count": p.view_count,
+            "like_count": p.like_count,
+            "dislike_count": p.dislike_count,
+            "duration": p.duration,
+            "liked_at": liked_at.isoformat() if liked_at else None
+        } for p, liked_at in results]
+
+        return {"results": new_podcasts}
 
 
 @app.get("/podcasts/trending")
@@ -709,7 +751,22 @@ async def get_podcasts_created_by(user_id: str):
         podcasts_db = (await sess.execute(select(Podcast).where(Podcast.profile_id == user_id))).scalars().all()
         if not podcasts_db:
             return {"error": "No podcasts found for this user"}, 404
-        return {"results": podcasts_db}
+        
+        results = [{
+            "id": str(p.id),
+            "podcast_title": p.title,
+            "podcast_description": p.description,
+            "type": p.type,
+            "language": p.language,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+            "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+            "view_count": p.view_count,
+            "like_count": p.like_count,
+            "dislike_count": p.dislike_count,
+            "duration": p.duration,
+        } for p in podcasts_db]
+
+        return {"results": results}
 
 @app.get("/user/{user_id}")
 async def get_user_profile(user_id: str):

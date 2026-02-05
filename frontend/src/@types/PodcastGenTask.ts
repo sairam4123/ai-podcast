@@ -10,6 +10,12 @@ export type PodcastGenTask = {
     error_message?: string; // Optional error message if the task failed
     progress?: number; // Optional progress percentage (0-100)
     progress_message?: string; // Optional message to show progress
+    generation_data?: {
+        topic?: string;
+        style?: string;
+        language?: string;
+        description?: string;
+    };
 
     podcast: Podcast & GenTaskPodcast;
 }
