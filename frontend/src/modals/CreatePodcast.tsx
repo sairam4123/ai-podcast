@@ -83,7 +83,7 @@ export function CreatePodcastModal({
               console.log("Creating podcast with data:", data);
               createPodcastMutation.mutate(data);
             }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed text-sm shadow-lg shadow-cyan-500/20"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[image:var(--gradient-primary)] text-white font-medium transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed text-sm shadow-lg shadow-cyan-500/20 hover:brightness-110 border-0"
           >
             {createPodcastMutation.isLoading ? (
               <PiSpinnerGap className="animate-spin text-lg" />

@@ -109,7 +109,7 @@ export function PodcastCard({
       .filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i) || [];
 
   return (
-    <div className="flex flex-col lg:flex-row flex-1 gap-6 pb-32 overflow-hidden">
+    <div className="flex flex-col lg:flex-row flex-1 gap-6 pb-32 overflow-hidden items-start h-full">
       <>
         <title>{podcast?.podcast_title}</title>
         <link rel="icon" href={`${imageUrl}`} precedence="high" />
@@ -121,15 +121,42 @@ export function PodcastCard({
         <meta name="og:url" content={`https://podolli-ai.co.in/podcast/${podcast?.id}`} />
       </>
 
-      {/* Sidebar */}
-      <div className="flex flex-col lg:w-80 glass-panel p-5 space-y-5 overflow-y-auto border border-tertiary/20 bg-surface/40">
+      {/* Transcript - Left Side (Main Content) */}
+      <div className="flex flex-col flex-1 glass-panel p-0 overflow-hidden border border-tertiary/20 bg-surface/30 h-full min-h-0">
+        <div className="p-4 border-b border-tertiary/10 bg-surface/40 backdrop-blur-sm sticky top-0 z-10">
+          <h2 className="font-heading text-lg font-semibold text-tertiary-foreground">Transcript</h2>
+        </div>
+
+        {(data as unknown as number[])?.[1] === 404 ||
+          (data?.conversations?.length === 0 && !isLoading) ? (
+          <TranscriptMissing />
+        ) : isLoading ? (
+          <div className="flex flex-col items-center justify-center flex-grow">
+            <Spinner size="xl" />
+          </div>
+        ) : error ? (
+          <p className="text-rose-400 p-4">Error loading transcript: {error.message}</p>
+        ) : null}
+
+        {data?.conversations && (
+          <Conversation
+            podcastId={podcast?.id ?? ""}
+            conversation={data?.conversations ?? []}
+            questions={liveQuestions?.questions || []}
+            refreshQuestions={() => refreshQuestions?.()}
+          />
+        )}
+      </div>
+
+      {/* Sidebar - Right Side (Sticky) */}
+      <div className="flex flex-col lg:w-80 glass-panel p-5 space-y-5 overflow-y-auto border border-tertiary/20 bg-surface/40 flex-shrink-0 sticky top-4 max-h-[calc(100vh-2rem)] custom-scrollbar">
         <img
           src={imageUrl ?? "/podcastplaceholdercover.png"}
           alt={podcast?.podcast_title}
-          className="w-40 aspect-square h-auto object-cover rounded-2xl shadow-lg ring-1 ring-white/10"
+          className="w-full aspect-square h-auto object-cover rounded-2xl shadow-lg ring-1 ring-white/10"
         />
         <div className="space-y-2">
-          <h2 className="font-heading text-2xl font-bold text-tertiary-foreground text-left">
+          <h2 className="font-heading text-2xl font-bold text-tertiary-foreground text-left leading-tight">
             {podcast?.podcast_title}
           </h2>
           <p className="text-tertiary text-sm text-left leading-relaxed">{podcast?.podcast_description}</p>
@@ -155,8 +182,8 @@ export function PodcastCard({
               setCurrentPodcast(podcast!);
               play();
             }
-          }} className="w-full sm:w-auto">
-            <FaPlay className="inline mr-2" /> Play
+          }} className="w-full sm:w-auto flex-1">
+            {isPlaying ? <span className="flex items-center gap-2"><div className="w-2 h-2 bg-white rounded-full animate-pulse" /> Playing</span> : <><FaPlay className="inline mr-2" /> Play</>}
           </Button>
 
           <Button
@@ -214,33 +241,6 @@ export function PodcastCard({
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Transcript */}
-      <div className="flex flex-col flex-1 glass-panel p-0 overflow-hidden border border-tertiary/20 bg-surface/30">
-        <div className="p-4 border-b border-tertiary/10 bg-surface/40 backdrop-blur-sm">
-          <h2 className="font-heading text-lg font-semibold text-tertiary-foreground">Transcript</h2>
-        </div>
-
-        {(data as unknown as number[])?.[1] === 404 ||
-          (data?.conversations?.length === 0 && !isLoading) ? (
-          <TranscriptMissing />
-        ) : isLoading ? (
-          <div className="flex flex-col items-center justify-center flex-grow">
-            <Spinner size="xl" />
-          </div>
-        ) : error ? (
-          <p className="text-rose-400 p-4">Error loading transcript: {error.message}</p>
-        ) : null}
-
-        {data?.conversations && (
-          <Conversation
-            podcastId={podcast?.id ?? ""}
-            conversation={data?.conversations ?? []}
-            questions={liveQuestions?.questions || []}
-            refreshQuestions={() => refreshQuestions?.()}
-          />
-        )}
       </div>
     </div>
   );

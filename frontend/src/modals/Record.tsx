@@ -206,7 +206,7 @@ export function RecordModal({
             }}
             className={cn(
               "relative z-10 p-4 rounded-full bg-surface border shadow-xl transition-all duration-100 cursor-pointer hover:scale-105 active:scale-95",
-              state === "recording" ? "border-rose-500/50 shadow-rose-500/20" : "border-tertiary/20 hover:border-primary/50"
+              state === "recording" ? "border-rose-500/50 shadow-rose-500/20" : "border-tertiary/20 hover:border-cyan-500/50"
             )}
             style={{ transform: `scale(${1 + amplitude * 0.5})` }} // Increased scale factor
           >
