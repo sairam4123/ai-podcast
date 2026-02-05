@@ -249,7 +249,7 @@ async def search_podcasts(query: str, v2: bool = True):
                 "language": p.language,
             } for p in podcasts_db}
     
-    response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-2.0-flash")
+    response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-2.5-flash")
     podcast_search_keys = PodcastTopicsSearch.model_validate(response.parsed) # Type: PodcastTopicsSearch
     print(podcast_search_keys)
     results = []
@@ -423,7 +423,7 @@ async def generate_form_data(topic: AutoFillPodcastForm):
     response = client.models.generate_content(
         contents=generate_form_prompt.format(query=topic.topic),
         config={"response_mime_type": "application/json", "response_schema": GeneratePodcast},
-        model="gemini-2.0-flash"
+        model="gemini-2.5-flash"
     )
     podcast_details = GeneratePodcast.model_validate(response.parsed) # Type: PodcastTopicsSearch
     return podcast_details
