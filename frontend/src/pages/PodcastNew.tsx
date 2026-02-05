@@ -24,7 +24,7 @@ import { useGetAvatarImage } from "../api/getAvatarImage";
 
 export function PodcastNew() {
   const { podcast_id } = useParams<{ podcast_id: string }>();
-  const { data, isLoading, error, refetch } = api.useGetPodcast({
+  const { data, isLoading, error } = api.useGetPodcast({
     podcastId: podcast_id,
   });
 
@@ -35,7 +35,7 @@ export function PodcastNew() {
       ) : (data as unknown as number[])?.[1] === 404 ? (
         <NotFound />
       ) : (
-        <PodcastCard refetch={refetch} podcast={data?.podcast} />
+        <PodcastCard podcast={data?.podcast} />
       )}
       {error && (
         <div className="text-rose-400 text-center w-full">
