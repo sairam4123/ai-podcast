@@ -100,16 +100,16 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
           ) : isPlaying && isCurrentPodcast ? (
             <button
               onClick={handlePause}
-              className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors border border-white/20 shadow-lg group-active:scale-95"
+              className="w-12 h-12 rounded-full bg-[image:var(--gradient-primary)] flex items-center justify-center hover:brightness-110 transition-all shadow-lg group-active:scale-95 text-white"
             >
-              <FaPause className="text-xl text-white" />
+              <FaPause className="text-xl" />
             </button>
           ) : (
             <button
               onClick={handlePlay}
-              className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors border border-white/20 shadow-lg group-active:scale-95"
+              className="w-12 h-12 rounded-full bg-[image:var(--gradient-primary)] flex items-center justify-center hover:brightness-110 transition-all shadow-lg group-active:scale-95 text-white"
             >
-              <FaPlay className="text-xl text-white ml-0.5" />
+              <FaPlay className="text-xl ml-0.5" />
             </button>
           )}
         </div>
@@ -117,8 +117,8 @@ export function PodcastCard({ podcast }: { podcast?: Podcast }) {
         {/* Mobile ONLY: Persistent Play Button (Bottom Right) */}
         {!isPlaying && (
           <div className="absolute bottom-2 right-2 md:hidden">
-            <div className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-md">
-              <FaPlay className="text-xs text-white ml-0.5" />
+            <div className="w-8 h-8 rounded-full bg-[image:var(--gradient-primary)] flex items-center justify-center shadow-md text-white">
+              <FaPlay className="text-xs ml-0.5" />
             </div>
           </div>
         )}

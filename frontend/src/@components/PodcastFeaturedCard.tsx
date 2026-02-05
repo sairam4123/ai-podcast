@@ -59,7 +59,7 @@ export default function PodcastFeaturedCard({ podcast }: { podcast: Podcast }) {
           <button
             onClick={handlePlay}
             className={cn(
-              "w-10 h-10 rounded-full bg-surface/80 backdrop-blur-md flex items-center justify-center transition-all shadow-lg scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100 hover:bg-surface text-tertiary-foreground",
+              "w-12 h-12 rounded-full bg-[image:var(--gradient-primary)] flex items-center justify-center transition-all shadow-lg scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100 text-white hover:brightness-110 hover:scale-105",
               audioLoading && "opacity-50 cursor-wait"
             )}
           >

@@ -6,10 +6,12 @@
   --font-body: 'Inter', sans-serif;
 
   /* Color Palette - Subtle/Organic "Human" Feel */
-  --color-primary: #94a3b8;
-  /* Slate 400 - Soft Blue-Grey */
-  --color-primary-foreground: #020617;
-  /* Slate 950 */
+  --color-primary: #06b6d4;
+  /* Cyan 500 - Brand Primary */
+  --gradient-primary: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+  /* Cyan 500 to Emerald 500 */
+  --color-primary-foreground: #ffffff;
+  /* White text on primary */
 
   --color-secondary: #292524;
   /* Stone 800 - Warm Dark Grey */

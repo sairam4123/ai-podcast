@@ -15,7 +15,7 @@ interface ButtonProps {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-gradient-to-r from-slate-200 to-slate-200 hover:from-white hover:to-slate-100 text-slate-900 shadow-sm border border-slate-300/50",
+    "bg-[image:var(--gradient-primary)] hover:brightness-110 text-white shadow-md border-0",
   secondary:
     "bg-surface hover:bg-surface-highlight text-tertiary-foreground border border-tertiary/20",
   ghost:
