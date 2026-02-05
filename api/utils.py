@@ -2,6 +2,7 @@ import functools
 from fastapi import Depends, HTTPException, Request
 from supabase import AClient as SupabaseClient
 from google.genai import types as genai_types
+import io
 
 from fastapi.security import APIKeyHeader
 SUPABASE_AUTH_HEADER = "Authorization"

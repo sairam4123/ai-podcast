@@ -7,6 +7,7 @@ import functools
 from fastapi import Depends, HTTPException, Request
 from supabase import AClient as SupabaseClient
 from google.genai import types as genai_types
+import io
 
 from fastapi.security import APIKeyHeader
 SUPABASE_AUTH_HEADER = "Authorization"
@@ -135,7 +136,6 @@ def parse_image_data(response: genai_types.GenerateContentResponse):
             raise ValueError("Invalid response from the model. Missing/malformed image data")
     else:
         raise ValueError("Invalid response from the model")
-    
 # Merging api/models.py
 import datetime
 import functools
