@@ -121,7 +121,7 @@ async def optional_user(request: Request):
 def parse_image_data(response: genai_types.GenerateContentResponse):
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No response from the model")
-    for content in response.parts:
+    for content in response.candidates[0].content.parts:
         # print(content)
         if content.text is not None:
             continue
@@ -135,6 +135,7 @@ def parse_image_data(response: genai_types.GenerateContentResponse):
             raise ValueError("Invalid response from the model. Missing/malformed image data")
     else:
         raise ValueError("Invalid response from the model")
+    
 # Merging api/models.py
 import datetime
 import functools
