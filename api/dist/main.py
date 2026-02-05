@@ -946,7 +946,7 @@ async def save_podcast_cover(podcast: Podcast) -> None:
     await save_image(image, f"{podcast.id}.png", "podcast-cover-images")
 
 async def generate_author_image(persona: PodcastAuthorPersona) -> tuple[UUID, io.BytesIO]:
-    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-image")
+    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
 
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
@@ -1005,7 +1005,7 @@ async def generate_podcast_content(create_podcast: CreatePodcast):
     content = "\n".join(contents)
     print("Search results fetched. Generating podcast content..., content: ", content)
 
-    response = await client.aio.models.generate_content(contents=content+podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
+    response = await client.aio.models.generate_content(contents=content+podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.5-flash",)
     return PodcastAI.model_validate(response.parsed) 
 
 async def generate_podcast_metadata(create_podcast: CreatePodcast) -> InteractivePodcastAI:
@@ -1018,7 +1018,7 @@ async def generate_podcast_metadata(create_podcast: CreatePodcast) -> Interactiv
     content = "\n".join(contents)
     print("Search results fetched. Generating podcast metadata..., content: ", content)
 
-    response = await client.aio.models.generate_content(contents=content+interactive_podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + interactive_podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
+    response = await client.aio.models.generate_content(contents=content+interactive_podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + interactive_podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.5-flash",)
     return InteractivePodcastAI.model_validate(response.parsed) 
 
 async def generate_podcast_authors(create_podcast: CreatePodcast) -> list[PersonaAI]:
@@ -1690,7 +1690,7 @@ async def search_podcasts(query: str, v2: bool = True):
                 "language": p.language,
             } for p in podcasts_db}
     
-    response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-2.0-flash")
+    response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-3.0-flash")
     podcast_search_keys = PodcastTopicsSearch.model_validate(response.parsed) # Type: PodcastTopicsSearch
     print(podcast_search_keys)
     results = []
@@ -1864,7 +1864,7 @@ async def generate_form_data(topic: AutoFillPodcastForm):
     response = client.models.generate_content(
         contents=generate_form_prompt.format(query=topic.topic),
         config={"response_mime_type": "application/json", "response_schema": GeneratePodcast},
-        model="gemini-2.0-flash"
+        model="gemini-3.0-flash"
     )
     podcast_details = GeneratePodcast.model_validate(response.parsed) # Type: PodcastTopicsSearch
     return podcast_details
