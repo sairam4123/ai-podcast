@@ -11,6 +11,7 @@ import useSendLiveQuestion from "../api/sendLiveQuestion";
 import { ProfileAvatarIcon } from "./AvatarIcon";
 import { RecordModal } from "../modals/Record";
 import { useGetAudio } from "../api/getAudio";
+import { Markdown } from "./Markdown";
 
 export function Conversation({
   podcastId,
@@ -229,11 +230,18 @@ const MessageCard = ({
   const { imageUrl, isLoading } = useGetAvatarImage({ personId: person.id });
 
   const cleanText = removeSSMLtags(conv.text);
-  const words = cleanText.split(/\s+/);
   const startTime = conv.start_time ?? 0;
   const endTime = conv.end_time ?? 0;
   const duration = endTime - startTime;
-  const wordDuration = words.length > 0 ? duration / words.length : 0;
+
+  // Only enable highlighting if we have a valid duration and it's the current podcast
+  const highlighting = duration > 0 ? {
+    startTime,
+    endTime,
+    currentPosition,
+    isPlaying,
+    isCurrent,
+  } : undefined;
 
   return (
     <div
@@ -286,42 +294,11 @@ const MessageCard = ({
           {person?.name}
         </p>
 
-        <p className="text-[15px] leading-7 font-light tracking-wide text-pretty">
-          {words.map((word, i) => {
-            const wordStart = startTime + i * wordDuration;
-            const wordEnd = wordStart + wordDuration;
-
-            // Logic:
-            // Past: Fully visible
-            // Current: Highlighted/Popping
-            // Future: Dimmed
-
-            // const isPast = isPlaying && isCurrent && currentPosition >= wordEnd;
-            const isCurrentWord = isPlaying && isCurrent && currentPosition >= wordStart && currentPosition < wordEnd;
-            const isFuture = isPlaying && isCurrent && currentPosition < wordStart;
-
-            // If not actively playing this card, everything is normal (unless strictly playing mode, then maybe dim?)
-            // Let's assume non-active cards are full opacity but container is dimmed (handled by parent className).
-
-            // For active card:
-            const opacityClass = isCurrent
-              ? (isFuture ? "opacity-50 blur-[0.3px] transition-all duration-300" : "opacity-100")
-              : "opacity-100";
-
-            return (
-              <span
-                key={i}
-                className={cn(
-                  "inline-block mr-1.5 transition-all duration-200 rounded px-0.5",
-                  opacityClass,
-                  isCurrentWord && "text-white font-medium scale-105"
-                )}
-              >
-                {word}
-              </span>
-            );
-          })}
-        </p>
+        <Markdown
+          content={cleanText}
+          highlighting={highlighting}
+          className="text-[15px] leading-7 font-light tracking-wide text-pretty"
+        />
       </div>
     </div>
   );
