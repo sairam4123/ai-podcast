@@ -1,6 +1,7 @@
 import functools
 from fastapi import Depends, HTTPException, Request
 from supabase import AClient as SupabaseClient
+from google.genai import types as genai_types
 
 from fastapi.security import APIKeyHeader
 SUPABASE_AUTH_HEADER = "Authorization"
@@ -111,3 +112,21 @@ async def optional_user(request: Request):
         return user
     except HTTPException:
         return None
+
+def parse_image_data(response: genai_types.GenerateContentResponse):
+    if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
+        raise ValueError("No response from the model")
+    for content in response.parts:
+        # print(content)
+        if content.text is not None:
+            continue
+        if image := content.as_image():
+            image_bytes = image.image_bytes
+            if image_bytes is None:
+                raise ValueError("Missing image data entirely.")
+            image = io.BytesIO(image_bytes)
+            return image
+        else:
+            raise ValueError("Invalid response from the model. Missing/malformed image data")
+    else:
+        raise ValueError("Invalid response from the model")

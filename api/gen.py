@@ -1,3 +1,4 @@
+from api.utils import parse_image_data
 import re
 import markdown
 import asyncio
@@ -367,49 +368,25 @@ people_prompt = """
 """
 
 
+
 async def generate_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
     response = await client.aio.models.generate_content(contents=img_prompt.format(
         podcastTitle=podcast.title,
         people="".join([people_prompt.format(index=index, persona=persona.author, interviewer=("host" if persona.is_host else "guest")) for index, persona in enumerate(podcast.authors, start=1)]),
         podcastDescription=podcast.description,
-    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
-    if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
-        raise ValueError("No image found in response")
-    for content in response.candidates[0].content.parts:
-        # print(content)
-        if content.text is not None:
-            continue
-        if content.inline_data is not None:
-            image = content.inline_data.data
-            if image is None:
-                raise ValueError("No image data found in response")
-            image = io.BytesIO(image)
-            break
-    else:
-        raise ValueError("No image found in response")
-    return image
+    ), model="gemini-2.5-flash-image")
+    return parse_image_data(response)
 
 async def generate_featured_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
     response = await client.aio.models.generate_content(contents=featured_prompt.format(
         podcastTitle=podcast.title,
         people="".join([people_prompt.format(index=index, persona=persona.author, interviewer=("host" if persona.is_host else "guest")) for index, persona in enumerate(podcast.authors, start=1)]),
         podcastDescription=podcast.description,
-    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
+    ), model="gemini-2.5-flash-image")
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
-        raise ValueError("No image found in response")
-    for content in response.candidates[0].content.parts:
-        # print(content)
-        if content.text is not None:
-            continue
-        if content.inline_data is not None:
-            image = content.inline_data.data
-            if image is None:
-                raise ValueError("No image data found in response")
-            image = io.BytesIO(image)
-            break
-    else:
-        raise ValueError("No image found in response")
-    return image
+        raise ValueError("No response from the model")
+    
+    return parse_image_data(response)
 
 def detect_topic_language(topic: str) -> str:
     response = client.models.generate_content(contents=f"Detect the language given in the topic: {topic}. The language must be in the form of en-US, en-IN, etc. Also, if the user requests for a specific language, eg: (in tamil, in hindi), return that language instead in the format as specified earlier. (ISO-639-1)", config={"response_mime_type": "application/json", "response_schema": DetectedLanguageAI}, model="gemini-2.5-flash")
@@ -471,22 +448,12 @@ async def save_podcast_cover(podcast: Podcast) -> None:
     await save_image(image, f"{podcast.id}.png", "podcast-cover-images")
 
 async def generate_author_image(persona: PodcastAuthorPersona) -> tuple[UUID, io.BytesIO]:
-    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
+    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), model="gemini-2.5-flash-image")
 
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
 
-    for content in response.parts:
-        if content.text is not None:
-            continue
-        if image := content.as_image():
-            image_bytes = image.image_bytes
-            if image_bytes is None:
-                raise ValueError("No image data found in response")
-            image = io.BytesIO(image_bytes)
-            return persona.id, image
-    else:
-        raise ValueError("No image found in response")
+    return persona.id, parse_image_data(response)
 
 async def generate_author_images(authors: list[PodcastAuthorPersona]) -> None:
     print(f"Generating images for {len(authors)} authors...")
