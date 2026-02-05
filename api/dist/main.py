@@ -847,7 +847,7 @@ async def generate_podcast_thumbnail_image(podcast: Podcast) -> io.BytesIO:
         podcastTitle=podcast.title,
         people="".join([people_prompt.format(index=index, persona=persona.author, interviewer=("host" if persona.is_host else "guest")) for index, persona in enumerate(podcast.authors, start=1)]),
         podcastDescription=podcast.description,
-    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
+    ), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-image")
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
     for content in response.candidates[0].content.parts:
@@ -946,7 +946,7 @@ async def save_podcast_cover(podcast: Podcast) -> None:
     await save_image(image, f"{podcast.id}.png", "podcast-cover-images")
 
 async def generate_author_image(persona: PodcastAuthorPersona) -> tuple[UUID, io.BytesIO]:
-    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
+    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-image")
 
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
