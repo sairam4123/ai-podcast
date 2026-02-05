@@ -1,5 +1,7 @@
 import { useParams } from "react-router";
 import { api } from "../api/api";
+import { useState } from "react";
+import { cn } from "../lib/cn";
 import {
   FaEye,
   FaEyeSlash,
@@ -108,8 +110,10 @@ export function PodcastCard({
       ?.map((c) => c.speaker)
       .filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i) || [];
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   return (
-    <div className="flex flex-col lg:flex-row flex-1 gap-6 pb-32 overflow-hidden items-start h-full">
+    <div className="flex flex-col flex-1 gap-4 md:gap-0 p-2 md:p-0 w-full h-full md:h-[calc(100vh-5rem)] overflow-hidden relative">
       <>
         <title>{podcast?.podcast_title}</title>
         <link rel="icon" href={`${imageUrl}`} precedence="high" />
@@ -121,124 +125,170 @@ export function PodcastCard({
         <meta name="og:url" content={`https://podolli-ai.co.in/podcast/${podcast?.id}`} />
       </>
 
-      {/* Transcript - Left Side (Main Content) */}
-      <div className="flex flex-col flex-1 glass-panel p-0 overflow-hidden border border-tertiary/20 bg-surface/30 h-full min-h-0">
-        <div className="p-4 border-b border-tertiary/10 bg-surface/40 backdrop-blur-sm sticky top-0 z-10">
-          <h2 className="font-heading text-lg font-semibold text-tertiary-foreground">Transcript</h2>
-        </div>
+      <div className="flex flex-col-reverse md:flex-row flex-1 overflow-hidden relative">
+        {/* Transcript - Left Side (Desktop) / Bottom (Mobile) */}
+        <div className="flex flex-col flex-1 bg-surface/30 backdrop-blur-xl border-0 md:border-r border-tertiary/20 rounded-3xl md:rounded-r-none overflow-hidden relative">
+          <div className="p-4 border-b border-tertiary/10 bg-surface/40 backdrop-blur-sm sticky top-0 z-10 flex justify-between items-center h-16 shrink-0">
+            <h2 className="font-heading text-lg font-semibold text-tertiary-foreground flex items-center gap-3">
+              Transcript
+              {!isSidebarOpen && (
+                <Button className="h-8 px-3 text-xs" onClick={() => {
+                  setSourceUrl(audioUrl ?? "");
+                  setCurrentPodcast(podcast!);
+                  play();
+                }}>
+                  <FaPlay className="mr-1.5 text-[10px]" /> Play Podcast
+                </Button>
+              )}
+            </h2>
 
-        {(data as unknown as number[])?.[1] === 404 ||
-          (data?.conversations?.length === 0 && !isLoading) ? (
-          <TranscriptMissing />
-        ) : isLoading ? (
-          <div className="flex flex-col items-center justify-center flex-grow">
-            <Spinner size="xl" />
-          </div>
-        ) : error ? (
-          <p className="text-rose-400 p-4">Error loading transcript: {error.message}</p>
-        ) : null}
-
-        {data?.conversations && (
-          <Conversation
-            podcastId={podcast?.id ?? ""}
-            conversation={data?.conversations ?? []}
-            questions={liveQuestions?.questions || []}
-            refreshQuestions={() => refreshQuestions?.()}
-          />
-        )}
-      </div>
-
-      {/* Sidebar - Right Side (Sticky) */}
-      <div className="flex flex-col lg:w-80 glass-panel p-5 space-y-5 overflow-y-auto border border-tertiary/20 bg-surface/40 flex-shrink-0 sticky top-4 max-h-[calc(100vh-2rem)] custom-scrollbar">
-        <img
-          src={imageUrl ?? "/podcastplaceholdercover.png"}
-          alt={podcast?.podcast_title}
-          className="w-full aspect-square h-auto object-cover rounded-2xl shadow-lg ring-1 ring-white/10"
-        />
-        <div className="space-y-2">
-          <h2 className="font-heading text-2xl font-bold text-tertiary-foreground text-left leading-tight">
-            {podcast?.podcast_title}
-          </h2>
-          <p className="text-tertiary text-sm text-left leading-relaxed">{podcast?.podcast_description}</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2 justify-start">
-          {podcast?.tags?.map((tag, index) => (
-            <span
-              key={index}
-              className="bg-surface-highlight text-primary px-3 py-1 rounded-full text-xs font-medium border border-tertiary/10"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-2 justify-start">
-          <Button isLoading={audioLoading} onClick={() => {
-            if (isPlaying) {
-              pause();
-            } else {
-              setSourceUrl(audioUrl ?? "");
-              setCurrentPodcast(podcast!);
-              play();
-            }
-          }} className="w-full sm:w-auto flex-1">
-            {isPlaying ? <span className="flex items-center gap-2"><div className="w-2 h-2 bg-white rounded-full animate-pulse" /> Playing</span> : <><FaPlay className="inline mr-2" /> Play</>}
-          </Button>
-
-          <Button
-            variant="secondary"
-            isLoading={updateVisibilityLoading}
-            onClick={() => {
-              mutate({
-                podcast_id: podcast?.id ?? "",
-                is_public: !podcast?.is_public,
-              });
-            }}
-          >
-            {podcast?.is_public ? (
-              <><FaEye className="inline mr-1" /> Public</>
-            ) : (
-              <><FaEyeSlash className="inline mr-1" /> Private</>
+            {/* Expand Sidebar Button (Visible when collapsed on Desktop) */}
+            {!isSidebarOpen && (
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="hidden md:block p-2 hover:bg-surface-highlight rounded-lg transition-colors text-tertiary"
+                title="Show Details"
+              >
+                <FaEye className="text-lg" />
+              </button>
             )}
-          </Button>
+          </div>
+
+          {(data as unknown as number[])?.[1] === 404 ||
+            (data?.conversations?.length === 0 && !isLoading) ? (
+            <TranscriptMissing />
+          ) : isLoading ? (
+            <div className="flex flex-col items-center justify-center flex-grow">
+              <Spinner size="xl" />
+            </div>
+          ) : error ? (
+            <p className="text-rose-400 p-4">Error loading transcript: {error?.message}</p>
+          ) : null}
+
+          {data?.conversations && (
+            <Conversation
+              podcastId={podcast?.id ?? ""}
+              conversation={data?.conversations ?? []}
+              questions={liveQuestions?.questions || []}
+              refreshQuestions={() => refreshQuestions?.()}
+            />
+          )}
         </div>
 
-        <div className="flex flex-wrap gap-2 justify-start">
-          <Button variant="ghost" isLoading={likeLoading} onClick={() => {
-            likePodcast({
-              podcast_id: podcast?.id ?? "",
-              liked: !(podcast?.liked_by_user ?? false),
-            });
-          }}>
-            {podcast?.liked_by_user ? <FaThumbsUp className="text-primary text-lg" /> : <FaRegThumbsUp className="text-tertiary text-lg" />}
-          </Button>
+        {/* Sidebar - Right Side (Desktop) / Top (Mobile) */}
+        <div className={cn(
+          "bg-surface/40 backdrop-blur-xl border-l md:border-l-0 border-tertiary/20 rounded-3xl md:rounded-l-none flex-shrink-0 flex flex-col transition-all duration-300 ease-in-out overflow-hidden relative",
+          // Desktop: Collapsible width
+          "md:static md:h-full",
+          isSidebarOpen ? "md:w-80 md:opacity-100" : "md:w-0 md:opacity-0 md:border-0",
+          // Mobile: Always visible, auto height
+          "w-full h-auto border-0 border-b md:border-b-0 mb-4 md:mb-0"
+        )}>
+          {/* Collapse Button (Desktop Only) */}
+          <div className="absolute top-4 right-4 z-20 hidden md:block">
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-1.5 bg-surface/50 hover:bg-surface text-tertiary hover:text-primary rounded-md transition-colors backdrop-blur-md"
+              title="Hide Details"
+            >
+              <FaEyeSlash size={14} />
+            </button>
+          </div>
 
-          <Button variant="ghost" isLoading={dislikeLoading} onClick={() => {
-            dislikePodcast({
-              podcast_id: podcast?.id ?? "",
-              disliked: !(podcast?.disliked_by_user ?? false),
-            });
-          }}>
-            {podcast?.disliked_by_user ? <FaThumbsDown className="text-primary text-lg" /> : <FaRegThumbsDown className="text-tertiary text-lg" />}
-          </Button>
+          <div className="p-4 md:p-5 space-y-5 overflow-y-auto h-full custom-scrollbar">
+            <div className="flex flex-row md:flex-col gap-5 items-start">
+              <img
+                src={imageUrl ?? "/podcastplaceholdercover.png"}
+                alt={podcast?.podcast_title}
+                className="w-24 md:w-full aspect-square h-auto object-cover rounded-2xl shadow-lg ring-1 ring-white/10 flex-shrink-0"
+              />
+              <div className="space-y-2 min-w-0">
+                <h2 className="font-heading text-xl md:text-2xl font-bold text-tertiary-foreground text-left leading-tight line-clamp-2 md:line-clamp-none">
+                  {podcast?.podcast_title}
+                </h2>
+                <p className="text-tertiary text-sm text-left leading-relaxed line-clamp-3 md:line-clamp-none">{podcast?.podcast_description}</p>
+              </div>
+            </div>
 
-          <Button variant="ghost" onClick={() => {
-            const podcastUrl = `${window.location.origin}/podcast/${podcast?.id}`;
-            navigator.clipboard.writeText(podcastUrl).then(() => {
-              toast.success("Link copied to clipboard");
-            });
-          }}>
-            <FaShare className="text-tertiary text-lg" />
-          </Button>
-        </div>
+            <div className="flex flex-wrap gap-2 justify-start">
+              {podcast?.tags?.map((tag, index) => (
+                <span
+                  key={index}
+                  className="bg-surface-highlight text-primary px-3 py-1 rounded-full text-xs font-medium border border-tertiary/10"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
 
-        <div className="pt-4 border-t border-tertiary/10">
-          <p className="text-tertiary text-xs uppercase tracking-widest font-semibold mb-3 text-left">Speakers</p>
-          <div className="flex justify-start -space-x-2">
-            {people?.map((person, index) => (
-              <PersonAvatarImage key={index} personId={person.id} first={index === 0} />
-            ))}
+            <div className="flex flex-wrap gap-2 justify-start w-full">
+              <Button isLoading={audioLoading} onClick={() => {
+                if (isPlaying) {
+                  pause();
+                } else {
+                  setSourceUrl(audioUrl ?? "");
+                  setCurrentPodcast(podcast!);
+                  play();
+                }
+              }} className="flex-1 md:flex-none w-full md:w-auto">
+                {isPlaying ? <span className="flex items-center gap-2"><div className="w-2 h-2 bg-white rounded-full animate-pulse" /> Playing</span> : <><FaPlay className="inline mr-2" /> Play</>}
+              </Button>
+
+              <Button
+                variant="secondary"
+                isLoading={updateVisibilityLoading}
+                onClick={() => {
+                  mutate({
+                    podcast_id: podcast?.id ?? "",
+                    is_public: !podcast?.is_public,
+                  });
+                }}
+              >
+                {podcast?.is_public ? (
+                  <><FaEye className="inline mr-1" /> Public</>
+                ) : (
+                  <><FaEyeSlash className="inline mr-1" /> Private</>
+                )}
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-start">
+              <Button variant="ghost" isLoading={likeLoading} onClick={() => {
+                likePodcast({
+                  podcast_id: podcast?.id ?? "",
+                  liked: !(podcast?.liked_by_user ?? false),
+                });
+              }}>
+                {podcast?.liked_by_user ? <FaThumbsUp className="text-primary text-lg" /> : <FaRegThumbsUp className="text-tertiary text-lg" />}
+              </Button>
+
+              <Button variant="ghost" isLoading={dislikeLoading} onClick={() => {
+                dislikePodcast({
+                  podcast_id: podcast?.id ?? "",
+                  disliked: !(podcast?.disliked_by_user ?? false),
+                });
+              }}>
+                {podcast?.disliked_by_user ? <FaThumbsDown className="text-primary text-lg" /> : <FaRegThumbsDown className="text-tertiary text-lg" />}
+              </Button>
+
+              <Button variant="ghost" onClick={() => {
+                const podcastUrl = `${window.location.origin}/podcast/${podcast?.id}`;
+                navigator.clipboard.writeText(podcastUrl).then(() => {
+                  toast.success("Link copied to clipboard");
+                });
+              }}>
+                <FaShare className="text-tertiary text-lg" />
+              </Button>
+            </div>
+
+            <div className="pt-4 border-t border-tertiary/10">
+              <p className="text-tertiary text-xs uppercase tracking-widest font-semibold mb-3 text-left">Speakers</p>
+              <div className="flex justify-start -space-x-2">
+                {people?.map((person, index) => (
+                  <PersonAvatarImage key={index} personId={person.id} first={index === 0} />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

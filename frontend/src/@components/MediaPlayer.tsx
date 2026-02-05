@@ -52,15 +52,15 @@ export function MediaPlayer() {
     <AnimatePresence>
       {currentPodcast?.id && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 100 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ ease: "easeOut", duration: 0.2 }}
-          className="fixed flex flex-col h-28 bottom-20 lg:bottom-4 left-1/2 -translate-x-1/2 w-11/12 max-w-4xl rounded-2xl bg-surface/90 backdrop-blur-md border border-tertiary/20 shadow-2xl shadow-black/20 z-50 ring-1 ring-white/5"
+          exit={{ opacity: 0, y: 100 }}
+          transition={{ ease: "easeOut", duration: 0.3 }}
+          className="fixed bottom-[4.5rem] lg:bottom-0 right-0 left-0 lg:left-64 h-20 lg:h-24 bg-surface/95 backdrop-blur-xl border-t border-tertiary/20 shadow-[0_-4px_20px_rgba(0,0,0,0.2)] z-40 flex flex-col justify-center"
         >
-          <div className="flex flex-row flex-grow items-center gap-4 p-2 pr-4">
+          <div className="flex flex-row items-center gap-6 px-4 lg:px-8 max-w-[1920px] mx-auto w-full h-full">
             <img
-              className="h-20 w-20 rounded-xl object-cover flex-shrink-0 shadow-sm ring-1 ring-white/10"
+              className="h-16 w-16 rounded-lg object-cover flex-shrink-0 shadow-sm ring-1 ring-white/10"
               src={imageUrl ?? "/podcastplaceholdercover.png"}
               alt=""
             />
@@ -155,13 +155,14 @@ export function MediaPlayer() {
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="px-2 pb-2">
-            <div className="w-full h-1 bg-surface-highlight rounded-full overflow-hidden group hover:h-2 transition-all cursor-pointer">
-              <div
-                className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${(currentPosition / currentPodcast.duration) * 100}%` }}
-              />
+          {/* Progress Bar (Top of player) */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-surface-highlight group cursor-pointer">
+            <div className="w-full h-full opacity-0 group-hover:opacity-100 transition-opacity absolute -top-2 bottom-0 z-20" />
+            <div
+              className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all relative"
+              style={{ width: `${(currentPosition / currentPodcast.duration) * 100}%` }}
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
         </motion.div>
