@@ -951,14 +951,14 @@ async def generate_author_image(persona: PodcastAuthorPersona) -> tuple[UUID, io
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
 
-    for content in response.candidates[0].content.parts:
+    for content in response.parts:
         if content.text is not None:
             continue
-        if content.inline_data is not None:
-            image = content.inline_data.data
-            if image is None:
+        if image := content.as_image():
+            image_bytes = image.image_bytes
+            if image_bytes is None:
                 raise ValueError("No image data found in response")
-            image = io.BytesIO(image)
+            image = io.BytesIO(image_bytes)
             return persona.id, image
     else:
         raise ValueError("No image found in response")
@@ -1690,7 +1690,7 @@ async def search_podcasts(query: str, v2: bool = True):
                 "language": p.language,
             } for p in podcasts_db}
     
-    response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-3.0-flash")
+    response = client.models.generate_content(contents=prompt.format(query=query), config={"response_mime_type": "application/json", "response_schema": PodcastTopicsSearch}, model="gemini-2.5-flash")
     podcast_search_keys = PodcastTopicsSearch.model_validate(response.parsed) # Type: PodcastTopicsSearch
     print(podcast_search_keys)
     results = []
@@ -1864,7 +1864,7 @@ async def generate_form_data(topic: AutoFillPodcastForm):
     response = client.models.generate_content(
         contents=generate_form_prompt.format(query=topic.topic),
         config={"response_mime_type": "application/json", "response_schema": GeneratePodcast},
-        model="gemini-3.0-flash"
+        model="gemini-2.5-flash"
     )
     podcast_details = GeneratePodcast.model_validate(response.parsed) # Type: PodcastTopicsSearch
     return podcast_details

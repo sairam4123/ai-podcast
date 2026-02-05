@@ -471,19 +471,19 @@ async def save_podcast_cover(podcast: Podcast) -> None:
     await save_image(image, f"{podcast.id}.png", "podcast-cover-images")
 
 async def generate_author_image(persona: PodcastAuthorPersona) -> tuple[UUID, io.BytesIO]:
-    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.0-flash-image")
+    response = await client.aio.models.generate_content(contents=author_prompt.format(persona=persona), config={"response_modalities": ["IMAGE", "TEXT"]}, model="gemini-2.5-flash-image")
 
     if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
         raise ValueError("No image found in response")
 
-    for content in response.candidates[0].content.parts:
+    for content in response.parts:
         if content.text is not None:
             continue
-        if content.inline_data is not None:
-            image = content.inline_data.data
-            if image is None:
+        if image := content.as_image():
+            image_bytes = image.image_bytes
+            if image_bytes is None:
                 raise ValueError("No image data found in response")
-            image = io.BytesIO(image)
+            image = io.BytesIO(image_bytes)
             return persona.id, image
     else:
         raise ValueError("No image found in response")
@@ -530,7 +530,7 @@ async def generate_podcast_content(create_podcast: CreatePodcast):
     content = "\n".join(contents)
     print("Search results fetched. Generating podcast content..., content: ", content)
 
-    response = await client.aio.models.generate_content(contents=content+podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
+    response = await client.aio.models.generate_content(contents=content+podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.5-flash",)
     return PodcastAI.model_validate(response.parsed) 
 
 async def generate_podcast_metadata(create_podcast: CreatePodcast) -> InteractivePodcastAI:
@@ -543,7 +543,7 @@ async def generate_podcast_metadata(create_podcast: CreatePodcast) -> Interactiv
     content = "\n".join(contents)
     print("Search results fetched. Generating podcast metadata..., content: ", content)
 
-    response = await client.aio.models.generate_content(contents=content+interactive_podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + interactive_podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.0-flash",)
+    response = await client.aio.models.generate_content(contents=content+interactive_podcast_prompt.format(topic=create_podcast.topic, language=create_podcast.language, style=create_podcast.style, description=create_podcast.description) + interactive_podcast_schema, config={"response_mime_type": "application/json", "response_schema": PodcastAI}, model="gemini-2.5-flash",)
     return InteractivePodcastAI.model_validate(response.parsed) 
 
 async def generate_podcast_authors(create_podcast: CreatePodcast) -> list[PersonaAI]:
