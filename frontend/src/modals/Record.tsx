@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import ActionModal from "../@components/ActionModal";
-import { FaMicrophone, FaStop, FaRotateRight, FaToggleOn, FaToggleOff } from "react-icons/fa6";
+import { FaMicrophone, FaToggleOn, FaToggleOff } from "react-icons/fa6";
 import useRecorder from "../api/useRecorder";
 import { cn } from "../lib/cn";
 import { TextArea } from "../@components/TextArea";
@@ -18,14 +18,65 @@ declare global {
 }
 
 const LANGUAGES = [
-  { label: "English (US)", value: "en-US" },
+  { label: "Afrikaans", value: "af-ZA" },
+  { label: "Arabic", value: "ar-SA" },
+  { label: "Basque", value: "eu-ES" },
+  { label: "Bulgarian", value: "bg-BG" },
+  { label: "Catalan", value: "ca-ES" },
+  { label: "Chinese (Simplified)", value: "zh-CN" },
+  { label: "Chinese (Traditional)", value: "zh-TW" },
+  { label: "Croatian", value: "hr-HR" },
+  { label: "Czech", value: "cs-CZ" },
+  { label: "Danish", value: "da-DK" },
+  { label: "Dutch", value: "nl-NL" },
+  { label: "English (Australia)", value: "en-AU" },
+  { label: "English (Canada)", value: "en-CA" },
+  { label: "English (India)", value: "en-IN" },
+  { label: "English (New Zealand)", value: "en-NZ" },
+  { label: "English (South Africa)", value: "en-ZA" },
   { label: "English (UK)", value: "en-GB" },
-  { label: "English (IN)", value: "en-IN" },
-  { label: "Spanish", value: "es-ES" },
+  { label: "English (US)", value: "en-US" },
+  { label: "Finnish", value: "fi-FI" },
   { label: "French", value: "fr-FR" },
+  { label: "French (Canada)", value: "fr-CA" },
+  { label: "Galician", value: "gl-ES" },
   { label: "German", value: "de-DE" },
+  { label: "Greek", value: "el-GR" },
+  { label: "Hebrew", value: "he-IL" },
   { label: "Hindi", value: "hi-IN" },
+  { label: "Hungarian", value: "hu-HU" },
+  { label: "Icelandic", value: "is-IS" },
+  { label: "Indonesian", value: "id-ID" },
+  { label: "Italian", value: "it-IT" },
   { label: "Japanese", value: "ja-JP" },
+  { label: "Korean", value: "ko-KR" },
+  { label: "Latin", value: "la" },
+  { label: "Malay", value: "ms-MY" },
+  { label: "Norwegian", value: "no-NO" },
+  { label: "Polish", value: "pl-PL" },
+  { label: "Portuguese (Brazil)", value: "pt-BR" },
+  { label: "Portuguese (Portugal)", value: "pt-PT" },
+  { label: "Romanian", value: "ro-RO" },
+  { label: "Russian", value: "ru-RU" },
+  { label: "Serbian", value: "sr-RS" },
+  { label: "Slovak", value: "sk-SK" },
+  { label: "Slovenian", value: "sl-SI" },
+  { label: "Spanish (Argentina)", value: "es-AR" },
+  { label: "Spanish (Bolivia)", value: "es-BO" },
+  { label: "Spanish (Chile)", value: "es-CL" },
+  { label: "Spanish (Colombia)", value: "es-CO" },
+  { label: "Spanish (Costa Rica)", value: "es-CR" },
+  { label: "Spanish (Ecuador)", value: "es-EC" },
+  { label: "Spanish (El Salvador)", value: "es-SV" },
+  { label: "Spanish (Spain)", value: "es-ES" },
+  { label: "Spanish (US)", value: "es-US" },
+  { label: "Spanish (Mexico)", value: "es-MX" },
+  { label: "Swedish", value: "sv-SE" },
+  { label: "Thai", value: "th-TH" },
+  { label: "Turkish", value: "tr-TR" },
+  { label: "Ukrainian", value: "uk-UA" },
+  { label: "Vietnamese", value: "vi-VN" },
+  { label: "Zulu", value: "zu-ZA" },
 ];
 
 export function RecordModal({
@@ -145,19 +196,31 @@ export function RecordModal({
             />
           )}
 
-          <div className="relative z-10 p-4 rounded-full bg-surface border border-tertiary/20 shadow-xl transition-transform duration-100"
-            style={{ transform: `scale(${1 + amplitude * 0.2})` }}>
+          <div
+            onClick={() => {
+              if (state === "recording") {
+                handleStop();
+              } else {
+                handleRestart();
+              }
+            }}
+            className={cn(
+              "relative z-10 p-4 rounded-full bg-surface border shadow-xl transition-all duration-100 cursor-pointer hover:scale-105 active:scale-95",
+              state === "recording" ? "border-rose-500/50 shadow-rose-500/20" : "border-tertiary/20 hover:border-primary/50"
+            )}
+            style={{ transform: `scale(${1 + amplitude * 0.5})` }} // Increased scale factor
+          >
             <FaMicrophone
               size={32}
               className={cn(
                 "transition-colors duration-300",
-                state === "recording" ? "text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.4)]" : "text-tertiary"
+                state === "recording" ? "text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.4)]" : "text-tertiary group-hover:text-primary"
               )}
             />
           </div>
 
           <p className="mt-4 text-sm font-medium text-tertiary animate-pulse">
-            {state === "recording" ? "Listening..." : "Recording Paused"}
+            {state === "recording" ? "Tap mic to stop" : "Tap mic to start"}
           </p>
 
           {/* Controls: Language & Silence */}
@@ -170,6 +233,7 @@ export function RecordModal({
                 onChange={setLanguage}
                 className="w-full"
                 placeholder="Select Language"
+                usePortal={true}
               />
             </div>
 
@@ -199,43 +263,17 @@ export function RecordModal({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center pt-2 gap-3">
-          {/* Left side actions (Restart) */}
-          <div>
-            {state !== "recording" && (
-              <button
-                onClick={handleRestart}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-highlight text-tertiary font-medium transition-colors text-sm border border-tertiary/10"
-              >
-                <FaRotateRight />
-                Record Again
-              </button>
-            )}
-          </div>
-
-          {/* Right side actions */}
-          <div className="flex gap-3">
-            {state === "recording" ? (
-              <button
-                onClick={handleStop}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-medium transition-all"
-              >
-                <FaStop className="text-sm" />
-                Stop Recording
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  sendQuestion({ question: transcript, podcast_id });
-                }}
-                disabled={!transcript.trim() || isSending}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-white text-slate-900 border border-slate-200 hover:bg-slate-100 font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              >
-                {isSending ? <PiSpinnerGap className="animate-spin text-lg" /> : null}
-                Send Question
-              </button>
-            )}
-          </div>
+        <div className="flex justify-end items-center pt-2 gap-3">
+          <button
+            onClick={() => {
+              sendQuestion({ question: transcript, podcast_id });
+            }}
+            disabled={!transcript.trim() || isSending}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-white text-slate-900 border border-slate-200 hover:bg-slate-100 font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            {isSending ? <PiSpinnerGap className="animate-spin text-lg" /> : null}
+            Send Question
+          </button>
         </div>
 
       </div>
